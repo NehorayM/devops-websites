@@ -63,3 +63,13 @@ def C(q, right, *wrong, x):
 def F(m, q, right, *wrong, x):
     """A final-exam question: each option is (text, why in Hebrew), the right one first."""
     return {"q": q, "o": [{"t": t, "w": w} for t, w in [right] + list(wrong)], "a": [0], "x": x, "m": m}
+
+
+def QZ(q, right, *wrong, x):
+    """A Study-mode check: options are plain strings, the right one first; x is Hebrew."""
+    return {"q": q, "o": [right] + list(wrong), "x": x}
+
+
+def ASK(*qs):
+    """The questions interviewers keep asking on a topic, as a list block."""
+    return {"t": "list", "x": list(qs), "cap": "שאלות שחוזרות בראיונות. נסה לענות בקול לפני שממשיכים."}

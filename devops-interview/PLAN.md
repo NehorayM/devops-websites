@@ -91,6 +91,11 @@ docs.gitlab.com/ee/ci · jenkins.io/doc · man7.org. Every question carries a `r
    Hebrew explanations), a summary, and a 10-question exam with a Hebrew note on every option. Authored with
    the shorthand in `learn_src/_h.py`; `python3 build_learn.py` validates and injects. `QA_LEARN` passes all
    24 subjects in a real browser.
-6. **Study:** reading chapters for each topic.
+6. *(done)* **Study:** reading chapters for each topic.
+   9 quick-reference chapters (one per topic, 30 pages): commands, comparison tables, numbers to remember,
+   and the questions interviewers keep asking, with a short Hebrew-explained check per chapter. Authored in
+   `study_src/c*.py`; `python3 build_study.py` validates (every sector in exactly one chapter) and injects.
+   The Study engine's sources are now real files (`study_engine.js`, `study_styles.css`,
+   `study_screens.html`) that `inject_study.py` reads; chapters carry their own sectors and domain.
 7. **Hebrew explanations, QA** (`QA_BANK`, `QA_UI`, and the rest) run in a real browser, then update `STATE.md`.
 8. **Games:** adapt the duel and casino to the new bank (the SQL is ready), turned on once there is a new Supabase project.

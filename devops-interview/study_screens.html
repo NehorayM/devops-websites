@@ -1,0 +1,36 @@
+<!-- STUDY: CHAPTER PICKER -->
+  <div id="stuPickScreen" class="screen hidden">
+    <button class="backbtn" id="stuPickBack" aria-label="Back to the Study chapters">‹</button>
+    <div style="text-align:center;margin-bottom:14px">
+      <h2 class="head">📖 Study</h2>
+      <p class="sub">A quick-reference chapter for each topic: the commands, comparison tables,
+        numbers to remember and the questions interviewers ask. Read in any order before an interview.</p>
+    </div>
+    <div class="motiv" id="stuMotiv"></div>
+    <div class="statstrip" id="stuStats" style="margin-bottom:14px"></div>
+    <div class="list" id="stuPickList"></div>
+  </div>
+
+  <!-- STUDY: READING A CHAPTER -->
+  <div id="stuReadScreen" class="screen hidden">
+    <button class="backbtn" id="stuReadBack" aria-label="Back to the chapter list">‹</button>
+    <div class="crswrap">
+      <div class="qtop" style="margin-bottom:10px">
+        <span class="tag" id="stuTag">CHAPTER</span>
+        <span class="stuprog" id="stuCount"></span>
+      </div>
+      <h2 class="head" id="stuTitle"></h2>
+      <p class="sub" id="stuSub" style="margin-bottom:12px"></p>
+      <div class="statstrip" id="stuWeight" style="margin-bottom:14px"></div>
+      <div class="stujump" id="stuJump"></div>
+      <div class="mdx" id="stuBody"></div>
+      <div class="sechead">Quick check</div>
+      <div id="stuQuiz"></div>
+      <div class="crsfoot">
+        <div class="row" style="justify-content:center">
+          <button class="btn" id="stuNext">Next chapter ▸</button>
+          <button class="btn ghost sm" id="stuPractise">Practise these questions</button>
+        </div>
+      </div>
+    </div>
+  </div>

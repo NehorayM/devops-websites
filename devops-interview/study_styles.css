@@ -1,0 +1,65 @@
+/* ---------- study mode ---------- */
+.stucard{position:relative;display:flex;align-items:flex-start;gap:13px;width:100%;
+  padding:15px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+  text-align:left;transition:.15s;overflow:hidden}
+.stucard:hover{border-color:var(--line2);background:var(--surface2)}
+.stucard:active{transform:scale(.99)}
+.stucard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--dcol,var(--cyan))}
+.stucard .sem{font-size:20px;flex:none;line-height:1.2}
+.stucard .snm{font-size:14px;font-weight:650}
+.stucard .ssub{font-size:11.5px;color:var(--dim);line-height:1.45;margin-top:3px}
+.stucard .smeta{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:7px;letter-spacing:.3px}
+.studone{flex:none;font-size:11px;font-weight:650;color:var(--lime);white-space:nowrap}
+.stujump{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;margin-bottom:4px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.stujump::-webkit-scrollbar{display:none}
+.stujump button{flex:none;font-size:11px;font-weight:550;padding:7px 12px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.stujump button:hover,.stujump button.on{color:var(--txt);border-color:var(--line2)}
+.stutopic{scroll-margin-top:86px;padding-top:6px}
+/* a read-aloud button on each paragraph: in the gutter, out of the text's way */
+.rdpara{position:relative;padding-right:40px;border-radius:10px;transition:background .2s}
+.rdpara.reading{background:color-mix(in srgb, var(--cyan) 7%, transparent)}
+.parread{position:absolute;top:2px;right:0;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+  font-size:14px;background:transparent;border:1px solid var(--line);color:var(--dim);opacity:.75}
+.parread:hover,.parread.on{opacity:1;border-color:var(--cyan);color:var(--cyan)}
+.parread.on{background:color-mix(in srgb, var(--cyan) 12%, transparent)}
+.stutopic h2{font-size:17px;font-weight:650;letter-spacing:.2px;margin:22px 0 10px;
+  padding-bottom:9px;border-bottom:1px solid var(--line)}
+.stutopic:first-of-type h2{margin-top:6px}
+.stuq{border:1px solid var(--line);background:var(--surface);border-radius:12px;
+  padding:15px 16px;margin-bottom:10px}
+.stuq .qq{font-size:14px;line-height:1.55;font-weight:650;margin-bottom:11px}
+.stuo{display:block;width:100%;text-align:left;font-size:13.5px;line-height:1.5;
+  padding:11px 13px;border-radius:9px;background:var(--panel);border:1px solid var(--line);
+  color:var(--txt);margin-bottom:7px;transition:.14s}
+.stuo:hover{border-color:var(--line2)}
+.stuo.ok{border-color:var(--lime);background:color-mix(in srgb, var(--lime) 11%, transparent)}
+.stuo.no{border-color:var(--red);background:color-mix(in srgb, var(--red) 11%, transparent)}
+.stuo:disabled{cursor:default}
+.stufeed{font-size:12px;margin-top:4px;color:var(--dim)}
+.stuprog{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.stuw{margin-top:9px}
+.stuw .wbar{height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.stuw .wbar i{display:block;height:100%;border-radius:3px;background:var(--dcol,var(--cyan))}
+.stuw .wtxt{font-family:var(--mono);font-size:9.5px;color:var(--dim);margin-top:5px;letter-spacing:.2px}
+.stuw .wtxt b{color:var(--txt);font-size:11px}
+.stuw.heavy .wtxt b{color:var(--gold)}
+/* the chapter body is long; give the sticky footer room to breathe */
+#stuReadScreen .crsfoot{margin-top:18px}
+
+/* Ship It: chapters are Hebrew reference pages; commands stay left-to-right */
+#stuBody{direction:rtl;text-align:right}
+#stuBody code{direction:ltr;unicode-bidi:isolate}
+#stuBody .lb-code{direction:ltr;text-align:left}
+#stuBody ul,#stuBody ol{padding-left:0;padding-right:19px}
+#stuBody .lb-split .c ul{padding-left:0;padding-right:17px}
+#stuBody th{text-align:right}
+#stuBody table.wide{min-width:0}
+#stuBody table.wide th{white-space:normal}
+#stuBody .lb-flow .n+.n::before{content:"←";margin-right:0;margin-left:9px}
+#stuBody .lb-tree .v{border-left:0;border-right:1px solid color-mix(in srgb, var(--lime) 28%, transparent)}
+#stuSub,.stucard .ssub{direction:rtl;unicode-bidi:isolate;text-align:right}
+.stufeed .stux{display:block;margin-top:6px;direction:rtl;unicode-bidi:isolate;text-align:right;
+  font-size:12.8px;line-height:1.6;color:#c9d6e8}
+.stufeed .stux code{direction:ltr;unicode-bidi:isolate}
