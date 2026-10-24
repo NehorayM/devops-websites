@@ -72,9 +72,10 @@ def stats(names):
     for name in names:
         qs = dump(name)
         lg = sum(1 for d in qs if len(d["r"][0]) > max(len(w[0]) for w in d["w"]))
+        sh = sum(1 for d in qs if len(d["r"][0]) < min(len(w[0]) for w in d["w"]))
         short = sum(1 for d in qs for o in [d["r"]] + d["w"] if len(o[1]) < 60)
         tot += len(qs); longest += lg
-        print(f"  {name:18s} right-is-longest {lg:3d}/{len(qs):<3d} ({100 * lg // max(1, len(qs)):2d}%)  whys<60ch {short}")
+        print(f"  {name:18s} right-is-longest {lg:3d}/{len(qs):<3d} ({100 * lg // max(1, len(qs)):2d}%)  shortest {100 * sh // max(1, len(qs)):2d}%  whys<60ch {short}")
     print(f"  {'total':18s} right-is-longest {longest}/{tot} ({100 * longest // max(1, tot)}%)")
 
 

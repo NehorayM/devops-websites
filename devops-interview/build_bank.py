@@ -124,6 +124,9 @@ def validate(qs, partial):
         lg = sum(1 for q in fq if len(q.opts[0][0]) > max(len(o[0]) for o in q.opts[1:]))
         if lg > 0.4 * len(fq):
             errs.append(f"{fname}: the right option is the longest in {lg}/{len(fq)} questions, want <= 40%")
+        sh = sum(1 for q in fq if len(q.opts[0][0]) < min(len(o[0]) for o in q.opts[1:]))
+        if sh > 0.4 * len(fq):
+            errs.append(f"{fname}: the right option is the shortest in {sh}/{len(fq)} questions, want <= 40%")
 
     by_topic = defaultdict(list)
     by_sec = Counter(q.sec for q in qs)

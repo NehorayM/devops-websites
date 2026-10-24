@@ -91,7 +91,7 @@ devops-interview/
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
-  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, repl.py, stubs.py
+  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, stubs.py
   supabase_*.sql sql_tests/          backend for stage 8
 ```
 
@@ -178,7 +178,7 @@ Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
 - `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b) and caps
-  questions whose right option is the longest at `<=969` (was 1,096). Lower both caps as files are rewritten.
+  questions whose right option is the longest at `<=833` (was 1,096). Lower both caps as files are rewritten.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -232,7 +232,7 @@ Notes:
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
-| 9 *(in progress)* | Hard distractors + full explanations: all Kubernetes files done (265 q, right-is-longest 78% → 27%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count |
+| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes and Argo CD done (477 q; right-is-longest 79% → 23%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count (≤ 833) |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -247,11 +247,13 @@ Notes:
    right answer's meaning stay. **Option text changes `BANKV`, so users' seen/wrong/marks reset; Nehoray approved this rewrite.**
    **Enforced by `build_bank.py`** for any `qsrc` file that declares `HARD = True` (put it above `S = ...`):
    the right option at most 15% longer than the longest distractor; no distractor under 55% of the right one's length;
-   every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% of questions.
-   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **969**) — lower it after each topic.
-   **Done (HARD = True):** `k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug` — all Kubernetes, 265 questions,
-   right-is-longest 27%.
-   **Left, in this order:** Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`), CI (`ci_docker`, `ci_sec`, `ci_test`,
+   every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% **and the shortest
+   in ≤ 40%** of questions. (Fixing the first tell created the second: after the first pass the right answer was the
+   shortest in up to 56% of a file. Aim for both near 25%: the right answer should sit mid-pack by length.)
+   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **833**) — lower it after each topic.
+   **Done (HARD = True):** Kubernetes (`k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug`, 265 q) and
+   Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q). Across these 477: right-is-longest 23%, shortest ~29%.
+   **Left, in this order:** CI (`ci_docker`, `ci_sec`, `ci_test`,
    `ci_deploy`), AWS (`aws_eks`, `aws_net`, `aws_ops`), Helm (`helm_charts`, `helm_ops`), Terraform (`tf_core`, `tf_state`),
    `linux`, `cicd_tools`, `net`. Then stage 10 (below).
    **Workflow per file** (from `devops-interview/`; tools in `tools/`):
@@ -261,8 +263,13 @@ Notes:
    - `tools/merge_apply.sh <file>.py part_a.json part_b.json` — checks every index is covered, rewrites the `Q(...)` calls
      in place (comments survive), adds `HARD = True`, runs the validator.
    - Fix what it reports: `tools/short.py <file>.py` lists explanations < 70; `tools/longest.py <file>.py` lists questions where
-     the right one is longest; `tools/repl.py <file>.py fixes.json` replaces exact string literals (`[[old,new],...]`, each
-     must occur once). Aim explanations at ≥ 90 chars so the 70 floor is never hit.
+     the right one is longest; `tools/shortest.py <file>.py` where it is shortest; `tools/fitcheck.py <file>.py cands.json`
+     (`{"i": "new right text"}`) reports which candidate right-option rewrites land between the shortest and longest
+     distractor and writes those to `/tmp/fit_ok.json` for `tools/repl.py <file>.py /tmp/fit_ok.json`.
+     `tools/repl.py` replaces exact string literals (`[[old,new],...]`, each must occur once).
+     **Habits that save a fix round:** write each wrong-option explanation as two full sentences (~90–120 chars); the
+     first pass kept producing 55–69-char lines. Write the right option a little shorter than the distractors, but not
+     the shortest.
    - Per topic: `build_bank.py`, `inject_bank.py`, `gen_duel_v2.py`, `build_duel_key.py`, lower the caps in `authoredChecks`,
      run QA_BANK / QA_INTEG / QA_UI, commit `Questions: <topic> hard distractors and full explanations`, push to the branch and `main`.
    **Documentation:** the docs sites are blocked by the cloud proxy, but `raw.githubusercontent.com` works, and most tools keep
