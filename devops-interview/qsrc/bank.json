@@ -972,7 +972,7 @@
 ],
 "y": [
 "מראה בדיוק איזה principal ו-account אתה משתמש בהם. לרוב מגלים profile אחר או env vars שדורסים.",
-"לא קשור.",
+"`aws s3 mb` מנסה ליצור bucket ויקבל כנראה את אותה שגיאה. קודם בודקים עם איזו זהות אתה מחובר בכלל.",
 "לפני איפוס כדאי לדעת מה הבעיה.",
 "לא אומר מי אתה."
 ],
@@ -1042,9 +1042,9 @@
 ],
 "y": [
 "SG ברירת מחדל חוסם כל תעבורה נכנסת. צריך לפתוח 80 או 443.",
-"לא קשור.",
+"CloudTrail מתעד קריאות API ולא משפיע על תעבורת רשת. בודקים את ה-SG ואת ה-route table של ה-subnet.",
 "לא קשור לנגישות.",
-"לא קשור."
+"מערכת ההפעלה של ה-AMI לא קובעת אם השרת נגיש מבחוץ. בודקים קודם את ה-SG, שחוסם inbound כברירת מחדל."
 ],
 "x": "אחר כך: האפליקציה מאזינה על 0.0.0.0? ה-firewall המקומי (iptables, ufw)?",
 "lv": 0,
@@ -1146,8 +1146,8 @@
 "D"
 ],
 "y": [
-"לא קשור.",
-"לא קשור.",
+"CloudTrail לא משתתף בשליחת התראות. ה-alarm שולח ל-SNS, ו-SNS שולח מייל רק למנוי שאושר.",
+"retention של log group לא משפיע על שליחת מיילים מ-SNS. בודקים שהמנוי של המייל אושר, אחרת הוא נשאר Pending.",
 "אז הוא לא היה מתריע.",
 "SNS שולח מייל אישור. מנוי שלא אושר נשאר Pending, ולא מקבל הודעות."
 ],
@@ -1463,7 +1463,7 @@
 "y": [
 "EBS הוא דיסק רגיל.",
 "instance store לרוב מהיר יותר (NVMe מקומי).",
-"לא.",
+"הם שונים מאוד: EBS הוא דיסק רשת שנשמר גם אחרי stop, ו-instance store הוא דיסק מקומי שנמחק כשה-instance נעצר.",
 "instance store נמחק כשה-instance נעצר או מוחלף. EBS שורד ואפשר להעביר אותו."
 ],
 "x": "instance store מתאים ל-cache וקבצים זמניים. נתונים חשובים תמיד ב-EBS או S3.",
@@ -1986,10 +1986,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"Bottlerocket לא יוצר IAM policies. זו מערכת הפעלה מינימלית ל-nodes, שמקטינה את שטח התקיפה.",
+"Bottlerocket לא קשור ל-load testing. זו מערכת הפעלה מינימלית של AWS שבנויה להרצת קונטיינרים על nodes.",
 "פחות חבילות, פחות CVEs, ועדכונים אטומיים שאפשר להחזיר. מתאים ל-nodes של Kubernetes.",
-"לא."
+"ה-registry של AWS הוא ECR. Bottlerocket היא מערכת הפעלה ל-nodes, עם מעט חבילות ועדכונים אטומיים."
 ],
 "x": "אלטרנטיבה: Amazon Linux 2023 (EKS optimized). הבחירה תלויה בצורך ב-SSH ובכלים על ה-node.",
 "lv": 0,
@@ -2759,7 +2759,7 @@
 "CNAME לא מותר ב-apex (`example.com`). alias פותר את זה ל-ALB, CloudFront ו-S3, וללא חיוב על שאילתות.",
 "alias מצביע על משאבי AWS, לא על IP שרירותי.",
 "יש הבדלים חשובים.",
-"ההפך."
+"ההפך: DNS לא מתיר CNAME ב-apex (`example.com`), ו-alias של Route 53 נועד בדיוק לזה."
 ],
 "x": "שאלה נפוצה מאוד ב-Route 53.",
 "lv": 0,
@@ -2791,10 +2791,10 @@
 "C"
 ],
 "y": [
-"יכולים.",
+"users יכולים לגשת ל-S3 אם ה-policy מתירה. הבעיה איתם היא מפתחות קבועים שנשכחים בקוד ודולפים.",
 "role צריך policy.",
 "credentials זמניים פגים לבד. אין מפתח שנשכח בקוד או בקובץ.",
-"שניהם בחינם."
+"גם roles וגם users ב-IAM הם בחינם. היתרון של roles הוא credentials זמניים שמתחלפים אוטומטית, בלי מפתח קבוע."
 ],
 "x": "ב-EC2: instance profile. ב-EKS: IRSA או Pod Identity. ב-Lambda: execution role.",
 "lv": 0,
@@ -3072,9 +3072,9 @@
 ],
 "y": [
 "SecureString מוצפן ב-KMS. נגיש מ-EC2, Lambda ו-ECS לפי IAM.",
-"לא.",
-"לא.",
-"לא."
+"Parameter Store הוא לא registry. הוא מאגר key-value ל-config ולסודות, עם היררכיה של paths.",
+"Parameter Store לא מיועד לנתוני אפליקציה. הוא שומר config וסודות בגודל קטן, לא רשומות של משתמשים.",
+"לוגים של הרצות Systems Manager נשמרים ב-CloudWatch או S3. Parameter Store שומר ערכי config וסודות."
 ],
 "x": "ל-Kubernetes, External Secrets Operator יודע לקרוא מ-Parameter Store וגם מ-Secrets Manager.",
 "lv": 0,
@@ -3213,8 +3213,8 @@
 "y": [
 "AMI כולל snapshot של דיסק ה-root והגדרות. בונים AMIs מוכנים עם Packer.",
 "זה instance profile.",
-"לא.",
-"זה ENI."
+"AMI הוא לא מטריקה. זו תבנית עם מערכת הפעלה ותוכנה שממנה יוצרים EC2 instances.",
+"ממשק רשת וירטואלי הוא ENI. AMI הוא תבנית ל-instance: מערכת הפעלה, תוכנה והגדרות דיסק."
 ],
 "x": "AMI הוא regional. להפצה ל-regions אחרים מעתיקים אותו.",
 "lv": 0,
@@ -3808,7 +3808,7 @@
 "y": [
 "גישה זמנית לפי צורך (just-in-time). כל שימוש מתועד ב-CloudTrail, ואין הרשאה קבועה שיכולה לדלוף.",
 "משותף וקשה ל-audit.",
-"מפתח קבוע.",
+"מפתח קבוע ב-password manager הוא עדיין הרשאת admin קבועה שיכולה לדלוף. המטרה היא גישה זמנית שפגה לבד.",
 "root לא לשימוש יומיומי."
 ],
 "x": "IAM Identity Center עם permission sets ותוקף session קצר הוא הסטנדרט.",
@@ -3911,9 +3911,9 @@
 "B"
 ],
 "y": [
-"לא.",
+"Logs Insights לא מצפין לוגים. הצפנה מוגדרת על ה-log group עם KMS; Insights הוא כלי שאילתות.",
 "סינון, ספירה וגרפים על לוגים. למשל: כמה 5xx לפי endpoint בשעה האחרונה.",
-"לא.",
+"Logs Insights לא מחליף את CloudTrail. CloudTrail מתעד קריאות API, ו-Logs Insights מאפשר לחפש ולסכם לוגים.",
 "export ל-S3 הוא פעולה נפרדת."
 ],
 "x": "עלות לפי כמות הנתונים שנסרקים. מצמצמים טווח זמן ו-log groups.",
@@ -4961,7 +4961,7 @@
 "D"
 ],
 "y": [
-"אפשר לשנות.",
+"אפשר לשנות alias records, והשינוי עצמו מיידי ב-Route 53. העיכוב נובע מ-resolvers ששומרים את הרשומה הישנה עד שה-TTL פג.",
 "לא מסביר משתמשים חיצוניים.",
 "השינוי מתפרסם תוך דקות.",
 "TTL קובע כמה זמן resolvers שומרים את התשובה. מורידים TTL מראש, לפני שינויים מתוכננים."
@@ -4997,9 +4997,9 @@
 ],
 "y": [
 "אפשר להוסיף כמה ENIs ל-instance. ב-EKS, VPC CNI משתמש בהם כדי לתת IPs לפודים.",
-"לא.",
-"לא.",
-"לא."
+"ENI הוא לא מאזן עומסים. זה כרטיס רשת וירטואלי; LBs עצמם משתמשים ב-ENIs כדי להתחבר ל-subnets.",
+"ENI הוא לא רשומת DNS. זה כרטיס רשת וירטואלי שמוצמד ל-instance, עם IP פרטי ו-SGs.",
+"ENI הוא לא קו ייעודי ל-region; זה Direct Connect. ENI הוא כרטיס רשת וירטואלי עם IPs ו-SGs משלו."
 ],
 "x": "מספר ה-ENIs וה-IPs לכל ENI תלוי ב-instance type, וזה מגביל pods per node ב-EKS.",
 "lv": 0,
@@ -5171,10 +5171,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"החלפת מפתחות הצפנה נעשית ב-KMS (automatic rotation). lifecycle rule מטפל במעבר בין storage classes ובמחיקה.",
 "למשל: אחרי 30 יום ל-Standard-IA, אחרי 90 ל-Glacier, ומחיקה אחרי שנה. חוסך עלויות באופן אוטומטי.",
-"לא.",
-"לא."
+"lifecycle rule לא מתזמן העלאות. הוא מעביר אובייקטים ל-storage classes זולים יותר או מוחק אותם לפי גיל.",
+"lifecycle rule לא מגביל גודל של אובייקטים. הוא פועל על אובייקטים קיימים לפי גיל או גרסה."
 ],
 "x": "אל תשכח non-current versions ו-incomplete multipart uploads. הם צוברים עלות בשקט.",
 "lv": 0,
@@ -6886,10 +6886,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"`update-kubeconfig` לא יוצר cluster, הוא רק מוסיף רשומה ל-kubeconfig. cluster יוצרים עם `aws eks create-cluster`, eksctl או Terraform.",
 "הרשאות מגיעות מ-access entries.",
 "הוא מוסיף cluster, user ו-context. האימות נעשה עם token שנוצר מה-AWS credentials שלך.",
-"לא."
+"`update-kubeconfig` לא משדרג את ה-cluster. שדרוג נעשה עם `aws eks update-cluster-version`; הפקודה הזו רק מעדכנת את ה-kubeconfig המקומי."
 ],
 "x": "אם יש כמה AWS profiles: `--profile` או `--role-arn`, אחרת הטוקן ייווצר מזהות אחרת.",
 "lv": 0,
@@ -6921,10 +6921,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"אבטחה ב-EKS לא אופציונלית. AWS מאבטח את ה-control plane, וכל מה שרץ בתוך ה-cluster באחריותך.",
+"אבטחת מרכזי הנתונים היא באחריות AWS. האחריות שלך היא מה שבתוך הענן: IAM, images, רשת ותצורה.",
 "AWS אחראי ל-security 'של' הענן. אתה אחראי ל-security 'בתוך' הענן: הרשאות, images ותצורה.",
-"לא."
+"AWS לא אחראי להכול. הוא מאבטח את ה-control plane והתשתית, ואתה אחראי להרשאות, images ותצורת ה-workloads."
 ],
 "x": "ב-Fargate ו-Auto Mode, החלק של AWS גדל (גם ה-nodes).",
 "lv": 0,
@@ -7833,8 +7833,8 @@
 "y": [
 "השגיאה היא IAM, לא StorageClass.",
 "ה-driver יוצר volumes בשם ה-SA שלו. בלי הרשאה, הקריאה ל-EC2 נדחית.",
-"לא קשור.",
-"לא."
+"סוג ה-instance לא קשור לשגיאה. `UnauthorizedOperation` על `ec2:CreateVolume` אומר שחסרה הרשאת IAM ל-SA של ה-driver.",
+"envelope encryption מצפין Secrets ב-etcd ולא קשור ליצירת volumes. השגיאה היא הרשאת IAM חסרה ל-driver."
 ],
 "x": "אם volumes מוצפנים עם KMS key מותאם, צריך גם הרשאה על ה-key.",
 "lv": 0,
@@ -7867,7 +7867,7 @@
 ],
 "y": [
 "ב-SG, תשובה לחיבור מורשה עוברת אוטומטית. ב-NACL צריך לאשר גם את תעבורת החזרה (ephemeral ports).",
-"ההפך.",
+"ההפך: SG מוצמד ל-instance (ל-ENI), ו-NACL מוצמד ל-subnet. וגם SG הוא stateful בעוד NACL הוא stateless.",
 "SGs רק allow. NACLs יכולים allow ו-deny.",
 "שני מנגנונים שונים."
 ],
@@ -7937,7 +7937,7 @@
 ],
 "y": [
 "ACLs נחסמים ב-BPA, וזה גם לא מומלץ.",
-"מוגזם.",
+"EC2 מוסיף שרת לתחזק בשביל אתר סטטי. CloudFront עם OAC מגיש את האתר וה-bucket נשאר פרטי.",
 "מסיר הגנה לכל ה-buckets.",
 "CloudFront ניגש ל-bucket פרטי עם OAC. ה-bucket נשאר חסום לציבור, והאתר עובד דרך CloudFront."
 ],
@@ -7973,7 +7973,7 @@
 "y": [
 "סדר ההצמדה לא משנה.",
 "deny גובר בלי קשר לספציפיות.",
-"אין שלב כזה.",
+"IAM לא שואל אף אחד. ההערכה אוטומטית ודטרמיניסטית: explicit deny גובר על כל allow.",
 "explicit deny גובר תמיד. בלי allow מפורש, ברירת המחדל היא deny."
 ],
 "x": "תזכיר את השכבות: SCPs, permission boundaries, session policies. כולן יכולות להגביל, אף אחת לא מרחיבה מעבר להן.",
@@ -8426,7 +8426,7 @@
 "B"
 ],
 "y": [
-"לא קשור.",
+"ה-Dashboard הוא תוסף אופציונלי ולא קשור להצטרפות nodes. node צריך access entry ל-role שלו ונתיב רשת ל-API.",
 "node צריך הרשאה להצטרף ונתיב רשת ל-endpoint של ה-cluster. אחד מהשניים חסר ברוב המקרים.",
 "לא קשור להצטרפות של nodes.",
 "nodes מצטרפים גם בלי CoreDNS."
@@ -9128,7 +9128,7 @@
 "y": [
 "מראים מי דיבר עם מי ואם התעבורה נחסמה (REJECT). מצוין לדבג SGs ו-NACLs.",
 "flow logs לא מכילים payload. בשביל זה יש Traffic Mirroring.",
-"לא.",
+"Flow Logs רואים רק IPs, ports והחלטת accept או reject, לא זמני תגובה של האפליקציה. latency מודדים עם APM או מטריקות.",
 "זה Route 53 Resolver query logging."
 ],
 "x": "REJECT ב-flow log מצביע על SG או NACL. אם אין רשומה בכלל, הבעיה בניתוב.",
@@ -10771,7 +10771,7 @@
 "B"
 ],
 "y": [
-"לא קשור לרשת.",
+"גודל ה-node לא משנה את הרשת. בלי NAT ובלי VPC endpoints, ל-node אין דרך להגיע ל-ECR ול-S3.",
 "בלי יציאה לאינטרנט, nodes מגיעים ל-ECR רק דרך VPC endpoints. שכבות ה-image נשמרות ב-S3, ולכן צריך גם endpoint ל-S3.",
 "גם repo ציבורי צריך דרך רשת.",
 "אז ה-image לא יימשך בכלל."
@@ -10876,10 +10876,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"eksctl לא מחליף את kubectl. הוא מנהל את ה-cluster עצמו (יצירה, node groups), ו-kubectl ממשיך לנהל את המשאבים בתוכו.",
 "זה כלי CLI, לא שירות.",
 "נוח להתחלה ולבדיקות. בפרודקשן נפוץ יותר Terraform, בגלל ניהול state וקוד משותף.",
-"לא."
+"eksctl לא סוכן monitoring. זה CLI ליצירה וניהול של clusters ו-node groups ב-EKS."
 ],
 "x": "אם שואלים מה עדיף: Terraform ל-IaC מלא, eksctl לניסויים מהירים.",
 "lv": 0,
@@ -11051,7 +11051,7 @@
 "D"
 ],
 "y": [
-"לא נדרש.",
+"ALB לא צריך Elastic IP על כל node. ה-controller מחפש subnets לפי tags, ובלי `kubernetes.io/role/elb` הוא לא מוצא איפה ליצור את ה-LB.",
 "לא קשור לגילוי subnets.",
 "DNS לא נדרש ליצירת ALB.",
 "ה-controller מחפש subnets לפי tags. בלי tags הוא לא יודע איפה ליצור את ה-ALB."
@@ -11156,7 +11156,7 @@
 "D"
 ],
 "y": [
-"רק שירות אחד.",
+"CloudWatch Logs הוא רק שירות אחד. Cost Explorer מראה את כל החשבון לפי שירות ו-tag, ומשם רואים מה עלה.",
 "רק חלק מהתמונה.",
 "מראה פעולות, לא עלויות.",
 "מראה מאיזה שירות ואיזה צוות הגיעה העלייה. tags טובים הופכים את זה לתשובה של דקה."
@@ -11401,7 +11401,7 @@
 "D"
 ],
 "y": [
-"זה NLB.",
+"latency מינימלי במיליוני חיבורים הוא היתרון של NLB, שעובד ב-L4. ALB נבחר בשביל ניתוב HTTP לפי path או host.",
 "זה יתרון של NLB.",
 "ALB לא תומך ב-UDP.",
 "ALB עובד ב-L7: ניתוב לפי path, host ו-headers. NLB עובד ב-L4 (TCP/UDP), עם latency נמוך ו-IP קבוע."
@@ -11436,7 +11436,7 @@
 "B"
 ],
 "y": [
-"לא קשור.",
+"IP ציבורי לא משפיע על רזולוציה של private hosted zone. בודקים ש-`enableDnsSupport` ו-`enableDnsHostnames` מופעלים ב-VPC.",
 "בלי DNS support, ה-resolver של ה-VPC לא עונה. בלי hostnames, private zones לא עובדים כמו שצריך.",
 "SG לא חוסם את ה-Amazon DNS resolver המובנה.",
 "private zone לא דורש רישום דומיין."
@@ -11614,7 +11614,7 @@
 "FIFO לא פותר timeout קצר מדי.",
 "standard queue מבטיח at-least-once, אבל לא 'שלוש פעמים'.",
 "ההודעה חוזרת לתור לפני שה-consumer סיים, ו-consumer אחר לוקח אותה. מגדילים את ה-timeout מעבר לזמן העיבוד.",
-"גודל לא הסיבה."
+"גודל ההודעה לא גורם לעיבוד כפול. ההודעה חוזרת לתור כי ה-visibility timeout (30 שניות) קצר מזמן העיבוד."
 ],
 "x": "גם עם timeout נכון, consumers צריכים להיות idempotent, כי SQS standard יכול לשלוח פעמיים.",
 "lv": 0,
@@ -11963,8 +11963,8 @@
 "y": [
 "IPs משתנים. כלל שמפנה ל-SG של ה-app מאפשר לכל instance בו לגשת ל-DB, בלי לעדכן IPs.",
 "מותרים, אבל פחות גמישים.",
-"לא מאחד.",
-"לא מעתיק."
+"הפניה ל-SG אחר לא מאחדת את הקבוצות. היא מתירה תעבורה מכל instance שחבר בקבוצה ההיא, בלי קשר ל-IP שלו.",
+"החוקים של הקבוצה השנייה לא מועתקים. ההפניה משמשת רק כמקור: כל מי שחבר בה מקבל גישה לפי החוק הזה."
 ],
 "x": "דוגמה: SG של RDS מאשר 5432 רק מ-SG של שרתי האפליקציה.",
 "lv": 0,
@@ -12419,7 +12419,7 @@
 "זה instance profile.",
 "לא, ואסור לשים שם סודות.",
 "שימושי להתקנות והגדרות ראשוניות. רץ פעם אחת כברירת מחדל.",
-"לא."
+"user data לא שומר נתוני חיוב. זה script או config של cloud-init שרץ ב-boot הראשון של ה-instance."
 ],
 "x": "user data נגיש דרך IMDS לכל תהליך ב-instance. לכן סודות לא שמים שם.",
 "lv": 0,
@@ -12454,7 +12454,7 @@
 "kube-proxy מממש Services, לא IPs לפודים.",
 "CoreDNS מטפל ב-DNS.",
 "aws-node DaemonSet מקצה לכל פוד IP מה-VPC דרך ENIs של ה-node.",
-"זה לאחסון."
+"ה-EBS CSI driver מנהל volumes של EBS ל-PVCs. את ה-IPs של הפודים מה-VPC מקצה ה-VPC CNI plugin."
 ],
 "x": "הקשר: בגלל VPC CNI, תכנון ה-subnets (גודל ה-CIDR) קריטי ב-EKS.",
 "lv": 0,
@@ -12556,9 +12556,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"roles לא פגים.",
+"restart לא יעזור, גם לא פעמיים. ה-roles עדיין בוטחים ב-OIDC provider של ה-cluster הישן.",
+"STS לא מושבת ב-clusters חדשים. הבעיה היא שה-trust policy מצביע על ה-OIDC issuer של ה-cluster הישן.",
+"IAM roles לא פגים כשמוחקים cluster. הם קיימים, אבל ה-trust policy שלהם מצביע על OIDC provider שכבר לא בשימוש.",
 "לכל cluster יש OIDC issuer ייחודי. roles שבוטחים בישן לא מקבלים tokens מהחדש. צריך provider חדש ולעדכן trust."
 ],
 "x": "זו אחת הסיבות ש-Pod Identity נוח יותר: ה-trust לא תלוי ב-OIDC של cluster מסוים.",
@@ -13467,9 +13467,9 @@
 ],
 "y": [
 "מראה מסלול של בקשה דרך Lambda, API Gateway ו-services, ואיפה הזמן הלך.",
-"לא.",
-"לא.",
-"לא."
+"גיבוי של מסדי נתונים הוא תפקיד של AWS Backup או snapshots. X-Ray מראה איפה הזמן הולך בבקשה.",
+"סריקת images ל-CVEs נעשית ב-ECR או Inspector. X-Ray עושה distributed tracing בין שירותים.",
+"X-Ray לא מצפין תעבורה. הוא אוסף traces כדי להראות את ה-latency בכל hop בין שירותים."
 ],
 "x": "ADOT הוא הפצה של OpenTelemetry. נייד בין ספקים, ולכן מומלץ לקוד חדש.",
 "lv": 0,
@@ -13781,10 +13781,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"תעודת לקוח לא תקינה נכשלת ב-TLS handshake, לפני שה-ALB מחזיר קוד HTTP. 503 קשור ל-targets.",
 "ה-ALB לא מוצא לאן לשלוח. בודקים health checks ורישום targets.",
 "שגיאה מה-backend מועברת כפי שהיא, או כ-502 אם התשובה לא תקינה.",
-"זה 504."
+"timeout של בקשה מחזיר 504 Gateway Timeout. 503 אומר שאין targets בריאים ב-target group."
 ],
 "x": "502: תשובה שבורה. 503: אין targets. 504: timeout. כדאי לזכור את שלושתם.",
 "lv": 0,
@@ -13887,8 +13887,8 @@
 ],
 "y": [
 "SG שנוצר אוטומטית ומאפשר תעבורה בין ה-control plane ל-nodes. שינוי שגוי בו מנתק nodes.",
-"לא.",
-"לא.",
+"security group מגביל תעבורת רשת, לא התחברות של משתמשים. גישת משתמשים נקבעת ב-IAM וב-access entries.",
+"ה-cluster SG לא מצפין את etcd. הצפנת Secrets ב-etcd נעשית עם KMS; ה-SG מתיר תעבורה בין ה-control plane ל-nodes.",
 "זה NetworkPolicy או SG for pods."
 ],
 "x": "תקלה נפוצה: מישהו 'מנקה' SG rules, וה-nodes הופכים NotReady.",
@@ -14342,9 +14342,9 @@
 ],
 "y": [
 "זה launch template.",
-"לא.",
+"CPU credits שייכים ל-instances מסוג T (burstable) ולא קשורים ל-instance profile. instance profile מצמיד IAM role ל-EC2.",
 "ה-instance מקבל credentials זמניים של ה-role דרך IMDS.",
-"לא."
+"instance profile לא קשור לפרופיל משתמש בקונסול. הוא האובייקט שמאפשר ל-EC2 לקבל credentials של IAM role."
 ],
 "x": "שאלה בסיסית שמובילה ל-IMDSv2 ול-hop limit.",
 "lv": 0,
@@ -14376,9 +14376,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"ההפך.",
+"spot הוא ההפך מקיבולת שמורה במחיר מלא: קיבולת פנויה בהנחה גדולה, ש-AWS יכול לקחת בחזרה בהתראה של 2 דקות.",
+"spot לא בחינם. הוא מחיר מוזל לקיבולת פנויה, עם הסיכון ש-AWS יפסיק את ה-instance.",
+"ההפך: spot instances יכולים להיעצר בכל רגע כש-AWS צריך את הקיבולת, עם התראה של 2 דקות.",
 "עד 90% הנחה, אבל ה-instance יכול להילקח. מתאים ל-workloads עמידים להפסקות."
 ],
 "x": "פיזור בין instance types ו-AZs מקטין הפרעות. Karpenter ו-ASG mixed instances עושים את זה.",
@@ -14516,10 +14516,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"cross-zone לא משנה את מספר ה-nodes של ה-LB. הוא משנה את חלוקת התעבורה, כך שכל target מקבל חלק שווה.",
 "בלי זה, כל node של ה-LB מחלק רק בתוך ה-AZ שלו, וחלוקה לא שוויונית של targets יוצרת עומס לא אחיד.",
-"לא.",
-"לא."
+"cross-zone לא מצפין את התעבורה בין AZs. הוא רק קובע אם כל node של ה-LB שולח לכל ה-targets או רק לאלה ב-AZ שלו.",
+"cross-zone לא מעביר את ה-LB בין regions. הוא מחלק את התעבורה באופן שווה בין כל ה-targets בכל ה-AZs."
 ],
 "x": "ב-ALB מופעל כברירת מחדל. ב-NLB כבוי כברירת מחדל, ויש עלות לתעבורה בין AZs.",
 "lv": 0,
@@ -14902,9 +14902,9 @@
 ],
 "y": [
 "backup plans, retention ו-cross-region או cross-account copies, במקום אחד.",
-"לא.",
-"לא.",
-"לא."
+"version control לקוד תשתית הוא Git. AWS Backup מנהל גיבויים מרכזיים של משאבים לפי policy.",
+"AWS Backup לא מחליף את S3 versioning. versioning שומר גרסאות בתוך ה-bucket, ו-Backup יוצר גיבויים מנוהלים לפי תוכנית.",
+"AWS Backup לא עושה שכפול בזמן אמת. הוא יוצר גיבויים לפי תזמון; replication בזמן אמת הוא תכונה של ה-DB עצמו."
 ],
 "x": "בדיקת restore חשובה כמו הגיבוי. גיבוי שלא שוחזר אף פעם הוא רק תקווה.",
 "lv": 0,
@@ -15111,8 +15111,8 @@
 "C"
 ],
 "y": [
-"לא שיקול.",
-"לא.",
+"IMDSv1 לא מאט את הרשת של הפודים. הסיכון הוא שכל פוד יכול לקרוא את ה-credentials של ה-role של ה-node.",
+"IMDSv1 לא מבטל את IRSA. הבעיה היא שפוד שלא מוגדר ל-IRSA, או SDK ישן, יכול לקבל את ה-role של ה-node דרך IMDS.",
 "בלי IMDSv2 ו-hop limit 1, כל פוד מקבל את ה-credentials של ה-node, וזה בדרך כלל יותר מדי הרשאות.",
 "IMDSv2 מומלץ, ו-v1 לא נדרש."
 ],
@@ -15181,7 +15181,7 @@
 "B"
 ],
 "y": [
-"לא פתרון כללי.",
+"מעבר ל-region אחר לא פותר את הבעיה: יש שם limits משלו, והנתונים או המשאבים לא תמיד שם. צריך backoff עם jitter.",
 "AWS מגביל קצב קריאות. backoff עם jitter מפזר את הניסיונות ומונע הצפה מחודשת. ה-SDKs עושים את זה אוטומטית.",
 "המגבלה לרוב לפי account, לא לפי user.",
 "מחמיר את ה-throttling."
@@ -16616,9 +16616,9 @@
 "D"
 ],
 "y": [
-"זה Shield.",
-"לא.",
-"לא.",
+"הגנה מ-DDoS בקצה הרשת היא AWS Shield. GuardDuty מזהה איומים מתוך לוגים ולא חוסם תעבורה.",
+"סריקת קוד לחולשות היא תפקיד של כלים כמו CodeGuru או Inspector. GuardDuty מזהה פעילות חשודה בחשבון.",
+"GuardDuty לא מצפין נתונים. הוא מנתח לוגים (CloudTrail, flow logs, DNS) ומזהה פעילות חשודה.",
 "GuardDuty מזהה דברים כמו credentials בשימוש מ-IP חשוד, crypto mining או תקשורת עם שרתים זדוניים."
 ],
 "x": "כולל הגנות ל-EKS (audit log ו-runtime) ול-S3.",
@@ -16687,7 +16687,7 @@
 ],
 "y": [
 "ה-volume נמחק עם ה-instance.",
-"סותר את ה-ASG.",
+"instances שלא מוחלפים סותרים את ה-ASG, שאמור להחליף instances לא בריאים. הלוגים צריכים לצאת מה-instance.",
 "יאבדו לוגים בין ההעתקות.",
 "instances זמניים. הלוגים צריכים לצאת מהם בזמן אמת, לשירות מרכזי."
 ],
@@ -16827,7 +16827,7 @@
 ],
 "y": [
 "ההפך: IRSA מאפשר לא להשתמש ב-role של ה-node.",
-"אין מפתח קבוע.",
+"IRSA לא שומר מפתח קבוע ב-Secret. הפוד מקבל token של OIDC, וה-SDK מחליף אותו ב-credentials זמניים דרך STS.",
 "ה-SA מקבל annotation עם ה-role. ה-SDK מחליף token של OIDC בהרשאות זמניות דרך STS.",
 "IRSA נותן הרשאות AWS, לא RBAC."
 ],
@@ -17214,7 +17214,7 @@
 "עם type ELB הוא כן מסתמך עליהם.",
 "עם health check מסוג ELB, ה-ASG מקבל את המצב מה-LB. path שגוי מחזיר 404, ולכן instances תקינים מוחלפים בלולאה.",
 "ALB לא משנה path של health check.",
-"אין השהיה כזו."
+"אין השהיה של 24 שעות. ה-ASG מחליף instance ברגע שה-ELB מסמן אותו unhealthy, אחרי ה-grace period."
 ],
 "x": "תזכיר את health check grace period: זמן לפני שה-ASG מתחיל לבדוק instance חדש.",
 "lv": 0,
@@ -17316,7 +17316,7 @@
 "B"
 ],
 "y": [
-"לא ההגדרה.",
+"trust policy לא מגביל regions, ו-permissions policy לא מגביל משתמשים. trust קובע מי רשאי לקבל את ה-role, ו-permissions מה ה-role רשאי לעשות.",
 "trust מגדיר principal (שירות, account, OIDC provider). permissions מגדיר פעולות ומשאבים.",
 "users לא 'נלקחים'. trust policy שייך ל-roles.",
 "אלה שני מסמכים נפרדים."
@@ -17457,8 +17457,8 @@
 ],
 "y": [
 "אלה logs של workloads. הם דורשים agent.",
-"לא.",
-"לא.",
+"נתוני חיוב נמצאים ב-Cost Explorer וב-CUR. ה-logging של EKS שולח לוגים של רכיבי ה-control plane בלבד.",
+"VPC flow logs מוגדרים ב-VPC, לא בלוגים של ה-control plane. EKS שולח לוגים של ה-API server, ה-audit, ה-authenticator ועוד.",
 "בלי audit log, אי אפשר לדעת מי מחק משאב או קרא secret. מפעילים לפי צורך, כי יש עלות."
 ],
 "x": "logs של authenticator עוזרים לדבג בעיות `Unauthorized`.",
@@ -17562,7 +17562,7 @@
 ],
 "y": [
 "reboot שומר את ה-IP, אבל לא פותר את הבעיה לטווח ארוך.",
-"לא קשור.",
+"גודל ה-instance לא משפיע על ה-IP הציבורי. IP ציבורי רגיל מתחלף ב-stop/start, ורק Elastic IP נשאר קבוע.",
 "אז אין לו IP ציבורי בכלל.",
 "Elastic IP נשאר קבוע גם אחרי stop/start. עדיף בכלל שם DNS על LB."
 ],
@@ -18297,9 +18297,9 @@
 ],
 "y": [
 "KMS לא מצפין גיגה-בייטים. הוא מצפין data key קטן, וה-data key מצפין את המידע מקומית.",
-"לא.",
-"לא.",
-"לא ההגדרה."
+"envelope encryption לא קשור למיילים. הנתונים מוצפנים ב-data key, וה-data key עצמו מוצפן ב-KMS key.",
+"ZIP הוא דחיסה, לא הצפנה. envelope encryption מצפין את הנתונים ב-data key ומצפין את ה-data key ב-KMS.",
+"זה לא שני KMS keys. יש data key מקומי שמצפין את הנתונים, ו-KMS key אחד שמצפין את ה-data key."
 ],
 "x": "ככה גם EBS, S3 ו-Secrets ב-EKS עובדים.",
 "lv": 0,
@@ -19067,8 +19067,8 @@
 ],
 "y": [
 "תעבורה בין AZs דווקא עולה.",
-"לא.",
-"לא קשור.",
+"אין מגבלה של instance אחד לכל AZ. פיזור בין AZs נועד לשרוד כשל של AZ שלם.",
+"AZs לא קשורים לחשבונות AWS; כל AZs ב-region זמינים לאותו חשבון. הפיזור נועד לזמינות.",
 "AZ הוא data center (או קבוצה) נפרד. פיזור שומר על זמינות כשאחד נופל."
 ],
 "x": "multi-AZ הוא בסיס. multi-region הוא החלטה יקרה ומורכבת יותר.",
@@ -19136,9 +19136,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"לא.",
+"Object Lock לא מצפין עם סיסמה. הצפנה ב-S3 נעשית עם SSE; Object Lock מגן מפני מחיקה ושינוי.",
+"Object Lock לא מגביל גודל העלאה. הוא מגן על אובייקטים קיימים ממחיקה ושינוי לתקופת retention.",
+"Object Lock לא מגביל כתיבה לכותב אחד. הוא מונע מחיקה או שינוי של גרסאות לתקופה מוגדרת (WORM).",
 "WORM: write once, read many. מגן על גיבויים מפני ransomware ומחיקה, ועומד בדרישות רגולציה."
 ],
 "x": "ב-compliance mode אפילו root לא יכול למחוק עד סוף התקופה. בוחרים בזהירות.",
@@ -19346,10 +19346,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"Transit Gateway לא מאיץ את ה-internet gateway של VPC. הוא hub מרכזי שמחבר בין הרבה VPCs ורשתות on-prem.",
 "במקום רשת peering מלאה בין כל הזוגות, כל VPC מתחבר ל-hub אחד עם route tables מרכזיות.",
-"זה Route 53.",
-"זה NLB."
+"DNS לאזורים פרטיים הוא Route 53 private hosted zone. Transit Gateway מנתב תעבורה בין רשתות.",
+"מאזן עומסים ל-TCP הוא NLB. Transit Gateway הוא נתב מרכזי בין VPCs, לא מאזן עומסים."
 ],
 "x": "trade-off: TGW עולה לפי attachment ו-GB. ל-2–3 VPCs, peering זול יותר.",
 "lv": 0,
@@ -19941,10 +19941,10 @@
 "B"
 ],
 "y": [
-"זה Budgets.",
+"תקציבים חודשיים מגדירים ב-AWS Budgets. Service Quotas הם מגבלות טכניות על משאבים וקריאות API.",
 "למשל מספר vCPUs ל-on-demand, או EIPs. חלקן ניתנות להגדלה בבקשה.",
-"לא.",
-"רק דוגמה אחת."
+"Service Quotas הם לא הנחות. הם מגבלות לכל חשבון על משאבים וקצב API, וחלק מהן אפשר להגדיל.",
+"משתמשים ב-IAM Identity Center הם רק דוגמה אחת. Service Quotas חלים על כל שירותי AWS."
 ],
 "x": "תקלה נפוצה: ASG לא מצליח להוסיף instances כי הגיעו למגבלת vCPU. alarm על quota usage מונע.",
 "lv": 0,
@@ -20013,7 +20013,7 @@
 "y": [
 "מסוכן ולא נדרש.",
 "cross-account דורש הרשאה בשני הצדדים: identity policy אצלך, ו-resource policy (bucket policy) אצלם.",
-"לא נדרש.",
+"משתמש IAM נוסף בחשבון שלך לא יעזור. cross-account דורש גם הרשאה בצד של ה-bucket, כלומר bucket policy בחשבון השני.",
 "לא קשור להרשאות."
 ],
 "x": "אם ה-bucket מוצפן עם KMS key של ה-account השני, צריך גם הרשאה על ה-key.",
@@ -20084,7 +20084,7 @@
 "NodePort לא יוצר LB.",
 "ה-controller יוצר NLB לפי annotations (`aws-load-balancer-type`). בלעדיו, ה-provider הישן יוצר CLB.",
 "Ingress יוצר ALB, לא NLB.",
-"לא נדרש."
+"אין צורך ליצור את ה-cluster מחדש. מתקינים את AWS Load Balancer Controller ומוסיפים annotation ל-Service כדי לקבל NLB."
 ],
 "x": "ALB ל-HTTP(S) ב-Ingress. NLB ל-TCP/UDP ב-Service.",
 "lv": 0,
@@ -21168,8 +21168,8 @@
 "y": [
 "אוסף CPU, זיכרון, רשת ו-restarts לפי cluster, node ו-pod.",
 "לא קשור למטריקות.",
-"לא.",
-"לא."
+"AWS Config עוקב אחרי תצורה של משאבים ושינויים בה, לא אחרי מטריקות של קונטיינרים.",
+"Trusted Advisor נותן המלצות על עלות, אבטחה ו-limits. מטריקות ברמת קונטיינר נותן Container Insights."
 ],
 "x": "לחלופין Prometheus מנוהל (AMP) ו-Grafana מנוהל (AMG), נפוצים ב-EKS.",
 "lv": 0,
@@ -21237,9 +21237,9 @@
 ],
 "y": [
 "מפתח קבוע שיכול לדלוף.",
-"לא.",
+"הפיכת משאבים לציבוריים חושפת אותם לכל העולם, לא רק ל-CI. צריך assume role עם הרשאות מינימליות.",
 "אין מפתחות קבועים לשני ה-accounts. ה-CI מקבל credentials זמניים ב-B, ומוגבל לפעולות של deploy.",
-"מסוכן מאוד."
+"credentials של root הם הרשאה מלאה וקבועה לחשבון B. דליפה שלהם היא אובדן שליטה על החשבון כולו."
 ],
 "x": "אם צד שלישי מקבל את ה-role, מוסיפים `sts:ExternalId` נגד confused deputy.",
 "lv": 0,
@@ -21411,7 +21411,7 @@
 "C"
 ],
 "y": [
-"תלוי בצורך.",
+"Parameter Store לא תמיד עדיף. הוא זול ופשוט, אבל Secrets Manager נותן rotation מובנה ושיתוף בין חשבונות.",
 "Parameter Store מתאים יותר.",
 "Secrets Manager תומך ב-rotation אוטומטי (למשל RDS) ובשיתוף. Parameter Store זול יותר לערכים פשוטים.",
 "גודל לא הקריטריון."
@@ -22217,9 +22217,9 @@
 ],
 "y": [
 "אין סיסמה. החתימה ב-URL.",
-"לא.",
+"presigned URL לא מוביל לקונסול. זה קישור לאובייקט עם חתימה זמנית, שמאפשר להוריד או להעלות בלי credentials.",
 "מאפשר ללקוח להוריד או להעלות בלי credentials של AWS. התוקף מוגבל, וההרשאה היא של מי שחתם.",
-"לא."
+"presigned URL לא הופך את ה-bucket לציבורי. הוא נותן גישה זמנית לאובייקט אחד, וה-bucket נשאר פרטי."
 ],
 "x": "אם ה-role שחתם נמחק או שה-credentials הזמניים פגו, גם ה-URL מפסיק לעבוד.",
 "lv": 0,
@@ -22393,8 +22393,8 @@
 "y": [
 "תעודות מגיעות מ-ACM.",
 "למשל `/api/*` ל-target group אחד ו-`/static/*` לאחר. כך ALB אחד משרת כמה שירותים.",
-"לא.",
-"לא."
+"שם ה-DNS של ה-ALB נקבע על ידי AWS כשהוא נוצר. listener rule קובע לאיזה target group כל בקשה הולכת.",
+"ה-SG של ה-ALB מוגדר על ה-LB עצמו, לא בחוקי ה-listener. listener rule מנתב בקשות לפי host, path או headers."
 ],
 "x": "ב-Kubernetes, ה-AWS LB Controller מתרגם Ingress rules ל-listener rules.",
 "lv": 0,
@@ -22601,8 +22601,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
+"stacks של CloudFormation מנוהלים ב-CloudFormation. launch template מגדיר AMI, סוג instance, SGs ו-user data.",
+"launch template לא מפעיל instances. הוא רק מגדיר את ההגדרות שבהן instance ייווצר כשמישהו (או ASG) יפעיל אותו.",
 "זה scheduled actions.",
 "launch template הוא גרסתי ומחליף את launch configurations הישנים."
 ],
@@ -23338,7 +23338,7 @@
 "y": [
 "subnet ציבורי לא נותן IP ציבורי ל-Lambda.",
 "אי אפשר לשייך EIP ל-Lambda.",
-"לא קשור לרשת.",
+"זיכרון לא משפיע על גישה לאינטרנט. Lambda ב-VPC מקבלת רק IP פרטי, ולכן צריכה NAT gateway כדי לצאת החוצה.",
 "Lambda ב-VPC מקבל ENI פרטי בלי IP ציבורי. ליציאה לאינטרנט צריך NAT, גם אם ה-subnet 'ציבורי'."
 ],
 "x": "אם צריך רק שירותי AWS, VPC endpoints זולים יותר מ-NAT.",
@@ -23863,7 +23863,7 @@
 "y": [
 "רשת לא נותנת AccessDenied על decrypt.",
 "versioning לא קשור להרשאות.",
-"לא נדרש.",
+"אין צורך להעלות מחדש את כל האובייקטים. מספיק לתת `kms:Decrypt` ב-key policy, ואז S3 יכול לפענח בשם ה-role שלך.",
 "S3 מפענח עם KMS בשם הקורא. בלי הרשאה על ה-key, הקריאה נכשלת גם אם ה-bucket מתיר."
 ],
 "x": "שאלה מאוד נפוצה. KMS היא 'השכבה השלישית' שאנשים שוכחים.",
@@ -24246,9 +24246,9 @@
 "B"
 ],
 "y": [
-"לא.",
+"KMS keys לא מוגבלים ל-root. אבל ה-key policy צריכה להתיר ל-IAM policies לתת גישה, אחרת ה-IAM policy לא מספיק.",
 "ב-KMS, ה-key policy הוא השער הראשי. אם הוא לא מאפשר שימוש ב-IAM policies (או לא נותן ל-principal), IAM לבד לא מספיק.",
-"לא חובה.",
+"VPC endpoint ל-KMS לא חובה; אפשר לגשת דרך האינטרנט או NAT. הבעיה היא ה-key policy.",
 "envelope encryption פותר גודל. זו לא שגיאת הרשאה."
 ],
 "x": "ה-key policy ברירת המחדל מאפשר ל-account להשתמש ב-IAM. keys עם policy מותאם לפעמים מוחקים את השורה הזו.",
@@ -24771,9 +24771,9 @@
 "D"
 ],
 "y": [
-"לא קשור.",
+"שם ה-bucket לא מגן מפני מחיקה. מה שמגן הוא Object Lock במצב compliance, שאפילו admin לא יכול לעקוף.",
 "admin יכול למחוק גם גרסאות.",
-"גרוע יותר.",
+"גיבוי על אותו instance הוא גרוע יותר: מי שפרץ אליו או מחק אותו מאבד גם את הגיבוי.",
 "account נפרד עם הרשאות מינימליות, ו-Object Lock שמונע מחיקה גם מ-admin. ככה גיבויים שורדים פריצה."
 ],
 "x": "AWS Backup Vault Lock מספק הגנה דומה לגיבויים מנוהלים.",
@@ -24911,9 +24911,9 @@
 "D"
 ],
 "y": [
-"לא קשור.",
+"ה-rollout strategy של ה-Deployment קובעת איך מחליפים פודים. היא לא יכולה לגרום ל-node להיות NotReady או בלי IPs.",
 "לא קשור להצטרפות node.",
-"לא קשור.",
+"ה-HPA קובע כמה replicas יהיו, לא את ההגדרות של ה-node. node שהוא NotReady ובלי IPs מצביע על EC2NodeClass שגוי.",
 "Karpenter משגר instances לפי EC2NodeClass. אם ה-role, ה-subnets או ה-SGs לא נכונים, ה-node לא מצטרף כראוי או בלי רשת."
 ],
 "x": "לוגים של Karpenter ו-`kubectl describe nodeclaim` מראים את השלב שנכשל.",
@@ -25052,9 +25052,9 @@
 ],
 "y": [
 "לא קשור לבקשות קיימות.",
-"לא קשור.",
+"cross-zone קובע איך התעבורה מתחלקת בין AZs. הוא לא משפיע על בקשות פתוחות כש-target מוסר.",
 "ה-ALB מפסיק לשלוח בקשות חדשות ל-target, אבל מחכה עד שהקיימות מסתיימות. ברירת מחדל 300 שניות.",
-"לא מונע ניתוק."
+"sticky sessions שולחים את אותו לקוח לאותו target, אבל לא מונעים ניתוק כשה-target יוצא. צריך deregistration delay."
 ],
 "x": "ב-Kubernetes עם target-type ip, משלבים עם preStop sleep.",
 "lv": 1,
@@ -25892,7 +25892,7 @@
 ],
 "y": [
 "לא מעשי ולא מכסה הכול.",
-"לא.",
+"SG על ECR לא מונע מה-cluster למשוך images ממקורות אחרים. ההגבלה צריכה להיות ב-admission, על ה-pod.",
 "IAM לא שולט ב-images שנבחרים ב-spec.",
 "Kubernetes לא מגביל registries בעצמו. policy ב-admission דוחה pods עם images ממקור אחר."
 ],
@@ -26313,8 +26313,8 @@
 "y": [
 "PrivateLink חושף שירות אחד, לא רשת שלמה. אין צורך ב-CIDRs שלא חופפים, ו-A מקבל interface endpoint.",
 "פותח את כל הרשת של B.",
-"חשיפה מיותרת.",
-"לא מעשי."
+"API ציבורי חושף אותו לכל האינטרנט בלי צורך. PrivateLink מאפשר לצרוך אותו באופן פרטי בלי לחשוף את VPC B.",
+"העתקת ה-API ל-VPC A יוצרת שני עותקים לתחזק ושוברת את הבעלות של הצוות. PrivateLink מאפשר שימוש בלי העתקה."
 ],
 "x": "PrivateLink הוא גם הדרך של SaaS לחשוף שירותים ללקוחות בלי peering.",
 "lv": 1,
@@ -26452,9 +26452,9 @@
 ],
 "y": [
 "ספק SaaS עם role ב-accounts של הרבה לקוחות. ExternalId ייחודי מונע מלקוח אחד לגרום לספק לגשת ל-account של לקוח אחר.",
-"לא ההגדרה.",
-"לא.",
-"לא."
+"roles עם אותו שם בחשבונות שונים הם מצב רגיל ובטוח. confused deputy הוא ספק שמנוצל כדי לגשת לחשבון של לקוח אחר.",
+"role עם allow ו-deny הוא מצב רגיל ב-IAM. confused deputy הוא בעיה של זהות: גורם מורשה שמבצע פעולה בשם מישהו אחר.",
+"זו טעות של משתמש, לא confused deputy. המונח מתאר שירות עם הרשאות שמנוצל על ידי צד שלישי, ו-ExternalId מונע את זה."
 ],
 "x": "ExternalId רלוונטי לצד שלישי. בין accounts שלך, תנאי `aws:PrincipalOrgID` לרוב מתאים יותר.",
 "lv": 1,
@@ -26558,7 +26558,7 @@
 "y": [
 "לא קשור ומסוכן.",
 "בלי bucket key, כל אובייקט דורש קריאה ל-KMS. bucket key מקטין קריאות דרמטית וגם עלות.",
-"לא קשור ל-KMS.",
+"versioning לא משפיע על מספר הקריאות ל-KMS. Bucket Keys מקטינים את הקריאות ל-KMS ופותרים את ה-throttling.",
 "מגדיל את מספר הקריאות."
 ],
 "x": "אפשר גם לבקש הגדלת quota של KMS, אבל bucket key הוא הפתרון הנכון.",
@@ -27081,10 +27081,10 @@
 "B"
 ],
 "y": [
-"לא קורה לבד.",
+"log groups לא משוכפלים ל-regions אחרים לבד. הם נשארים ב-region שבו נוצרו, אלא אם מגדירים העברה.",
 "עלות CloudWatch Logs נקבעת בעיקר לפי ingestion. log level של debug בפרודקשן יכול להכפיל פי עשר.",
-"לא סביר.",
-"לא."
+"שינוי מחיר פי 10 בבת אחת לא סביר, והקפיצה הגיעה בדיוק אחרי release. הסיבה כמעט תמיד היא לוגים רבים יותר.",
+"מטריקות מחויבות בנפרד ולא נספרות כלוגים. הקפיצה בחשבון נובעת מכמות הלוגים שנכתבים."
 ],
 "x": "כדאי alarm על `IncomingBytes` ל-log groups גדולים, וגם sampling ללוגים רועשים.",
 "lv": 1,
@@ -27571,7 +27571,7 @@
 "D"
 ],
 "y": [
-"לא קשור.",
+"IRSA לא דורש `hostNetwork`, ואפילו הפוך: hostNetwork נותן גישה ל-IMDS של ה-node. הבעיה היא פוד ישן או SDK ישן.",
 "IRSA עובד גם על EC2.",
 "ה-SDK מעדיף web identity, אם הוא מוגדר.",
 "ה-webhook מזריק env ו-token רק ביצירת פוד. פוד ישן או SDK ישן נופל ל-IMDS ולוקח את ה-node role."
@@ -27641,8 +27641,8 @@
 "C"
 ],
 "y": [
-"לא הבעיה.",
-"תומך.",
+"ה-execution role לא צריך `lambda:*`. ההרשאה החסרה היא אצל ה-CI: `iam:PassRole` כדי להצמיד את ה-role לפונקציה.",
+"Lambda תומך ב-deploy מ-CI. השגיאה אומרת שלתפקיד ה-CI חסרה הרשאת `iam:PassRole` על ה-execution role של הפונקציה.",
 "כשיוצרים משאב שמקבל role, צריך הרשאה 'להעביר' את ה-role. זה מונע מישהו להצמיד role חזק יותר ממה שמותר לו.",
 "גודל נותן שגיאה אחרת."
 ],
@@ -28168,8 +28168,8 @@
 "y": [
 "access entry ממופה ל-role. מי שמחובר עם user ישיר או role אחר לא מזוהה. `get-caller-identity` יראה.",
 "הרשאה ב-Kubernetes מגיעה מה-access entry.",
-"לא קשור.",
-"לא קשור."
+"מספר ה-nodes לא משפיע על הרשאות kubectl. אימות נקבע לפי ה-IAM identity של המשתמש, ובודקים עם `get-caller-identity`.",
+"מערכת ההפעלה במחשב לא משנה את הזהות שמגיעה ל-EKS. השאלה היא אם המשתמש עושה assume ל-role שמופיע ב-access entry."
 ],
 "x": "IAM groups לא יכולים להיות principal ב-access entry. ממפים roles או users.",
 "lv": 1,
@@ -28621,7 +28621,7 @@
 "C"
 ],
 "y": [
-"מחמיר.",
+"scale פעם בשעה בצעדים גדולים מאט את התגובה עוד יותר. הבעיה היא זמן העלייה, ופותרים אותה ב-warm pool וב-AMI מוכן.",
 "לא מאיץ ועלול להכניס instances שבורים.",
 "warm pool מחזיק instances מוכנים (stopped או running) שנכנסים לשירות מהר. AMI מוכן חוסך התקנות ב-user data.",
 "לא מקצר את זמן העלייה."
@@ -28691,10 +28691,10 @@
 "B"
 ],
 "y": [
-"נתמך.",
+"Secrets Manager תומך ב-rotation ל-RDS עם Lambda מוכנה. הבעיה היא שהאפליקציה לא קוראת את הסיסמה החדשה.",
 "rotation מחליף סיסמה ב-DB וב-secret. אפליקציה שקראה פעם אחת ממשיכה עם הישנה. צריך לקרוא מחדש בכשל, או להשתמש ב-cache עם TTL.",
-"לא.",
-"לא."
+"מפתחות KMS לא פגים ב-rotation של secret. rotation משנה את הסיסמה, והאפליקציה שמחזיקה את הישנה נכשלת.",
+"rotation לא מוחק את ה-DB. הוא משנה את הסיסמה ב-DB וב-secret, והאפליקציה ממשיכה עם הסיסמה הישנה ששמורה אצלה."
 ],
 "x": "אסטרטגיית alternating users ב-rotation מפחיתה חלון כשל.",
 "lv": 1,
@@ -29566,9 +29566,9 @@
 "D"
 ],
 "y": [
-"בנפרד.",
+"Route 53 מופיע כשירות נפרד בחשבון. EC2-Other כולל עלויות שקשורות ל-EC2 כמו NAT, EBS ותעבורה.",
 "Lambda מופיע בנפרד.",
-"S3 בנפרד.",
+"S3 מופיע כשירות נפרד ב-Cost Explorer. ב-EC2-Other יושבים NAT gateway, EBS ו-data transfer.",
 "'EC2-Other' כולל דברים כמו NAT data processing, EBS ו-snapshots שנשכחו. מפצלים לפי usage type."
 ],
 "x": "snapshots ו-volumes יתומים הם חיסכון קל. כלים כמו Trusted Advisor מוצאים אותם.",
@@ -30337,7 +30337,7 @@
 ],
 "y": [
 "access entries נותנים הרשאות לפי policy.",
-"לא הסיבה.",
+"aws-auth לא מוצפן ולא איטי לקריאה. הבעיה היא שזה ConfigMap שנערך ידנית, וטעות אחת בו יכולה לנעול את כולם בחוץ.",
 "aws-auth הוא YAML ידני. טעות בו מנתקת גם admins. access entries מנוהלים כ-API עם audit ב-CloudTrail.",
 "aws-auth עבד גם עם nodes רגילים."
 ],
@@ -30478,8 +30478,8 @@
 "y": [
 "SA עדיין בשימוש.",
 "ה-trust policy פשוט וגנרי (pods.eks.amazonaws.com). השיוך בין SA ל-role מוגדר ב-EKS, ואפשר לשתף role בין clusters בקלות.",
-"לא.",
-"לא."
+"Pod Identity לא נותן לפוד את ה-role של ה-node. הוא משייך role ייעודי ל-SA, בדיוק כמו IRSA, רק בלי OIDC trust.",
+"Pod Identity לא קשור ל-Kubernetes Secrets. ה-credentials מגיעים מ-agent על ה-node, לפי שיוך שמוגדר ב-EKS API."
 ],
 "x": "IRSA עדיין נתמך. Pod Identity נוח במיוחד כשיש הרבה clusters.",
 "lv": 1,
@@ -30931,7 +30931,7 @@
 "C"
 ],
 "y": [
-"לא פתרון.",
+"מעבר ל-HTTP מוריד את ההצפנה ומעלים את האזהרה רק כי אין תעודה. צריך תעודה שמכסה את `api.example.com` (או wildcard).",
 "לא משנה את התעודה.",
 "תעודה ל-`example.com` לא מכסה תת-דומיין. צריך SAN מתאים או `*.example.com`.",
 "אין restart ל-ALB, וזה לא קשור."
@@ -30968,7 +30968,7 @@
 "y": [
 "תבנית קבועה בזמן מצביעה על משימה מתוזמנת: backup, report, cache refresh או cron.",
 "לא מסביר תבנית קבועה.",
-"בדרך כלל לא.",
+"sampling של CloudWatch בדרך כלל לא יוצר spikes בדיוק כל שעה עגולה. דפוס קבוע כזה מצביע על job מתוזמן.",
 "לא תבנית שעתית."
 ],
 "x": "חקירה: מה רץ בשעה עגולה? cron ב-hosts, EventBridge rules, CronJobs ב-Kubernetes.",
@@ -31631,9 +31631,9 @@
 "B"
 ],
 "y": [
-"לא.",
+"מספר המנויים ב-SNS קובע רק כמה יקבלו התראה. הבעיה היא שה-alarm לא נכנס ל-ALARM כשאין נתונים.",
 "`TreatMissingData` קובע אם חוסר נתונים הוא breaching, notBreaching, ignore או missing. ההגדרה הנכונה תלויה במטריקה.",
-"לא קשור.",
+"סוג ה-instance לא משנה את מצב ה-alarm. מה שקובע הוא איך ה-alarm מתייחס לנקודות חסרות (`TreatMissingData`).",
 "לא קשור למטריקות."
 ],
 "x": "למטריקות של heartbeat: missing = breaching. למטריקות של שגיאות: missing = notBreaching.",
@@ -31876,10 +31876,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"רשומות DNS מנוהלות ב-Route 53. SNS הוא שירות pub/sub שמפיץ הודעה להרבה מנויים.",
 "זה EventBridge Scheduler.",
 "pub/sub: מפרסמים פעם אחת, וכל המנויים מקבלים. נפוץ ל-alarms ולאירועים.",
-"זה SQS."
+"שמירה של הודעות עד ש-consumer מושך היא SQS. SNS דוחף כל הודעה מיד לכל המנויים."
 ],
 "x": "SNS ל-SQS fan-out מאפשר לכל consumer קצב משלו.",
 "lv": 1,
@@ -32121,10 +32121,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"זה SQS FIFO.",
+"מסד נתונים למטריקות הוא CloudWatch Metrics. EventBridge מנתב אירועים בין שירותים.",
+"תור עם סדר מובטח הוא SQS FIFO. EventBridge מנתב אירועים לפי חוקים ולא מבטיח סדר.",
 "למשל: event של EC2 state change או ECR scan finding, ו-rule ששולח ל-Lambda או SNS.",
-"לא."
+"EventBridge הוא לא מאזן עומסים. הוא event bus שמנתב אירועים ליעדים לפי חוקים."
 ],
 "x": "EventBridge Scheduler החליף הרבה שימושים של cron על EC2.",
 "lv": 1,
@@ -32752,9 +32752,9 @@
 ],
 "y": [
 "controllers יוצרים משאבים מחוץ ל-Terraform. tags מאפשרים לדעת למי שייך, כמה עולה, ומה למחוק.",
-"לא.",
+"tags לא משנים את מהירות היצירה. הערך שלהם הוא לדעת למי שייך כל משאב, כמה הוא עולה ומה אפשר למחוק.",
 "לא כולם נדרשים, אבל חלק כן (subnets).",
-"לא."
+"tags לא מצפינים משאבים. הם metadata שמשמש לחלוקת עלויות, זיהוי בעלות וניקוי."
 ],
 "x": "tag policies ב-AWS Organizations אוכפים אחידות.",
 "lv": 1,
@@ -33312,8 +33312,8 @@
 ],
 "y": [
 "cluster: latency נמוך בין instances (HPC). spread: כל instance על חומרה נפרדת. partition: למערכות כמו Kafka ו-HDFS.",
-"זה tags.",
-"לא.",
+"קיבוץ לפי חיוב נעשה עם tags. placement groups קובעים איך instances ממוקמים פיזית: קרוב, מפוזר או במחיצות.",
+"placement group לא מצפין אחסון. הצפנה של EBS מוגדרת על ה-volume; placement groups עוסקים במיקום פיזי.",
 "placement groups הם בתוך region."
 ],
 "x": "cluster placement משפר רשת, אבל מגדיל סיכון לנפילה משותפת.",
@@ -33976,7 +33976,7 @@
 "B"
 ],
 "y": [
-"אין מגבלה כזו.",
+"ב-Fargate אין מגבלה של pod אחד לכל namespace. המגבלה היא שכל pod רץ ב-VM מבודד משלו, ולכן אין DaemonSets ואין privileged.",
 "כל pod הוא VM מבודד. לכן DaemonSets לא עובדים, וצריך sidecars ללוגים ול-monitoring.",
 "Services עובדים.",
 "IRSA ו-Pod Identity נתמכים."
@@ -34011,9 +34011,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"לא.",
+"הרשאות על מטריקות מוגדרות ב-IAM. metric filter הוא כלל שסופר או מחלץ ערכים משורות לוג.",
+"metric filter לא מוחק מטריקות; מטריקות פגות לבד לפי retention. ה-filter יוצר מטריקה חדשה מתוך לוגים.",
+"metric filter לא מסתיר מטריקות. הוא הופך שורות לוג שמתאימות לתבנית למטריקה שאפשר לבנות עליה alarm.",
 "למשל ספירה של 'ERROR' בלוג. אחר כך שמים alarm על המטריקה."
 ],
 "x": "Embedded Metric Format (EMF) מאפשר להפיק מטריקות ישירות מלוגים מובנים, בלי filters.",
@@ -34116,10 +34116,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"gp2 לא מוגבל ל-Windows; כל סוגי EBS עובדים עם כל מערכת הפעלה. ההבדל בין gp2 ל-gp3 הוא במודל הביצועים והמחיר.",
 "gp2 תומך בהצפנה.",
 "ב-gp2 הביצועים קשורים לגודל (3 IOPS ל-GB). ב-gp3 יש בסיס של 3,000 IOPS ומגדילים ביצועים בלי להגדיל דיסק.",
-"אפשר."
+"gp3 תומך ב-snapshots בדיוק כמו gp2. היתרון שלו הוא IOPS ו-throughput שלא תלויים בגודל, ובמחיר נמוך יותר."
 ],
 "x": "מעבר מ-gp2 ל-gp3 אפשרי בלי downtime (Elastic Volumes). חיסכון קל.",
 "lv": 1,
@@ -34151,10 +34151,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"אלה לא תפקידים. RPO הוא Recovery Point Objective ו-RTO הוא Recovery Time Objective.",
 "RPO של שעה פירושו גיבוי כל שעה לפחות. RTO של 15 דקות דורש התאוששות מהירה (warm standby).",
-"לא.",
-"לא."
+"RPO ו-RTO הם לא סוגי instances. הם יעדים של DR: כמה נתונים מותר לאבד, וכמה זמן מותר לקחת להתאושש.",
+"אלה לא מטריקות של CPU וזיכרון. RPO הוא כמות הנתונים שמותר לאבד, ו-RTO הוא זמן ההתאוששות המותר."
 ],
 "x": "אסטרטגיות DR: backup and restore, pilot light, warm standby, active-active. כל אחת עם RPO, RTO ועלות.",
 "lv": 1,
@@ -34258,8 +34258,8 @@
 "y": [
 "שני מנגנונים משלימים.",
 "מאפשר לתת לפוד אחד גישה ל-RDS, למשל, בלי לפתוח לכל ה-node. אכיפה ברמת VPC.",
-"SG לא מצפין.",
-"לא."
+"security group לא מצפין תעבורה. הוא רק מתיר או חוסם חיבורים; הצפנה דורשת TLS או service mesh.",
+"הפודים נשארים באותו VPC. Security Groups for Pods מצמידים SG לפוד מסוים דרך branch ENI באותו VPC."
 ],
 "x": "יש מגבלות: לא כל instance type תומך, ויש השפעה על density.",
 "lv": 1,
@@ -34397,9 +34397,9 @@
 ],
 "y": [
 "NLB הוא L4 ולא מוסיף headers של HTTP.",
-"לא קשור.",
+"DHCP options set קובע DNS ו-domain name ל-instances. הוא לא משפיע על ה-source IP שה-NLB מעביר לאפליקציה.",
 "NLB שומר IP של הלקוח כברירת מחדל ל-targets מסוג instance. עם target type ip הוא מוגדר. proxy protocol מעביר את ה-IP ב-header.",
-"לא קשור."
+"hostname והגדרות DNS לא קובעים איזה source IP מגיע לאפליקציה. בודקים client IP preservation או proxy protocol v2."
 ],
 "x": "כשה-IP של הלקוח נשמר, ה-SG של ה-targets צריך לאשר את ה-IPs של הלקוחות, לא רק את ה-NLB.",
 "lv": 1,
@@ -34921,9 +34921,9 @@
 "B"
 ],
 "y": [
-"לא.",
+"CloudTrail לא מוחק אירועים אחרי יום. ה-Event history שומר 90 יום, אבל data events של S3 לא נרשמים בכלל אם לא הופעלו.",
 "ברירת המחדל מתעדת רק management events. קריאה לאובייקט היא data event, שצריך להפעיל במפורש.",
-"לא.",
+"הורדות מ-S3 לא אנונימיות כשיש credentials. אפשר לתעד אותן, אבל רק אם data events מופעלים ב-trail.",
 "יכול, עם data events."
 ],
 "x": "S3 server access logs הם אפשרות זולה יותר, עם פחות פרטים.",
@@ -34957,9 +34957,9 @@
 ],
 "y": [
 "לא עוזר ל-throughput.",
-"לא קשור.",
+"bucket ציבורי לא משנה את מגבלות הקצב ל-prefix, ורק חושף את הנתונים. צריך לפזר על יותר prefixes.",
 "S3 מתרחב לפי prefix (בערך 3,500 PUT לשנייה לכל prefix). פיזור על כמה prefixes מגדיל את הקצב.",
-"מחמיר."
+"key אחד לכל האובייקטים מרכז את כל העומס על prefix אחד ומחמיר את ה-throttling."
 ],
 "x": "S3 מתרחב אוטומטית לאורך זמן, אבל קפיצות חדות עדיין דורשות backoff.",
 "lv": 1,
@@ -35027,8 +35027,8 @@
 ],
 "y": [
 "ממוצע של 10 instances יכול להיות 30% כשאחד ב-100%. maximum, p99 או alarm לכל instance חושפים את זה.",
-"מדווחים.",
-"לא.",
+"EC2 מדווח CPU ל-CloudWatch כברירת מחדל. הבעיה היא שהממוצע מסתיר instances עמוסים.",
+"alarms עובדים על כל מטריקה, כולל CPU. הבעיה היא סטטיסטיקה: ממוצע מסתיר instances עמוסים, ועדיף max או percentile.",
 "אפשרי, אבל הבעיה המרכזית היא הממוצע."
 ],
 "x": "עיקרון כללי ב-monitoring: ממוצעים מטעים. percentiles מספרים את האמת.",
@@ -35343,8 +35343,8 @@
 "y": [
 "סיסמה לא מגבילה רשת.",
 "SG ברמת הפוד מגביל ברמת VPC. NetworkPolicy משלימה בתוך ה-cluster.",
-"מחמיר.",
-"מסוכן."
+"subnet ציבורי חושף את ה-DB לאינטרנט ומרחיב את הגישה. המטרה היא לצמצם אותה לפודים מסוימים.",
+"פתיחה ל-0.0.0.0/0 חושפת את ה-DB לכל העולם, וסיסמה חזקה לא מספיקה. צריך SG ברמת הפוד."
 ],
 "x": "כדאי גם IAM authentication ל-RDS, כדי לא לנהל סיסמאות סטטיות.",
 "lv": 1,
@@ -35586,10 +35586,10 @@
 "C"
 ],
 "y": [
-"לא ההבדל.",
+"שני ה-target types עובדים עם IPv4 וגם עם IPv6. ההבדל הוא לאן התעבורה מגיעה: ישר ל-IP של הפוד, או ל-NodePort על ה-node.",
 "יש הבדל בנתיב התעבורה.",
 "ip חוסך hop ומאפשר health checks לפודים עצמם. instance עובר דרך kube-proxy.",
-"לא."
+"`instance` לא יוצר LB לכל node. יש LB אחד, וה-nodes רשומים בו כ-targets על ה-NodePort."
 ],
 "x": "ip עובד עם VPC CNI כי לפודים יש IPs מה-VPC. עם Fargate חייבים ip.",
 "lv": 1,
@@ -36426,10 +36426,10 @@
 "B"
 ],
 "y": [
-"גרוע יותר.",
+"IAM user משותף עם מפתחות קבועים גרוע יותר מה-node role: מפתח שיכול לדלוף, ואין הפרדה בין workloads.",
 "role לכל workload: least privilege, ו-audit ברור. ה-node role נשאר עם מה שה-node עצמו צריך.",
 "יקר ומסורבל, ועדיין ברמת node.",
-"מחמיר."
+"כל ההרשאות ל-node role הן ההפך מ-least privilege: כל פוד על ה-node יקבל אותן. צריך role נפרד לכל workload."
 ],
 "x": "ב-CloudTrail רואים איזה role עשה מה. עם role לכל workload, החקירה פשוטה.",
 "lv": 1,
@@ -36986,7 +36986,7 @@
 "B"
 ],
 "y": [
-"לא קשור.",
+"CoreDNS לא משתתף ב-health checks של ה-ALB, שמגיעים ישירות ל-IP של הפוד. בודקים את ה-path של ה-health check ואת ה-SGs.",
 "ALB בודק health בעצמו. path שגוי (למשל `/` שמחזיר 404) או SG שחוסם, הופכים targets ללא בריאים.",
 "לא קשור ל-health checks.",
 "ה-ALB לא משתמש ב-probes של Kubernetes."
@@ -37303,7 +37303,7 @@
 "y": [
 "לא צריך zone נפרד.",
 "לא קשור להחלטת ה-failover.",
-"לא חובה.",
+"CloudFront לא נדרש ל-failover routing. מה שחסר הוא health check על הרשומה הראשית, שבלעדיו Route 53 לא יודע שהיא נפלה.",
 "בלי health check, Route 53 לא יודע שה-primary נפל, וממשיך להחזיר אותו."
 ],
 "x": "ה-health check צריך לבדוק משהו משמעותי (endpoint של בריאות שבודק תלויות), לא רק שהשרת עונה.",
@@ -37477,8 +37477,8 @@
 ],
 "y": [
 "credential קבוע.",
-"מסוכן מאוד.",
-"לא.",
+"API server ציבורי בלי אימות פותח את ה-cluster לכל אחד. אימות דרך OIDC ו-access entry שומר על גישה מבוקרת.",
+"מפתחות root הם ההרשאה החזקה ביותר בחשבון ומפתח קבוע. AWS ממליצה לא ליצור להם מפתחות בכלל.",
 "שני שלבים: AWS (OIDC trust ל-role) ו-Kubernetes (access entry עם הרשאות). אין מפתחות קבועים."
 ],
 "x": "ב-GitOps, ה-CI לא צריך גישה ל-cluster בכלל. רק ל-Git.",
@@ -37511,7 +37511,7 @@
 "D"
 ],
 "y": [
-"לא יעבוד.",
+"step scaling מופעל על ידי CloudWatch alarms, ובלעדיהם הוא לא יפעל בכלל. מה שעוזר הוא cooldown ארוך יותר ב-scale-in.",
 "מבטל autoscaling.",
 "מבטל autoscaling.",
 "scale-in זהיר מונע הורדה מוקדמת. target סביר (לא 90% CPU) נותן מרווח."
@@ -37651,10 +37651,10 @@
 "C"
 ],
 "y": [
-"יכול.",
-"לא.",
+"Terraform יכול ליצור EC2 עם ה-provider של AWS. ה-AccessDenied מגיע משכבת הרשאות אחרת, כמו SCP או boundary.",
+"`ec2:*` כולל את `RunInstances`. החסימה מגיעה מ-SCP, מ-boundary, או מהרשאה חסרה על משאב נלווה כמו KMS key.",
 "`ec2:*` על ה-role לא מספיק אם שכבה אחרת חוסמת, או אם הפעולה דורשת הרשאה על משאב נלווה (EBS מוצפן, instance profile).",
-"לא."
+"CloudTrail מתעד את השגיאה שהתקבלה בפועל, והיא אמינה. צריך לחפש איזו שכבה חסמה, לא לפקפק בלוג."
 ],
 "x": "CloudTrail ו-`aws sts decode-authorization-message` מפענחים את הסיבה המדויקת.",
 "lv": 1,
@@ -37826,10 +37826,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"S3 לא מחייב כפול על קבצים שנמחקו. החיוב נמשך כי ב-versioning מחיקה רק מוסיפה delete marker, והגרסאות הישנות נשמרות.",
 "ב-bucket עם versioning, מחיקה לא מוחקת גרסאות קודמות. צריך lifecycle rule ל-noncurrent versions.",
 "לא קורה בלי הגדרה.",
-"לא אוטומטית."
+"קבצים לא עוברים ל-Glacier לבד. זה קורה רק עם lifecycle rule, ובלעדיו הגרסאות הישנות נשארות ב-storage class המקורי."
 ],
 "x": "S3 Storage Lens מראה כמה מקום תופסות גרסאות לא נוכחיות.",
 "lv": 1,
@@ -38142,9 +38142,9 @@
 ],
 "y": [
 "מתאים כשלא יודעים מראש כמה ייקראו. אין עלות שליפה, יש עלות ניטור קטנה לכל אובייקט.",
-"לא.",
-"לא.",
-"לא."
+"Intelligent-Tiering לא מהיר יותר מ-Standard. הוא חוסך עלות על נתונים עם דפוס גישה לא צפוי.",
+"Intelligent-Tiering לא דוחס אובייקטים. הוא מעביר אותם בין tiers לפי תדירות הגישה.",
+"Intelligent-Tiering לא מעתיק buckets. הוא storage class שמעביר אובייקטים בין tiers לפי השימוש."
 ],
 "x": "לאובייקטים קטנים מאוד (מתחת ל-128KB) אין חיסכון.",
 "lv": 1,
@@ -38946,10 +38946,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"DLQ לא מאיץ משלוח. הוא מוציא הודעות בעייתיות מהתור הראשי, כדי שלא ייתקעו בלולאת כשלונות.",
+"DLQ לא שומר הודעות שנמחקו. הוא מקבל הודעות שנכשלו בעיבוד יותר מ-`maxReceiveCount` פעמים.",
 "אחרי `maxReceiveCount` ניסיונות, ההודעה עוברת ל-DLQ. כך היא לא חוסמת ולא נעלמת.",
-"לא."
+"DLQ לא מצפין הודעות; הצפנה מוגדרת על התור עם SSE. DLQ אוסף הודעות שנכשלו שוב ושוב."
 ],
 "x": "תמיד alarm על אורך ה-DLQ. DLQ שמתמלא בשקט הוא אובדן נתונים.",
 "lv": 1,
@@ -39298,8 +39298,8 @@
 "y": [
 "AWS מנהל את זה.",
 "שדרוג control plane לא משדרג add-ons אוטומטית (אם מנוהלים ידנית). גרסה ישנה יכולה להיות לא תואמת.",
-"לא קשור.",
-"לא נדרש."
+"מעבר ל-VPC חדש לא קשור ולא נדרש. השדרוג פספס את ה-add-ons, ו-CoreDNS בגרסה ישנה לא תואם ל-control plane.",
+"Services לא צריך ליצור מחדש אחרי שדרוג. בעיית ה-DNS נובעת מגרסה ישנה של CoreDNS שלא עודכנה יחד עם ה-cluster."
 ],
 "x": "EKS managed add-ons מקלים: מעדכנים גרסה ב-API, ו-AWS מנהל את התאימות.",
 "lv": 1,
@@ -39436,8 +39436,8 @@
 "D"
 ],
 "y": [
-"יכול.",
-"לא.",
+"Terraform מנהל bucket policies עם `aws_s3_bucket_policy`. ה-diff החוזר נובע מ-JSON שלא מנורמל, ו-`jsonencode` או data source פותרים.",
+"S3 לא מחליף bucket policies לבד. ה-diff נובע מהבדלי פורמט או סדר בין ה-JSON שלך לזה ש-AWS מחזיר.",
 "לא מסביר diff בכל ריצה.",
 "AWS מחזיר את ה-policy בסדר או פורמט שונה. `jsonencode` או `aws_iam_policy_document` מנרמלים ומונעים diff מיותר."
 ],
@@ -39543,8 +39543,8 @@
 "y": [
 "לא קשור ל-IPv4.",
 "כמו NAT ל-IPv6: instances יוצאים לאינטרנט, אבל אף אחד לא יכול ליזום חיבור אליהם.",
-"ההפך.",
-"לא."
+"ההפך: egress-only gateway מתיר רק תעבורה יוצאת ב-IPv6 וחוסם חיבורים נכנסים מהאינטרנט.",
+"egress-only gateway הוא לא VPN. VPN מחבר רשת on-prem; egress-only gateway נותן יציאה לאינטרנט ב-IPv6 בלבד."
 ],
 "x": "IPv6 יכול להוריד עלויות NAT ו-IPv4 ציבורי. נושא שעולה יותר ויותר.",
 "lv": 1,
@@ -39891,7 +39891,7 @@
 "D"
 ],
 "y": [
-"לא משנה quota.",
+"restart ל-ASG לא משנה את ה-quota של vCPU בחשבון. צריך לבקש הגדלה, ואחר כך alarm על ניצול ה-quota.",
 "יפגע בשירותים אחרים.",
 "גם ל-spot יש quotas.",
 "עכשיו: בקשה להגדלה (או instance types אחרים). אחר כך: CloudWatch alarm על usage מול quota."
@@ -40031,9 +40031,9 @@
 "D"
 ],
 "y": [
-"לא.",
+"private hosted zone מופיע בקונסול כרגיל. 'private' אומר שהשמות נפתרים רק מתוך VPCs משויכים, לא מהאינטרנט.",
 "אין סיסמאות ב-DNS.",
-"לא.",
+"private hosted zone לא קשור לאופן רכישת הדומיין. הוא אזור DNS שנענה רק בתוך ה-VPCs שמשויכים אליו.",
 "שימושי לשמות פנימיים (`db.internal`). צריך enableDnsSupport ו-enableDnsHostnames ב-VPC."
 ],
 "x": "להיברידי: Route 53 Resolver endpoints מחברים בין DNS של on-prem ל-VPC.",
@@ -40346,10 +40346,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"יותר מזה.",
+"EKS תמיד רץ בתוך VPC, גם ב-Auto Mode. ההבדל הוא שהניהול של ה-nodes וה-add-ons עובר ל-AWS.",
+"Auto Mode עושה יותר משדרוג גרסאות. AWS מנהל גם את ה-nodes, ה-scaling וה-add-ons של רשת ואחסון.",
 "AWS בוחר instances, מעדכן AMIs ומנהל networking ו-storage. פחות תחזוקה, פחות שליטה.",
-"לא."
+"Auto Mode לא חינמי: יש תשלום על ה-cluster ותוספת על ה-instances המנוהלים. ההבדל הוא שהניהול עובר ל-AWS."
 ],
 "x": "השאלה בראיון: מתי מתאים? צוות קטן בלי צורך בהתאמות עמוקות ל-nodes.",
 "lv": 1,
@@ -40769,7 +40769,7 @@
 "טעות נפוצה: namespace או שם SA שונים, או OIDC provider של cluster אחר. ה-trust חייב להתאים בדיוק.",
 "IRSA לא עובר דרך ה-node role.",
 "permissions לא קשורים לכשל ב-assume.",
-"לא קשור."
+"משתמש ה-root בתוך הקונטיינר לא משפיע על AssumeRoleWithWebIdentity. הבדיקה היא שה-`sub` ב-trust policy מתאים ל-namespace ול-SA."
 ],
 "x": "ב-trust policy כדאי גם תנאי על `aud` (`sts.amazonaws.com`).",
 "lv": 1,
@@ -42027,7 +42027,7 @@
 ],
 "y": [
 "לא פותר את הבעיה.",
-"לא.",
+"כיבוי ה-mirror ימנע לגמרי את ההתקנה. הפתרון הוא לבנות את התלויות לתוך ה-AMI ולדווח על כשל ב-bootstrap.",
 "ניחוש שמאט את כל ה-instances.",
 "AMI מוכן (Packer) מקטין את מה שקורה ב-boot. כשל ב-user data צריך להגיע ל-logs ול-alarm, או לגרום ל-health check להיכשל."
 ],
@@ -42202,9 +42202,9 @@
 ],
 "y": [
 "קריאה לכל invocation מוסיפה latency ועלות. cache עם TTL (AWS Parameters and Secrets Lambda Extension) פותר.",
-"סוד בקוד.",
+"סוד בקוד נשמר ב-Git ובגרסאות של הפונקציה, וגלוי לכל מי שקורא אותם. עדיף cache בזיכרון עם TTL.",
 "לא מקטין קריאות.",
-"לא קשור."
+"תדירות ה-rotation לא משנה את מספר הקריאות. הפונקציה עדיין קוראת את ה-secret בכל הפעלה."
 ],
 "x": "TTL צריך להיות קצר מתדירות ה-rotation, כדי לא להיתקע עם סוד ישן.",
 "lv": 1,
@@ -42271,7 +42271,7 @@
 "D"
 ],
 "y": [
-"מבטל את המטרה.",
+"רשומות ידניות מבטלות את מה ש-ExternalDNS נועד לעשות. השגיאה אומרת במפורש שחסרה הרשאה ל-Route 53.",
 "CoreDNS לא קשור ל-Route 53.",
 "לא פותר הרשאות.",
 "ExternalDNS צריך הרשאות ל-Route 53, לרוב דרך IRSA, מוגבלות ל-hosted zones הרלוונטיים."
@@ -43216,7 +43216,7 @@
 "C"
 ],
 "y": [
-"לא.",
+"permissions boundary לא מצפין כלום. הוא מגדיר תקרה להרשאות: גם אם ה-policy מתיר יותר, ה-role לא יקבל מעבר ל-boundary.",
 "boundary רק מגביל.",
 "שימושי כשנותנים לצוותים ליצור roles: הם לא יכולים ליצור role עם יותר הרשאות מה-boundary.",
 "זה תנאי ב-policy, לא boundary."
@@ -43391,9 +43391,9 @@
 "D"
 ],
 "y": [
-"לא.",
+"Savings Plans ו-RIs הם הנחה על התחייבות לשימוש, לא spot. אין בהם סיכון שה-instance ייעצר.",
 "RIs פחות גמישים.",
-"לא.",
+"Savings Plans חלים על compute (EC2, Fargate, Lambda), לא על S3. הם התחייבות להוצאה לשעה, עם גמישות בין סוגי instances.",
 "Compute Savings Plans חלים גם על Fargate ו-Lambda, ולא קשורים ל-instance type מסוים."
 ],
 "x": "נושא FinOps: מתחילים מ-commitment שמכסה את הבסיס הקבוע, ו-spot לשאר.",
@@ -44514,7 +44514,7 @@
 "ה-key ID נשאר זהה.",
 "KMS שומר את החומר הישן לפענוח מידע קיים, ומשתמש בחדש להצפנות חדשות. שקוף לאפליקציה.",
 "לא. מידע קיים לא מוצפן מחדש.",
-"לא."
+"S3 עובד גם בלי rotation של מפתחות. rotation מגביל כמה נתונים מוצפנים עם אותו key material."
 ],
 "x": "תדירות ה-rotation ניתנת להגדרה. לרוב שנה.",
 "lv": 1,
@@ -44721,7 +44721,7 @@
 "B"
 ],
 "y": [
-"לא.",
+"EBS volumes לא מאטים עם הגיל. ב-gp2 יש burst credits, ואחרי שהם נגמרים הביצועים יורדים לבסיס של 3 IOPS ל-GB.",
 "volume קטן ב-gp2 מקבל IOPS בסיסי נמוך ומסתמך על burst. כשהקרדיטים נגמרים הביצועים נופלים. gp3 נותן ביצועים קבועים.",
 "rotation לא משפיע על ביצועים.",
 "לא מסביר את התבנית של שעה."
@@ -44896,8 +44896,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
+"ה-finding לא קשור למעבר בין regions. הוא אומר ש-credentials של ה-instance role משמשים מכתובת IP מחוץ ל-AWS, כלומר דלפו.",
+"GuardDuty לא מדווח על חוסר זיכרון. ה-finding מעיד על credentials של instance שנגנבו ומשמשים מבחוץ.",
 "לא קשור ל-instance credentials.",
 "מישהו גנב credentials מ-IMDS ומשתמש בהם מחוץ ל-AWS. מבטלים sessions של ה-role, בודקים איך דלף (SSRF, IMDSv1)."
 ],
@@ -45004,7 +45004,7 @@
 "תעודה שעומדת לפוג לא נותנת 502.",
 "ה-backend סוגר חיבור שה-ALB עדיין חושב שפתוח. הבקשה הבאה על החיבור נכשלת ב-502. keep-alive ארוך מה-idle timeout פותר.",
 "לא מסביר 502 לסירוגין.",
-"לא הבעיה."
+"HTTP/1.1 הוא ה-protocol version הרגיל ב-target group ועובד מצוין. ה-502 נובע מ-keep-alive קצר בצד ה-backend."
 ],
 "x": "ALB idle timeout ברירת מחדל 60 שניות. ב-Node.js, `keepAliveTimeout` ברירת מחדל קצרה ממנה.",
 "lv": 1,
@@ -45246,7 +45246,7 @@
 "B"
 ],
 "y": [
-"לא פג.",
+"peering לא פג אחרי זמן. non-transitive אומר ש-A לא יכול לעבור דרך B כדי להגיע ל-C, וצריך peering ישיר.",
 "כל זוג צריך peering משלו. ברשת גדולה זה מסתבך, ולכן עוברים ל-Transit Gateway.",
 "תעבורה עוברת לשני הכיוונים, לפי routes.",
 "אפשר להפעיל DNS resolution ב-peering."
@@ -45386,10 +45386,10 @@
 "B"
 ],
 "y": [
-"ההפך.",
+"ההפך: `aws:PrincipalOrgID` מתיר גישה רק ל-principals מהארגון שלך, ולא חוסם אותם.",
 "פשוט יותר מרשימת accounts, ומתעדכן לבד כשמוסיפים account לארגון.",
-"לא.",
-"לא."
+"conditions ב-resource policy לא מצפינים. `aws:PrincipalOrgID` רק מגביל את הגישה ל-principals מהארגון שלך.",
+"התנאי לא נותן הרשאות נוספות ל-root. הוא מגביל את הגישה לחשבונות מהארגון בלבד."
 ],
 "x": "דוגמה: bucket policy שמאפשר רק לארגון לקרוא, גם אם מישהו הוסיף בטעות `Principal: *`.",
 "lv": 1,
@@ -45634,7 +45634,7 @@
 "SCP לא נותן הרשאות. הוא חוסם, למשל, שימוש ב-regions מסוימים או כיבוי CloudTrail, גם ל-admin של ה-account.",
 "SCP לא נותן הרשאות.",
 "roles עדיין נדרשים.",
-"לא."
+"SCP לא מצפין buckets. הצפנה מוגדרת ב-S3 או ב-KMS; SCP רק מגביל את ההרשאות המקסימליות בחשבונות של הארגון."
 ],
 "x": "דוגמה נפוצה: deny על פעולות מחוץ ל-regions מאושרים, עם חריג לשירותים גלובליים.",
 "lv": 1,
