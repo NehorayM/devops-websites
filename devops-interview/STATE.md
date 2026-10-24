@@ -37,7 +37,7 @@ terms and code isolated LTR inside it.
 | 5 | Learn: 24 Hebrew subjects (3 parts, checks, recap, 10-question exam) | `e516975` … `0763ddc` |
 | 6 | Study: 9 reference chapters, 30 pages; Study engine moved to source files | `8598942` |
 | 7 | AWS remnants removed, Hebrew voice + Read on explanations, `authoredChecks`, all QA green, this file rewritten | `93a5ef3` |
-| 7b *(open)* | Expand the 1,558 terse wrong-option lines | — |
+| 7b *(in progress)* | Expand the 1,558 terse wrong-option lines: 930 done (K8s, Argo CD, CI, AWS, Helm, `tf_core`), 628 left | — |
 | 8 *(open)* | New Supabase project; games, casino, duel, tournament back on | — |
 
 ## Content pipelines
@@ -127,8 +127,8 @@ whole file defining anything, and it looks like the suite does not exist.
 
 ## Known gaps / next up
 
-- **Terse wrong-option lines.** 1,558 of the bank's Hebrew option lines are a word or two
-  ("לא.", "לא קשור.") across 789 questions; every right-answer line is a real explanation.
+- **Terse wrong-option lines.** 628 of the bank's Hebrew option lines (down from 1,558) are still a word or two
+  ("לא.", "לא קשור.") across 269 questions in `tf_state`, `linux`, `net` and `cicd_tools`; every right-answer line is a real explanation.
   `authoredChecks` caps the count so it can only go down. Rewriting them is content work, topic
   by topic in `qsrc/`.
 - **Stage 8:** a new Supabase project, then the games, casino, duel and tournament back on. The

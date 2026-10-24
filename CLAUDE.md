@@ -168,7 +168,7 @@ const {chromium}=require('playwright');
 Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
-- `authoredChecks` enforces the explanation rules and caps terse wrong-option lines at `<=1558`. Lower the cap as they get fixed.
+- `authoredChecks` enforces the explanation rules and caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b). Lower the cap as they get fixed.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
   Fix the bug, or update the assumption and explain why in the commit.
 
@@ -216,8 +216,9 @@ Notes:
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
-1. **Stage 7b: expand terse explanations.** 1,558 wrong-option Hebrew lines are a word or two ("לא." ×722,
-   "לא קשור." ×115 …) across 789 questions; every right-answer line is already full. Work topic by topic in
+1. **Stage 7b: expand terse explanations (in progress).** Started with 1,558 wrong-option Hebrew lines that were a word or two
+   ("לא." ×722, "לא קשור." ×115 …) across 789 questions. Done: K8s, Argo CD, CI, AWS, Helm, `tf_core` (930 lines).
+   Left: 628 lines in `tf_state` (146), `linux` (185), `net` (117), `cicd_tools` (180); every right-answer line is already full. Work topic by topic in
    `qsrc/`. Each line should say what the option actually does and why it doesn't fit, in one sentence.
    Then rebuild the bank, regenerate the duel key, lower the cap in `authoredChecks`, run QA, and commit per topic.
    List the stubs with a quick script over `#data` (`len(y) < 15` on a wrong option).
