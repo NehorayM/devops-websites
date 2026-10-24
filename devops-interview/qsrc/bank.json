@@ -1426,7 +1426,7 @@
 "B"
 ],
 "y": [
-"ההפך.",
+"ההפך: `PruneLast=true` דוחה את המחיקה לסוף, אחרי שכל שאר המשאבים סונכרנו והם Healthy.",
 "כך משאבים ישנים נמחקים רק אחרי שהחדשים עובדים. שימושי כשמחליפים משאב בגרסה עם שם חדש.",
 "pruning מתבצע, רק בסוף.",
 "האופציה פועלת בתוך Application אחד."
@@ -1918,7 +1918,7 @@
 "y": [
 "עובד, אבל מבטל את היתרון.",
 "ה-generator חושף את ה-labels וה-annotations של ה-cluster secret כפרמטרים.",
-"אפשר.",
+"אפשר: ה-Cluster generator חושף את ה-labels וה-annotations של ה-cluster secret כפרמטרים, וכך כל cluster מקבל ערכים משלו.",
 "שביר. כל cluster חדש דורש שינוי ב-chart."
 ],
 "x": "דוגמה: `valueFiles: [values-{{.metadata.labels.env}}.yaml]`.",
@@ -2337,7 +2337,7 @@
 ],
 "y": [
 "Argo CD מחיל משאבים עם ה-SA שלו. אם ב-prod ההרשאות מצומצמות (או שהוגדר SA אחר), יצירת resource נחסמת.",
-"לא קשור.",
+"webhook לא קשור לשגיאת `forbidden`. ההודעה אומרת שה-SA של ה-controller לא מורשה ליצור את המשאב, כלומר בעיית RBAC.",
 "השגיאה היא RBAC של Kubernetes.",
 "projects לא מגבילים waves."
 ],
@@ -2407,9 +2407,9 @@
 ],
 "y": [
 "ההרשאות כאן הן של Argo CD.",
-"Git לא השתנה.",
+"תוכן ה-repos לא השתנה, ו-Git לא קובע הרשאות UI. שגיאת permission denied אחרי שדרוג מצביעה על שינוי בהתנהגות RBAC.",
 "שדרוגים (במיוחד major) משנים לפעמים את ההתנהגות של RBAC. ה-notes מסבירים מה להוסיף.",
-"לא קשור."
+"לוגים של ה-kernel לא קשורים להרשאות של משתמשים ב-Argo CD. התשובה נמצאת ב-upgrade notes וב-`argocd-rbac-cm`."
 ],
 "x": "דוגמה: ב-Argo CD 3.0 השתנו הרשאות ברירת מחדל ל-logs ול-update/delete של sub-resources.",
 "lv": 0,
@@ -3177,7 +3177,7 @@
 ],
 "y": [
 "הפודים לא קשורים לגישה ל-Git.",
-"לא קשור.",
+"webhooks רק מזרזים refresh. `ComparisonError` אחרי החלפת token אומר ש-Argo CD עדיין משתמש ב-token הישן שבוטל.",
 "ה-token הישן בוטל, ו-Argo CD עדיין משתמש בו. מעדכנים את ה-Secret (או ב-ESO, מעדכנים במקור).",
 "מוגזם. מספיק לעדכן את ה-Secret."
 ],
@@ -3387,9 +3387,9 @@
 ],
 "y": [
 "PreSync קודם, אחר כך המשאבים הרגילים, ואחריהם PostSync, רק אם הכול Healthy. SyncFail רץ כשה-sync נכשל.",
-"הסדר הפוך.",
+"הסדר הפוך: PreSync תמיד רץ ראשון (למשל migration), אחריו המשאבים, ו-PostSync רק בסוף כשהכול Healthy.",
 "PreSync רץ לפני Sync, כמו שהשם אומר.",
-"הם רצים ברצף."
+"השלבים לא מתחילים במקביל. כל phase מחכה שהקודם יסתיים בהצלחה, ובתוך phase הסדר נקבע לפי sync waves."
 ],
 "x": "דוגמה ל-PostSync: smoke test או הודעה לצוות אחרי deploy.",
 "lv": 0,
@@ -4193,7 +4193,7 @@
 "y": [
 "הוא לא עושה rollback בעצמו, אלא אם כתבת Job כזה.",
 "הוא רץ אחרי הכשל, לא מונע אותו.",
-"לא.",
+"SyncFail hook לא משהה Applications אחרים. הוא Job או משאב שרץ רק כשה-sync של האפליקציה הזו נכשל.",
 "שימושי לשליחת התראה מותאמת, או לניקוי מצב חלקי אחרי כשל."
 ],
 "x": "ברוב המקרים notifications-controller מספיק להתראות. SyncFail hook מתאים לפעולות בתוך ה-cluster.",
@@ -4436,10 +4436,10 @@
 "C"
 ],
 "y": [
-"זה לא התחביר.",
-"אין פקודה כזו.",
+"אין קבוצת פקודות `argocd sync`. sync הוא פעולה על Application, ולכן התחביר הוא `argocd app sync <app>`.",
+"ב-CLI של Argo CD אין פקודת `app apply`. `apply` שייך ל-kubectl; ב-Argo CD מסנכרנים עם `argocd app sync`.",
 "אפשר להוסיף `--prune`, `--revision` או `--resource` כדי לסנכרן חלק מהמשאבים.",
-"אין פקודה כזו."
+"ב-CLI של Argo CD אין פקודת `app deploy`. הפקודה לסנכרון היא `argocd app sync`."
 ],
 "x": "ב-CI אפשר `argocd app sync` ואז `argocd app wait --health`, אבל ב-GitOps טהור ה-CI רק עושה commit.",
 "lv": 0,
@@ -4576,7 +4576,7 @@
 "D"
 ],
 "y": [
-"לא.",
+"`generate-token` לא מאפס סיסמת admin. הוא יוצר API token ל-account מקומי, בדרך כלל ל-CI עם הרשאות RBAC מצומצמות.",
 "לא קשור לגישה ל-cluster.",
 "Git credentials הם repository secrets.",
 "account מקומי עם capability `apiKey`, ו-RBAC מצומצם. מתאים ל-CI או לכלים."
@@ -4891,7 +4891,7 @@
 "D"
 ],
 "y": [
-"ידני ושביר.",
+"העתקה ידנית לכל cluster לא מתעדכנת אוטומטית, נוטה לסטיות בין clusters ולא עוברת דרך Git. ApplicationSet פותר את זה.",
 "עובד, אבל לא מתרחב ומוביל ל-drift בין clusters.",
 "עוקף GitOps ומאבד נראות.",
 "כל cluster חדש עם label מתאים מקבל את כל ה-addons אוטומטית."
@@ -5521,8 +5521,8 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"Dex לא מאזן עומסים, את זה עושים Service ו-Ingress. Dex מתרגם GitHub, LDAP או SAML ל-OIDC ש-Argo CD מבין.",
+"Dex לא שומר credentials של repos; הם נמצאים ב-Secrets של Argo CD. Dex אחראי רק על זהות משתמשים מול IdP חיצוני.",
 "Dex מתרגם פרוטוקולים שונים ל-OIDC ש-Argo CD מבין. אם ה-IdP כבר OIDC, אפשר לוותר עליו.",
 "Argo CD לא משתמש ב-Dex ל-state."
 ],
@@ -6609,7 +6609,7 @@
 "הוא יכול. זו המלצה, לא מגבלה.",
 "שינוי config לא צריך לבנות image מחדש. גם ה-audit של מה רץ בפרודקשן ברור יותר.",
 "Helm עובד בכל מבנה.",
-"אין מגבלה כזו."
+"ל-Git אין שום בעיה לשמור YAML לצד קוד. ההפרדה נועדה כדי ששינוי config לא יפעיל build, ושההיסטוריה וההרשאות יהיו נקיות."
 ],
 "x": "זו המלצה מתוך ה-best practices של Argo CD. אפשר להזכיר את ה-trade-off: יותר repos לנהל.",
 "lv": 0,
@@ -6784,7 +6784,7 @@
 "selective sync מחיל רק את המשאב שבחרת. שימושי לבדיקות, אבל משאיר את שאר האפליקציה OutOfSync.",
 "עוקף Git, ו-self-heal ידרוס.",
 "יוצר ניהול כפול.",
-"הוא נתמך."
+"selective sync נתמך: `--resource` ב-CLI או בחירת משאבים ב-UI מאפשרים לסנכרן רק חלק מה-Application."
 ],
 "x": "ב-UI אפשר לסמן משאבים ספציפיים בחלון ה-sync.",
 "lv": 0,
@@ -6851,7 +6851,7 @@
 "B"
 ],
 "y": [
-"אין דרישה כזו.",
+"אין דרישה לאות גדולה בשם תיקייה. ה-Git directory generator מתאים נתיבים לפי התבנית, והתיקייה החדשה לא מכילה `overlays/prod`.",
 "ה-generator מתאים רק נתיבים קיימים לפי התבנית. בלי התיקייה המלאה, לא נוצר Application.",
 "הם נבדקים לפי ה-requeue ו-webhooks, הרבה יותר מפעם ביום.",
 "זה כל היתרון של ה-generator: לא צריך."
@@ -7308,7 +7308,7 @@
 "y": [
 "ה-repo-server מוריד, לא ה-cluster.",
 "auto-sync לא קשור ל-rendering.",
-"הן נתמכות.",
+"Argo CD תומך בתלויות של Helm ומריץ `helm dependency build` בעצמו. מה שחסר הוא credentials ל-repo הפרטי.",
 "ה-repo-server מוריד את התלויות בעצמו. בלי credentials לאותו repo, הוא נכשל."
 ],
 "x": "אפשרות נוספת: לעשות vendor ל-charts (`charts/` ב-Git עם Chart.lock). rendering יציב בלי תלות ברשת.",
@@ -8532,8 +8532,8 @@
 ],
 "y": [
 "שדה ריק לעומת שדה חסר נראה כ-diff, אבל ה-API server לא שומר אותו. ניקוי ה-YAML פותר.",
-"לא קשור.",
-"לא קשור.",
+"ל-API server אין cache שגורם ל-diff הזה. ההבדל בין `resources: {}` לשדה חסר נמצא ב-manifest עצמו, ומנקים אותו ב-Git.",
+"שינוי replicas לא קשור ל-diff על `resources` ורק יוסיף diff חדש מול Git. מנקים את השדה הריק ב-YAML.",
 "יגרום ל-downtime ולא יפתור."
 ],
 "x": "גם Helm charts שמייצרים שדות ריקים גורמים לזה. כדאי להשתמש ב-`with` או `if` בתבניות.",
@@ -8776,7 +8776,7 @@
 "B"
 ],
 "y": [
-"אפשר להגדיר.",
+"אפשר להגדיר health check מותאם ב-Lua ב-`argocd-cm`. בלי הגדרה כזו, CR בלי status מוכר פשוט לא מקבל בדיקת health אמיתית.",
 "הסקריפט מקבל את האובייקט ומחזיר status (Healthy, Progressing, Degraded) והודעה.",
 "health checks נכתבים ב-Lua.",
 "ל-CRD אין probes."
@@ -9021,7 +9021,7 @@
 "D"
 ],
 "y": [
-"ה-sync הצליח.",
+"ה-sync הצליח, אז המשאב הוחל. `Unknown` אומר רק של-Argo CD אין health check שיודע לקרוא את ה-status של ה-kind הזה.",
 "אז ה-sync היה נכשל עם resource לא מוכר.",
 "sync עבד, אז ה-cluster נגיש.",
 "בלי health check, Argo CD לא יודע לפרש את ה-status. מוסיפים Lua check, או מקבלים Unknown."
@@ -9686,7 +9686,7 @@
 "B"
 ],
 "y": [
-"אפשר.",
+"לא נכון: Argo CD תומך בדריסת values של Helm דרך `valueFiles`, `values` או `parameters` ב-source של ה-Application.",
 "אפשר להפנות לקבצי values ב-repo, לכתוב values inline, או לדרוס פרמטרים בודדים.",
 "זו לא הדרך המקובלת.",
 "שכפול תבניות בשביל סביבות הוא anti-pattern."
@@ -9934,7 +9934,7 @@
 "שימושי ב-CI שצריך לדעת מתי ה-deploy הסתיים לפני שמריצים בדיקות.",
 "זה לא מה שהפקודה עושה.",
 "לא מכבה שום דבר.",
-"אין approval."
+"אין שלב אישור ב-UI של Argo CD. `app wait --health` רק מחכה שהאפליקציה תגיע ל-Healthy, או נכשל אחרי timeout."
 ],
 "x": "תזכיר את המתח בין GitOps 'טהור' לבין pipeline שמחכה לסיום. לפעמים זה הכרחי לבדיקות e2e.",
 "lv": 0,
@@ -10526,9 +10526,9 @@
 "B"
 ],
 "y": [
-"יש הבדל מהותי.",
+"הם לא זהים: refresh רק משווה מחדש את Git מול ה-cluster ומעדכן את המצב, ו-sync באמת מחיל שינויים.",
 "refresh בטוח: הוא רק מעדכן את התצוגה. sync משנה משאבים.",
-"הפוך.",
+"הפוך: refresh רק משווה, וזה בטוח להריץ תמיד. sync הוא הפעולה שמשנה משאבים ב-cluster.",
 "refresh לא נוגע ב-pods."
 ],
 "x": "ב-troubleshooting: refresh קודם, כדי לוודא שהבעיה עדכנית, ורק אז sync.",
@@ -12067,7 +12067,7 @@
 ],
 "y": [
 "שימושי למשאבים רגישים (PVC, namespace). גם אם הוסרו מ-Git, הם לא יימחקו.",
-"ההפך.",
+"ההפך: `Prune=false` מגן על המשאב ממחיקה, גם אם הוא הוסר מ-Git. Argo CD רק יסמן אותו כ-OutOfSync.",
 "המשאב עדיין מוצג ב-diff.",
 "ה-annotation חל רק על המשאב שעליו הוא כתוב."
 ],
@@ -12276,10 +12276,10 @@
 "C"
 ],
 "y": [
-"לא נחוץ.",
+"התקנה מחדש מיותרת ומסוכנת. אפשר לכתוב hash חדש של bcrypt ל-`argocd-secret` ולשמור את כל ה-Applications.",
 "Redis לא מחזיק סיסמאות.",
 "מחשבים bcrypt לסיסמה חדשה ומעדכנים `admin.password` ב-`argocd-secret`.",
-"אין סיסמה כזו."
+"אין סיסמת ברירת מחדל `password`. הסיסמה הראשונית נוצרת אקראית ב-`argocd-initial-admin-secret`, וזה בדיוק ה-Secret שנמחק."
 ],
 "x": "תזכיר את ה-FAQ הרשמי. שאלה מעשית שמראה שאתה יודע להתאושש בלי לשבור.",
 "lv": 0,
@@ -13607,8 +13607,8 @@
 ],
 "y": [
 "רק ה-syncs של ה-Application.",
-"לא.",
-"לא.",
+"`app history` לא מציג restarts של pods. הוא מציג את ה-syncs שבוצעו, עם revision ו-ID, כדי לאפשר rollback.",
+"ה-audit log של ה-cluster נמצא ב-API server של Kubernetes. `app history` מציג רק את היסטוריית ה-syncs של ה-Application.",
 "כל רשומה היא sync שבוצע. אפשר לחזור אליה עם `argocd app rollback` כש-auto-sync כבוי."
 ],
 "x": "ב-GitOps, ההיסטוריה האמיתית היא Git. ה-history של Argo CD מראה מה הוחל ומתי.",
@@ -13676,7 +13676,7 @@
 "C"
 ],
 "y": [
-"אין המרה.",
+"Argo CD לא ממיר Kustomize ל-Helm. הוא מזהה `kustomization.yaml` ומריץ `kustomize build` ישירות ב-repo-server.",
 "Kustomize נתמך ישירות.",
 "אין צורך בהגדרה מיוחדת. אפשר גם לדרוס image tags, namePrefix ועוד דרך שדה `kustomize` ב-Application.",
 "Kustomize מובנה ב-repo-server."
@@ -14693,7 +14693,7 @@
 "y": [
 "זה לא מה שהמונח אומר. מצב בלי UI הוא core install.",
 "היעד הוא `https://kubernetes.default.svc`. Argo CD משתמש ב-SA שלו בתוך ה-cluster.",
-"אין דבר כזה.",
+"`in-cluster` אינו cluster מיוחד ל-ApplicationSets. זה השם ברירת המחדל של ה-cluster ש-Argo CD עצמו רץ בו (`kubernetes.default.svc`).",
 "ל-Argo CD אין DB נפרד."
 ],
 "x": "אפשר לכבות את in-cluster (`cluster.inClusterEnabled: \"false\"`) כש-Argo CD מנהל רק clusters אחרים.",
@@ -15148,7 +15148,7 @@
 "y": [
 "בעיית credentials נותנת שגיאת authentication.",
 "project מגביל מאילו repos מותר לפרוס. מוסיפים את ה-repo, או משתמשים ב-repo שמותר.",
-"אין מושג כזה.",
+"אין ל-namespace מושג של 'מלא' שגורם לשגיאה הזו. ההודעה אומרת במפורש שה-repo לא ברשימת `sourceRepos` של ה-project.",
 "אפשר כמה repos."
 ],
 "x": "אפשר wildcards: `https://github.com/my-org/*`. ותזהיר מ-`*` שמבטל את ההגבלה לגמרי.",
@@ -15357,7 +15357,7 @@
 ],
 "y": [
 "גרסה לא קשורה ל-404 של ה-index.",
-"התמיכה קיימת.",
+"Argo CD עדיין תומך ב-Helm repos. 404 על `index.yaml` אומר שהקובץ כבר לא נמצא ב-URL שהוגדר.",
 "Argo CD מוריד את `index.yaml` מה-URL שהוגדר. 404 אומר שהקובץ לא שם יותר.",
 "Docker Hub לא קשור ל-Helm repo על GitHub Pages."
 ],
@@ -16127,8 +16127,8 @@
 ],
 "y": [
 "מציג שם, כתובת, גרסה ומצב החיבור לכל cluster.",
-"אין פקודה כזו.",
-"אין דגל כזה.",
+"אין פקודת `argocd proj clusters`. project מגדיר יעדים מותרים, אבל את ה-clusters הרשומים מציגים עם `argocd cluster list`.",
+"ל-`argocd app list` אין דגל `--clusters`. הוא מציג Applications; את ה-clusters מציגים עם `argocd cluster list`.",
 "clusters הם Secrets, לא resource בשם cluster."
 ],
 "x": "אם cluster מופיע עם `Unknown` status, לבדוק נגישות רשת ו-credentials.",
@@ -16582,7 +16582,7 @@
 ],
 "y": [
 "עם SSO כל פעולה משויכת לאדם, והסרת עובד נעשית ב-IdP. admin משותף עוקף את כל זה.",
-"אין דרישה כזו.",
+"שדרוג של Argo CD לא דורש את משתמש admin. הסיבה לכבות אותו היא סיסמה סטטית משותפת שקשה לבקר ולהחליף.",
 "שניהם יכולים לעבוד יחד.",
 "Argo CD הוא קוד פתוח, בלי רישוי."
 ],
@@ -16864,7 +16864,7 @@
 "SSO לא תלוי בזה לטווח ארוך.",
 "Redis הוא cache, אבל רכיבים תלויים בו לתקשורת. בלעדיו ההשוואות לא עובדות. מחזירים אותו לחיים, ואין אובדן נתונים קבוע.",
 "Redis לא גורם למחיקת משאבים.",
-"Git לא מושפע."
+"Redis הוא רק cache, ו-Git לא מושפע מנפילה שלו. התוכן ב-repos נשאר שלם, וההשוואות חוזרות לעבוד כש-Redis חוזר."
 ],
 "x": "בפרודקשן: התקנת HA עם Redis HA (Sentinel). זה ההבדל בין דקה של תקלה לשעה.",
 "lv": 0,
@@ -17038,7 +17038,7 @@
 "y": [
 "SealedSecret מוצפן למפתח הציבורי של controller מסוים. cluster חדש צריך את המפתח הישן, או הצפנה מחדש.",
 "Argo CD מחיל את ה-SealedSecret כמו שהוא.",
-"אין תפוגה כזו.",
+"ל-SealedSecret אין תאריך תפוגה. הוא פשוט מוצפן למפתח של ה-controller הישן, ול-controller החדש אין את המפתח הפרטי.",
 "קידוד לא הבעיה."
 ],
 "x": "DR: לגבות את מפתח ה-controller, אחרת שחזור cluster דורש הצפנה מחדש של כל הסודות.",
@@ -17668,7 +17668,7 @@
 "y": [
 "אם הפרמטר לא קיים, ה-placeholder לא מוחלף. בודקים אילו פרמטרים ה-generator מספק.",
 "restart לא יוסיף פרמטר שלא קיים.",
-"אין דרישה כזו.",
+"אין דרישה לאותיות גדולות ב-placeholders. ה-placeholder לא הוחלף כי ל-Cluster generator אין פרמטר בשם `cluster`, אלא `name`.",
 "templates מבוססים בדיוק על placeholders."
 ],
 "x": "עם `goTemplate: true` אפשר `missingkey=error`, כדי שפרמטר חסר יגרום לשגיאה ולא לשם שבור.",
@@ -18227,7 +18227,7 @@
 ],
 "y": [
 "project לא קשור.",
-"הוא יכול.",
+"Argo CD יכול לנהל namespaces, וגם ליצור אותם עם `CreateNamespace=true`. הכשל נובע מה-namespace הישן שעדיין נמחק.",
 "namespace בתהליך מחיקה לא מאפשר יצירה מחדש. בודקים אילו משאבים (לרוב CRs של operator שכבר לא קיים) מחזיקים אותו.",
 "שם ארוך היה נכשל בוולידציה."
 ],
@@ -18401,7 +18401,7 @@
 "D"
 ],
 "y": [
-"לא.",
+"`appset get` לא מציג צריכת CPU. הוא מציג את ה-Applications שנוצרו ואת ה-conditions; צריכת משאבים בודקים במטריקות.",
 "זה לא מה שהפקודה מציגה.",
 "היא מציגה הרבה יותר.",
 "conditions מראים אם ה-generator נכשל ולמה (parse error, הרשאות SCM)."
@@ -18821,7 +18821,7 @@
 "B"
 ],
 "y": [
-"לא קשור.",
+"Argo Rollouts לא מארח repositories של Git. הוא controller ל-progressive delivery: canary ו-blue-green עם ניתוח מטריקות.",
 "Rollout CRD מחליף Deployment ומאפשר שלבים (10%, 50%), בדיקת מטריקות ו-abort אוטומטי.",
 "יש לו dashboard, אבל זה לא הערך.",
 "זה ApplicationSet."
@@ -19558,7 +19558,7 @@
 "y": [
 "זה מקרה פרטי אפשרי, לא ההגדרה.",
 "זה לא קשור ל-images.",
-"זה לא הדפוס.",
+"הרצת כמה מופעים של Argo CD באותו namespace היא לא app of apps. הדפוס הוא Application אב אחד שה-manifests שלו הם Applications אחרים.",
 "ה-parent מצביע על תיקייה עם Applications. Argo CD יוצר אותם, וכל אחד מנהל את האפליקציה שלו. ככה עושים bootstrap ל-cluster."
 ],
 "x": "תשווה ל-ApplicationSet: app of apps הוא ידני ומפורש, ApplicationSet מייצר Applications מתבנית.",
@@ -19661,7 +19661,7 @@
 "C"
 ],
 "y": [
-"לא.",
+"`argocd app logs` לא מציג commits. הוא מזרים לוגים מה-pods של ה-Application; היסטוריית commits רואים ב-Git.",
 "אלה לוגים של הפודים באפליקציה.",
 "נוח כשאין kubectl ל-cluster היעד. ההרשאה נקבעת ב-RBAC של Argo CD.",
 "זה `argocd app history`."
@@ -21483,8 +21483,8 @@
 "y": [
 "זה reconciliation timeout.",
 "לדוגמה: deny על prod בשישי-שבת, או allow רק בשעות עבודה. אפשר להתיר sync ידני גם בחלון deny.",
-"זה history.",
-"זה wave delay."
+"היסטוריית ה-sync מוצגת ב-History של ה-Application. sync windows הם חוקי זמן ב-AppProject שקובעים מתי מותר לסנכרן.",
+"ההמתנה בין waves היא הגדרה אחרת של ה-controller. sync windows הם טווחי זמן שמתירים או חוסמים sync ל-Applications מסוימים."
 ],
 "x": "מקרה שימוש: change freeze בעונת חגים. ב-GitOps זה נאכף במערכת, לא רק בנוהל.",
 "lv": 0,
@@ -21553,7 +21553,7 @@
 "y": [
 "project לא קובע איזו revision נפרסת.",
 "HEAD פירושו 'כל מה שב-main'. production מקובע לגרסה מסוימת, והשינוי נעשה במכוון.",
-"לא פתרון.",
+"מחיקת main לא פותרת כלום ושוברת את כל מי שעובד מולו. הפתרון הוא לקבע את production ל-tag או SHA ולקדם ב-PR.",
 "Argo CD עדיין יגיב ל-webhooks או ל-refresh."
 ],
 "x": "דפוס נפוץ: staging עוקב אחרי main, production מצביע על tag שמתעדכן ב-PR.",
@@ -22112,7 +22112,7 @@
 ],
 "y": [
 "ולידציה עדיין מתבצעת.",
-"RBAC חל תמיד.",
+"`ServerSideApply` לא עוקף RBAC. כל בקשה עדיין עוברת authorization; מה שמשתנה הוא איפה מתבצע ה-merge ומי הבעלים של כל שדה.",
 "rendering עדיין ב-repo-server.",
 "SSA מקטין התנגשויות עם controllers אחרים, ולא שומר last-applied annotation ענק."
 ],
@@ -22183,7 +22183,7 @@
 "y": [
 "labels הם הבסיס של ה-Cluster generator. cluster חדש עם labels נכונים מקבל אוטומטית את מה שהוא צריך.",
 "labels לא קובעים סדר, אלא אם משתמשים ב-progressive syncs.",
-"אין מחיקה כזו.",
+"Argo CD לא מוחק cluster secrets בלי labels. ה-labels נועדו לכך ש-generators ו-selectors יוכלו לבחור קבוצות של clusters.",
 "labels לא קשורים להצפנה."
 ],
 "x": "דוגמה מעשית: addon של monitoring לכל `env=prod`, ו-addon של cost tools רק ל-`region=eu`.",
@@ -22881,7 +22881,7 @@
 "D"
 ],
 "y": [
-"אפשר לשלב.",
+"אפשר לשלב: `syncOptions` ב-Application חל על כולה, ו-annotation על משאב בודד דורס את ההגדרה רק עבורו.",
 "הם חלים על כל המשאבים.",
 "annotations עובדים עם כל סוג.",
 "למשל `ServerSideApply=true` לכל האפליקציה, או `Prune=false` רק ל-PVC מסוים."
@@ -24212,7 +24212,7 @@
 ],
 "y": [
 "prune עובד גם ב-Applications שנוצרו.",
-"אין מגבלה כזו.",
+"ל-clusters של production אין מגבלה על מחיקה דרך ה-API. כיבוי prune נועד להקטין את הנזק אם generator שגוי מוחק הרבה בבת אחת.",
 "ApplicationSet מכפיל שגיאות: שינוי אחד משפיע על הרבה clusters. בפרודקשן מקטינים את ה-blast radius.",
 "זה לא שיקול מהירות."
 ],
@@ -24283,7 +24283,7 @@
 "y": [
 "דילוג על גרסאות עלול לפספס מיגרציות. staging עם אותן Applications חושף שינויים בהתנהגות.",
 "מוחק state ועלול למחוק Applications.",
-"לא שיטה.",
+"לשדרג רק את Redis ולחכות חודש זו לא שיטת שדרוג. הרכיבים מותאמים זה לזה לפי גרסה, ושדרוג חלקי יוצר חוסר התאמה.",
 "סיכון גבוה, ו-Argo CD מנהל את כל ה-clusters."
 ],
 "x": "אם Argo CD מנהל את עצמו, השדרוג הוא commit. ה-rollback הוא revert, ותמיד יש runbook ידני.",
@@ -25963,7 +25963,7 @@
 "y": [
 "בודקים מה ייווצר לפני merge, מצמצמים עם selectors, ומרחיבים בהדרגה, עם repo-server מותאם.",
 "זה מגדיל את העומס.",
-"לא מעשי.",
+"Argo CD אחד לכל Application לא מעשי: מאות התקנות לתחזק. הבעיה היא קצב היצירה, ופותרים אותה ב-filters ובהתגלגלות הדרגתית.",
 "בלי limits, ה-repo-server יכול להשפיע על שכנים ב-node."
 ],
 "x": "תזכיר `--dry-run` ו-`appset generate` כחלק מ-CI על ה-repo של ה-ApplicationSets.",
@@ -26976,9 +26976,9 @@
 "B"
 ],
 "y": [
-"אין העברה כזו.",
+"Argo CD לא מעביר Applications ל-project אחר. ב-policy `sync`, Application שה-generator כבר לא מייצר נמחק.",
 "ב-policy ברירת המחדל, Application שכבר לא נוצר נמחק. עם finalizer, גם המשאבים.",
-"אין שלב אישור.",
+"אין שלב אישור ב-UI. ה-ApplicationSet controller פועל לבד, ולכן כדאי `create-update` או preserve כשמחיקה מסוכנת.",
 "זה קורה רק עם `create-only` או `create-update`."
 ],
 "x": "לכן שינוי ב-selectors או labels בפרודקשן הוא שינוי מסוכן, וצריך review מיוחד.",
@@ -27119,7 +27119,7 @@
 "לא כדאי לסמוך על payloads בלי אימות.",
 "בלי secret, כל אחד יכול לשלוח payload ולגרום ל-refresh. עם secret, Argo CD בודק חתימה.",
 "URL ארוך הוא לא אימות.",
-"לא רלוונטי."
+"IPv6 לא מאמת את מקור הבקשה. האבטחה מגיעה מ-shared secret ש-GitHub חותם איתו כל payload, ו-Argo CD בודק את החתימה."
 ],
 "x": "webhook לא מבצע sync בעצמו, רק refresh. גם כך, אימות מונע עומס מכוון.",
 "lv": 1,
@@ -28099,7 +28099,7 @@
 "Argo CD לא עושה rollback אוטומטי.",
 "לא, אלא אם יש retry, וגם אז מוגבל.",
 "PostSync רץ אחרי ה-deploy. כשל מסמן את ה-operation כנכשל, ואפשר להפעיל SyncFail hook, אבל אין rollback אוטומטי.",
-"לא."
+"Argo CD לא מוחק משאבים בגלל PostSync שנכשל. הוא מסמן את ה-sync כנכשל ומשאיר את הגרסה החדשה רצה."
 ],
 "x": "ל-rollback אוטומטי לפי מטריקות משתמשים ב-Argo Rollouts עם AnalysisTemplate.",
 "lv": 1,
@@ -28728,8 +28728,8 @@
 "y": [
 "terminal ב-UI הוא כמו `kubectl exec`. מפעילים אותו בזהירות ונותנים הרשאה רק למי שצריך.",
 "הוא עובד עם SSO.",
-"אין רישוי.",
-"לא."
+"ה-web terminal חלק מ-Argo CD בקוד פתוח ולא דורש רישיון. הוא כבוי כברירת מחדל כי הוא נותן shell לתוך pods.",
+"ה-terminal עובד עם pods של Linux רגילים, לא רק Windows. הוא כבוי כברירת מחדל כי זו גישת shell, ודורש הפעלה והרשאה ב-RBAC."
 ],
 "x": "הקשר ל-audit: גם exec דרך Argo CD נרשם, אבל עדיף להגביל אותו לסביבות שאינן prod.",
 "lv": 1,
@@ -29356,10 +29356,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"כיבוי prune נעשה עם `Prune=false`. `Validate=false` רק מדלג על בדיקת schema בזמן apply.",
 "health לא קשור.",
 "בדרך כלל ולידציה תופסת שגיאות. כיבוי מוצדק רק למשאבים עם schema שהכלי לא מכיר.",
-"RBAC לא מושפע."
+"`Validate=false` לא נוגע ב-RBAC. הוא רק מדלג על בדיקת ה-schema בצד הלקוח (`--validate=false`); ה-authorization ממשיך כרגיל."
 ],
 "x": "להשתמש ברמת משאב (annotation), לא ברמת האפליקציה כולה.",
 "lv": 1,
@@ -30127,8 +30127,8 @@
 ],
 "y": [
 "goTemplate עם תנאי על label מאפשר מדיניות שונה לכל סביבה, בלי ApplicationSets נפרדים.",
-"אין מגבלה כזו.",
-"אין דרישה כזו.",
+"production יכול להשתמש ב-auto-sync. ההבדל בין הסביבות הוא בחירה של מדיניות וסיכון, לא מגבלה טכנית.",
+"template תקין גם עם `syncPolicy` זהה לכל הסביבות. ההבדל נובע מהרצון להיות זהירים יותר בפרודקשן, לא מדרישה של ה-schema.",
 "זה לא הנימוק המרכזי."
 ],
 "x": "ב-ApplicationSet יש גם `templatePatch` שמאפשר שינויים מותנים בתבנית.",
@@ -30863,7 +30863,7 @@
 "y": [
 "אין אפשרות כזו, וזה רק יסתיר את הבעיה.",
 "abort מחזיר את התעבורה לגרסה היציבה. ה-Rollout נשאר Degraded כי Git עדיין מצביע על הגרסה השבורה.",
-"לא קשור.",
+"restart ל-Argo CD server לא משנה את מצב ה-Rollout. ה-Application נשאר Degraded כל עוד Git מצביע על הגרסה שנכשלה.",
 "יגרום ל-downtime."
 ],
 "x": "תסביר את ההבדל בין stable ל-canary, ואיך abort ו-promote עובדים יחד עם GitOps.",
@@ -31739,7 +31739,7 @@
 "core מריץ רק את ה-controller וה-repo-server. פחות רכיבים, פחות שטח תקיפה, ומתאים ל-edge או לסביבות קטנות.",
 "הביצועים לא ההבדל המרכזי.",
 "core עדיין רץ על Kubernetes.",
-"UI תומך ב-SSO."
+"ה-UI תומך ב-SSO דרך Dex או OIDC. core mode נועד להקטין את מספר הרכיבים ואת שטח התקיפה, לא לעקוף מגבלה."
 ],
 "x": "אפשר להשוות ל-Flux, שהוא 'core-only' מלכתחילה.",
 "lv": 1,
@@ -31913,7 +31913,7 @@
 "y": [
 "Argo CD עובד גם בלי.",
 "projects עדיין נדרשים.",
-"SSO לא קשור.",
+"SSO מוגדר ב-`argocd-cm` ולא תלוי ב-Application כלשהו. ה-root Application קיים כדי שכל הפלטפורמה תותקן מ-Git.",
 "אחרי התקנת Argo CD, Application אחד מצביע על תיקייה עם כל ה-Applications או ApplicationSets. משחזרים cluster מ-Git."
 ],
 "x": "זה גם בסיס ל-disaster recovery: cluster חדש, התקנת Argo CD, Application אחד, וכל הפלטפורמה חוזרת.",
@@ -32404,7 +32404,7 @@
 "עם repo-creds, כל repo חדש תחת `https://github.com/org` משתמש באותם credentials בלי הגדרה נוספת.",
 "clusters הם secret-type נפרד.",
 "repository יכול להיות Git או Helm.",
-"שניהם פעילים."
+"שניהם פעילים ונתמכים. `repository` מגדיר credentials ל-repo אחד, ו-`repo-creds` הוא תבנית שחלה על כל repo תחת URL prefix."
 ],
 "x": "בארגון עם הרבה repos, repo-creds חוסך הרבה הגדרות.",
 "lv": 1,
@@ -32927,9 +32927,9 @@
 ],
 "y": [
 "Argo CD רושם events עם המשתמש שהפעיל sync. Git מראה איזה commit נפרס ומה השתנה בו.",
-"הוא כן.",
+"Argo CD כן רושם את המשתמש שהפעיל sync, ב-events וב-history של ה-Application. יחד עם Git רואים מה השתנה.",
 "Redis לא שומר היסטוריה.",
-"לא שם."
+"syslog של ה-node לא מתעד פעולות של משתמשים ב-Argo CD. המידע נמצא ב-events וב-history של Argo CD, ובהיסטוריה של Git."
 ],
 "x": "ל-retention ארוך: לייצא events ולוגים של argocd-server ל-SIEM.",
 "lv": 1,
@@ -32964,7 +32964,7 @@
 "rollout restart לא מוחק.",
 "Argo CD לא חוסם kubectl.",
 "rollout restart מוסיף annotation ל-template. אם self-heal מחזיר אותו, ה-rollout כבר התחיל. עדיף להשתמש ב-action המובנה `restart` של Argo CD.",
-"לא קשור."
+"`Replace=true` לא קשור לשאלה. `rollout restart` רק מוסיף annotation ל-pod template, וזה עובד בלי לשנות את אופן ה-sync."
 ],
 "x": "תזכיר את resource actions ב-UI (restart, pause, resume). הן עובדות בלי לעקוף את המעקב.",
 "lv": 1,
@@ -33698,7 +33698,7 @@
 "y": [
 "כל סביבה היא תיקייה או קובץ ב-Git. promotion הוא PR שמעדכן tag. יש audit ו-review.",
 "branch לכל סביבה נחשב anti-pattern: merges מסובכים ו-drift בין סביבות.",
-"עוקף את Git.",
+"העתקת משאבים חיים מ-staging עוקפת את Git: אין review, אין היסטוריה, ו-Argo CD יראה drift מול מה שכתוב ב-repo.",
 "אין פיצ'ר כזה מובנה."
 ],
 "x": "תזכיר כלים שעוזרים: Argo CD Image Updater, Kargo, או job ב-CI שפותח PR אוטומטי.",
@@ -34291,9 +34291,9 @@
 "D"
 ],
 "y": [
-"אין הצפנה כזו.",
+"Argo CD לא מצפין diffs עם סיסמת admin. הוא מסתיר את הערכים של Secrets ב-diff וב-UI ומראה רק ששדה השתנה.",
 "Secrets מופיעים, רק עם ערכים מוסתרים.",
-"לא.",
+"אין צורך ב-kubectl כדי לראות diff של Secret. `argocd app diff` מציג אותו, רק עם הערכים מוסתרים.",
 "ה-diff מראה ששדה השתנה, אבל לא את הערך עצמו."
 ],
 "x": "ההסתרה חלה רק על kind Secret. סיסמה ב-ConfigMap תופיע בגלוי.",
@@ -34781,7 +34781,7 @@
 "D"
 ],
 "y": [
-"לא.",
+"פקודות `argocd admin` לא מריצות load tests. הן בודקות את ה-config של Argo CD (ConfigMaps, RBAC) כדי לתפוס שגיאות לפני שהן שוברות משהו.",
 "זה תפקיד של kubeconform.",
 "זה לא מה שהפקודה עושה.",
 "שגיאה ב-argocd-cm או ב-RBAC יכולה לשבור התחברות או sync. בדיקה מראש חוסכת תקלה."
@@ -35237,8 +35237,8 @@
 ],
 "y": [
 "API ו-CLI עדיין עובדים.",
-"לא קשור.",
-"נוהל לא אוכף.",
+"תדירות ה-reconciliation קובעת כל כמה זמן Argo CD בודק את Git. היא לא חוסמת sync, וגם לא sync ידני.",
+"מייל תזכורת הוא נוהל ולא אכיפה, וכמו שראינו מישהו עדיין יכול ללחוץ Sync. sync window מסוג deny חוסם את זה במערכת.",
 "חלון deny בלי manualSync חוסם גם sync ידני. האכיפה במערכת, לא בנוהל."
 ],
 "x": "אפשר לשלב עם RBAC: רק role מסוים רשאי לעקוף בחירום.",
@@ -35553,8 +35553,8 @@
 "y": [
 "לא קשור למהירות.",
 "בלי impersonation, ה-controller מחיל הכול עם הרשאות רחבות. עם impersonation, אפליקציה של צוות מוגבלת לצוות שלה.",
-"Git לא קשור.",
-"לא."
+"impersonation לא משנה את ההתחברות ל-Git. הוא קובע עם איזה ServiceAccount ה-controller מחיל משאבים ב-cluster.",
+"impersonation לא משפר ביצועי UI. היתרון שלו הוא אבטחה: כל אפליקציה מסונכרנת עם הרשאות מצומצמות משלה."
 ],
 "x": "נושא מתקדם של multi-tenancy. מראה שאתה חושב על blast radius.",
 "lv": 1,
@@ -35971,8 +35971,8 @@
 "D"
 ],
 "y": [
-"לא קשור.",
-"זה לא הנימוק.",
+"אין דרישה שה-CRDs יגיעו מספק Git אחר. אפשר לשמור אותם באותו repo; ההפרדה היא ל-Application נפרד בשביל סדר והגנה ממחיקה.",
+"ההפרדה לא נועדה לביצועי ה-UI. הסיבה היא שמחיקת CRD מוחקת את כל ה-CRs, ושה-CRDs צריכים להיות קיימים לפניהם.",
 "הוא יכול, עם waves.",
 "מחיקה בטעות של Application שמחזיק CRDs מוחקת את כל ה-CRs ב-cluster. הפרדה מגינה, ומאפשרת סדר נכון."
 ],
@@ -36848,7 +36848,7 @@
 "y": [
 "ה-webhook רשום, אבל ה-pods שלו עוד עולים. משאבים שעוברים דרכו נכשלים. waves (operator קודם) ו-retry פותרים.",
 "תעודה שפגה נותנת שגיאת x509.",
-"Git לא קשור.",
+"merge conflict ב-Git היה מונע מ-Argo CD לייצר manifests בכלל. השגיאה כאן מה-API server: ה-webhook רשום אבל ה-pods שלו לא מוכנים.",
 "הגרסה לא ההסבר."
 ],
 "x": "זו בעיה קלאסית ב-sync של operator ו-CRs יחד. waves עם health checks מטפלים בה.",
@@ -37056,8 +37056,8 @@
 "D"
 ],
 "y": [
-"מסוכן ומיותר.",
-"לא נכון.",
+"פתיחת כל ה-UI לאינטרנט חושפת את ה-login וה-API בלי צורך. מספיק לחשוף את `/api/webhook` עם secret.",
+"webhooks עובדים גם עם repos פרטיים. הבעיה היא שה-ALB פנימי ו-GitHub לא מגיע אליו, לא סוג ה-repo.",
 "אז שום דבר לא יסתנכרן.",
 "אפשר path ציבורי רק ל-`/api/webhook` עם אימות secret, או לוותר על webhooks ולקצר את ה-polling בזהירות."
 ],
@@ -37758,7 +37758,7 @@
 "y": [
 "זה לא קשור לסדר ה-generators.",
 "ה-policy נוגעת ל-Applications, לא ל-sync שלהם.",
-"אין approval.",
+"אין שלב אישור ידני ב-ApplicationSet. `create-only` אומר שה-controller יוצר Applications ואחר כך לא מעדכן ולא מוחק אותם.",
 "שימושי כשרוצים יצירה אוטומטית, אבל אחר כך כל Application מנוהל ידנית. `create-update` מעדכן ולא מוחק. `sync` עושה הכול."
 ],
 "x": "ב-production זהירים: `create-update` מונע מחיקה בטעות של Applications כשמשהו משתנה ב-generator.",
@@ -39017,9 +39017,9 @@
 ],
 "y": [
 "לדוגמה Events, PolicyReports או kinds שנוצרים בכמויות. ה-controller לא צופה בהם.",
-"זה RBAC.",
+"הסתרת Applications ממשתמשים נעשית ב-RBAC (`argocd-rbac-cm`). `resource.exclusions` עוצר את ה-controller מלצפות ב-kinds מסוימים.",
 "זה sync windows.",
-"זה לא תפקידו."
+"`resource.exclusions` לא קשור לקבצים ב-Git. הוא מוציא kinds של משאבים ב-cluster מה-watch של ה-controller."
 ],
 "x": "משאב מוחרג לא ינוהל גם אם הוא ב-Git. לא להחריג kinds שאתם פורסים.",
 "lv": 1,
@@ -39927,8 +39927,8 @@
 ],
 "y": [
 "replace מחליף את כל האובייקט במקום merge. לפעמים זה המצב היחיד שעובד, אבל ל-Deployment או PVC זה מסוכן.",
-"האופציה קיימת.",
-"אין מגבלה כזו.",
+"האופציה לא הוסרה ב-2.0 והיא קיימת גם היום, גם כ-sync option של ה-Application וגם כ-annotation על משאב בודד.",
+"`Replace=true` לא מוגבל ל-Secrets, ו-Secrets אפשר לעדכן ב-patch רגיל. האופציה נועדה למשאבים ש-apply לא מצליח לעדכן.",
 "זה לא מהיר יותר, ויש סיכון."
 ],
 "x": "עדיף ServerSideApply כשאפשר. Replace רק כשאין ברירה, ובצורה ממוקדת עם annotation על המשאב.",
@@ -40066,7 +40066,7 @@
 "B"
 ],
 "y": [
-"אין mirroring.",
+"ה-SCM Provider generator לא מבצע mirroring בין GitHub ל-GitLab. הוא רק סורק ארגון ומייצר Application לכל repo שמתאים.",
 "סורק ארגון ב-GitHub או GitLab ומייצר Application לכל repo שעומד בתנאים (למשל קובץ מסוים).",
 "SSO הוא Dex או OIDC.",
 "ה-generator קורא, הוא לא כותב."
@@ -40979,7 +40979,7 @@
 "Argo CD מגיע עם UI עשיר ו-multi-cluster מרכזי. Flux מודולרי יותר ונשען על CRDs (GitRepository, Kustomization, HelmRelease).",
 "אלה פרויקטים נפרדים של CNCF.",
 "שניהם תומכים בשניהם.",
-"שניהם pull."
+"שניהם עובדים ב-pull: controller בתוך ה-cluster מושך מ-Git. ההבדל הוא ב-UI ובמבנה (Applications מול CRDs מודולריים)."
 ],
 "x": "תענה בלי 'מלחמת דת': הבחירה תלויה בצוות. UI ו-multi-tenant מול גישה מבוססת CRDs.",
 "lv": 1,
@@ -41151,10 +41151,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"actions לא מופעלים אוטומטית לפי מטריקות. משתמש מפעיל אותם ידנית, ו-auto-sync מופעל לפי שינויים ב-Git ולא לפי מטריקות.",
 "actions כפופים ל-RBAC של Argo CD.",
 "actions מובנים (restart ל-Deployment, resume ל-Rollout), ואפשר להוסיף actions מותאמים ל-CRDs.",
-"לא קשור ל-Git."
+"resource actions לא קשורים ל-Git hooks. הם פעולות שמריצים על משאב חי מה-UI או ה-CLI, כמו restart או resume."
 ],
 "x": "דוגמה: action של promote ל-Argo Rollout ישירות מה-UI של Argo CD.",
 "lv": 1,
@@ -42517,7 +42517,7 @@
 ],
 "y": [
 "ה-repo-server רץ בקונטיינר. ה-trust store של ה-node לא רלוונטי.",
-"הם נתמכים.",
+"CA פרטי נתמך: מוסיפים את תעודת ה-CA ל-`argocd-tls-certs-cm` תחת שם ה-host, ו-Argo CD סומך עליה בחיבור.",
 "זה עוקף אימות TLS. מתאים רק לבדיקה.",
 "Argo CD יסמוך על התעודה כשהוא מתחבר ל-host הזה."
 ],
@@ -43708,7 +43708,7 @@
 "y": [
 "SSO עובר דרך argocd-server ו-Dex.",
 "זה לא שיקול ביצועים.",
-"לא קשור.",
+"ה-egress של ה-repo-server לא קשור ל-websockets של ה-UI, שעוברים דרך argocd-server. הסיכון הוא שתוקף ינצל את הגישה לרשת ול-metadata.",
 "ה-repo-server מעבד תוכן מכל repo. NetworkPolicy שמגבילה egress לשרתי Git ו-registries מקטינה את הסיכון."
 ],
 "x": "Argo CD עצמו מפרסם NetworkPolicies לדוגמה. הזכרה שלהן מראה תשומת לב לאבטחה.",
@@ -45564,7 +45564,7 @@
 "אין שכבה אחת שמספיקה: Git מגן על השער, admission policies חוסמים תוכן מסוכן, ו-projects מגבילים את ה-blast radius.",
 "רק מפרסם מהר יותר.",
 "לא פותר. ה-CI עדיין יכול לפרוס.",
-"מגדיל את הנזק."
+"cluster-admin מגדיל את הנזק: manifests זדוניים יוחלו בלי שום הגבלה. צריך את ההפך, הרשאות מצומצמות ו-projects."
 ],
 "x": "תשובה שמראה חשיבה של defense in depth היא מה שמחפשים בראיון לתפקיד senior.",
 "lv": 1,
