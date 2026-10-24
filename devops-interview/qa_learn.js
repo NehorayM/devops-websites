@@ -151,7 +151,7 @@ window.QA_LEARN = async function (opts) {
     const why = $('lrnDoneReview').querySelectorAll('.rcwhy');
     ok(why.length >= 30, name + ': each option carries its own why (' + why.length + ' notes)');
     ok(!!$('lrnDoneReview').querySelector('.rcopt.good b'), name + ': the correct option is called out');
-    ok(!localStorage.getItem('academy_learn'), name + ': finishing clears the saved run');
+    ok(!localStorage.getItem('shipit_learn'), name + ': finishing clears the saved run');
     const rec = (T.P.courses || {})[sec];
     ok(rec && rec.runs >= 1 && rec.mods.length === d.modules.length,
        name + ': the run is recorded against the subject');
@@ -185,7 +185,7 @@ window.QA_LEARN = async function (opts) {
   ok(LT.learnResume(), 'a saved run can be resumed');
   ok(LT.L && LT.L.sec === sec0, 'the resumed run is the same subject');
   LT.learnLeave(true);
-  localStorage.removeItem('academy_learn');
+  localStorage.removeItem('shipit_learn');
   }
 
   const secs = opts.secs || LT.LEARN_SECS;
@@ -250,6 +250,6 @@ window.QA_TAPS = function () {
   LT.learnSimSubmit(true);
   ['lrnDoneBack', 'lrnDoneNext', 'lrnDonePractice', 'lrnDoneHome'].forEach(id => probe(id, 'result'));
   T.go('homeScreen');
-  localStorage.removeItem('academy_learn');
+  localStorage.removeItem('shipit_learn');
   return { probed: out.length, failed: fails.length, fails, detail: out };
 };

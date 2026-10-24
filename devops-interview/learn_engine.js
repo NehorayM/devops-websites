@@ -46,7 +46,7 @@ function blocksChars(arr){ return (arr||[]).reduce((n,b)=>n+lbHTML(b).length,0);
 // L is null whenever no subject is open. Everything about the run lives in it so that one
 // localStorage write per transition is enough to survive a refresh.
 let L=null, lrnTimer=null, lrnGate=0, lrnGateTimer=null, lrnQuitArm=0;
-const LRN_KEY='academy_learn';
+const LRN_KEY='shipit_learn';
 
 function learnSave(){
   if(!L) return;

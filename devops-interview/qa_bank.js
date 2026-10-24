@@ -63,10 +63,10 @@ function bankChecks(){
 function paperChecks(){
   const t=T();
   eq(t.PAPER_LEN,65,'papers are 65 questions');
-  eq(t.SIM_QSEC,135,'a question gets 2:15');
+  eq(t.SIM_QSEC,90,'a question gets 1:30');
   eq(t.PAPER_MIN,Math.ceil(65*t.SIM_QSEC/60),'a 65-question paper is budgeted at the per-question limit each');
   eq(t.simBudget(65),Math.ceil(65*t.SIM_QSEC/60),'65 questions at '+t.SIM_QSEC+' s each: '+t.simBudget(65)+' minutes');
-  eq(t.simBudget(65),147,'2:15 a question makes a 65-question paper 147 minutes');
+  eq(t.simBudget(65),98,'1:30 a question makes a 65-question paper 98 minutes');
   eq(t.simBudget(31),Math.ceil(31*t.SIM_QSEC/60),'the short paper is budgeted the same way');
   eq(t.PAPER_COUNT, Math.ceil(t.QS.length/65), 'paper count covers the bank');
   const seen=new Set();
@@ -1679,7 +1679,7 @@ async function redoCsvChecks(){
     ok(!$('redoCsvAll').classList.contains('hidden'),'the list has a download-all button');
     csvBtn.click(); await sleep(20);
     eq(got.length,1,'tapping it downloads a file');
-    eq(got[0].name,'skyforge-exam-3-315-2026-09-24.csv','named after the exam, its score and date');
+    eq(got[0].name,'shipit-exam-3-315-2026-09-24.csv','named after the exam, its score and date');
     const text=await (await fetch(got[0].href)).text();
     const lines=text.replace(/^﻿/,'').split('\r\n');
     const head3=[...new Uint8Array(await (await fetch(got[0].href)).arrayBuffer()).slice(0,3)];
@@ -1694,7 +1694,7 @@ async function redoCsvChecks(){
     if(q0.w) ok(lines[1].indexOf(q0.w.slice(0,40).replace(/"/g,'""'))>=0,'with the written explanation');
     $('redoCsvAll').click(); await sleep(20);
     eq(got.length,2,'download-all gives one file');
-    ok(/^skyforge-all-exams-/.test(got[1].name),'named as all exams');
+    ok(/^shipit-all-exams-/.test(got[1].name),'named as all exams');
     const all=(await (await fetch(got[1].href)).text()).replace(/^﻿/,'').split('\r\n');
     eq(all.length,qs.length+5+1,'holding every question of every kept exam');
     ok(all.some(l=>/^"Mock exam"/.test(l)),'mock exams included and named');
@@ -1798,7 +1798,7 @@ async function mistakesChecks(){
     const got=[]; const rc=HTMLAnchorElement.prototype.click;
     HTMLAnchorElement.prototype.click=function(){ got.push({name:this.download,href:this.href}); };
     try{ t.mistakeCsv(); } finally { HTMLAnchorElement.prototype.click=rc; }
-    ok(got.length&&/^skyforge-mistakes-/.test(got[0].name),'the questions download as a CSV');
+    ok(got.length&&/^shipit-mistakes-/.test(got[0].name),'the questions download as a CSV');
     const lines=(await (await fetch(got[0].href)).text()).split('\r\n');
     eq(lines.length,t.mistakeSet().qs.length+1,'one row each');
     ok(/Wrong in Exam [34]/.test(lines[1]),'saying which exam it was wrong in');
@@ -1905,7 +1905,7 @@ async function mistakesReviewChecks(){
     ok(new RegExp((n0+1)+' questions').test($('mistakeStart').textContent),'new data from another device shows on the mistakes screen');
 
     // ---- 7. a kept mistakes exam's CSV is named for it
-    ok(/^skyforge-mistakes-/.test(t.histCsvName({kind:'mistakes',paper:0,sc:400,d:'2026-09-26'})),'its CSV is named skyforge-mistakes-…');
+    ok(/^shipit-mistakes-/.test(t.histCsvName({kind:'mistakes',paper:0,sc:400,d:'2026-09-26'})),'its CSV is named shipit-mistakes-…');
   } finally {
     if(t.sim) t.simAbandon(); await sleep(20);
     t.simClearSave(); t.P.runs={}; t.P.runsDone=[]; t.P.examHist={}; t.go('homeScreen'); await sleep(20);
@@ -2587,11 +2587,11 @@ async function duelChecks(){
 async function saveFlushChecks(){
   const t=T();
   t.simClearSave(); t.startPaper(1,'exam'); await sleep(400);
-  const base=localStorage.getItem('academy_profile');
+  const base=localStorage.getItem('shipit_profile');
   t.simPick(t.QS[t.sim.qs[0]].o[0][0]);
-  eq(localStorage.getItem('academy_profile'),base,'a save still waits a moment, so bursts become one write');
+  eq(localStorage.getItem('shipit_profile'),base,'a save still waits a moment, so bursts become one write');
   window.dispatchEvent(new Event('pagehide'));
-  const saved=JSON.parse(localStorage.getItem('academy_profile'));
+  const saved=JSON.parse(localStorage.getItem('shipit_profile'));
   ok(!!(saved.simSave&&saved.simSave.ans&&saved.simSave.ans[0]),'but closing the page writes it straight away');
   t.simAbandon(); await sleep(30); t.simClearSave(); await sleep(300);
 }
@@ -3197,7 +3197,7 @@ async function deviceChecks(){
   const t=T(), $=id=>document.getElementById(id);
   t.simClearSave();
   ok(!!t.DEVICE_ID,'this browser has a device id');
-  eq(localStorage.getItem('academy_device'),t.DEVICE_ID,'and it is kept outside the profile');
+  eq(localStorage.getItem('shipit_device'),t.DEVICE_ID,'and it is kept outside the profile');
   ok(['phone','tablet','desktop'].indexOf(t.DEVICE_KIND)>=0,'and a kind: '+t.DEVICE_KIND);
 
   // ---- the merge stops preferring whatever this device happens to hold
