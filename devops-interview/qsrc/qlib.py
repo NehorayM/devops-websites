@@ -75,7 +75,7 @@ REF_HOSTS = (
     "martinfowler.com", "prometheus.io", "opentelemetry.io", "kustomize.io",
     "github.com", "www.gnu.org", "systemd.io", "www.freedesktop.org", "docs.sonarsource.com",
     "external-secrets.io", "cert-manager.io", "karpenter.sh", "kubernetes-sigs.github.io",
-    "argoproj.github.io", "www.terraform.io", "coredns.io", "kubernetes.github.io", "keda.sh", "kyverno.io", "falco.org", "etcd.io", "sre.google", "nginx.org", "git-scm.com", "semver.org",
+    "argoproj.github.io", "www.terraform.io", "coredns.io", "kubernetes.github.io", "keda.sh", "kyverno.io", "falco.org", "etcd.io", "sre.google", "opengitops.dev", "fluxcd.io", "argocd-image-updater.readthedocs.io", "kubectl.docs.kubernetes.io", "nginx.org", "git-scm.com", "semver.org",
     "cheatsheetseries.owasp.org", "cloud.google.com", "learn.microsoft.com", "en.wikipedia.org",
 )
 
