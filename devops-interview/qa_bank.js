@@ -3724,7 +3724,7 @@ function authoredChecks(){
   eq(short,0,'the line under every right answer explains it');
   // A wrong option is often answered with a word ("לא.", "לא קשור."). It is honest but teaches
   // little; the count can only go down.
-  ok(stub<=1429,'terse lines under wrong options do not grow ('+stub+')');
+  ok(stub<=1261,'terse lines under wrong options do not grow ('+stub+')');
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');
