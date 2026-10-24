@@ -94,3 +94,36 @@ def Q(sec, lv, kind, q, right, *wrong, tip="", ref=""):
     fr = inspect.stack()[1]
     src = "%s:%d" % (fr.filename.rsplit("/", 1)[-1], fr.lineno)
     return Question(sec, lv, kind, q, [right] + list(wrong), tip, ref, src)
+
+
+# ---------------------------------------------------------------------------
+# Interview mode: open questions, authored in isrc/<topic>.py as calls to O().
+# There is nothing to pick from: the learner answers out loud, then compares what they
+# said with the points a strong answer covers and marks themselves.
+#
+#     O("k8s-debug", MS, T,
+#       "A pod is Running but gets no traffic through its Service. Walk me through it.",
+#       ["key point a strong answer covers, in Hebrew", "...", "..."],
+#       follow="the follow-up the interviewer is likely to ask, in English",
+#       trap="the mistake that loses the point, in Hebrew",
+#       ref="https://kubernetes.io/docs/...")
+
+# How many open questions each topic gets: the same weights, scaled to 300.
+IV_COUNTS = {"k8s": 61, "argocd": 49, "ci": 43, "aws": 37, "helm": 31,
+             "terraform": 31, "linux": 18, "cicd": 18, "net": 12}
+
+
+class Open:
+    __slots__ = ("sec", "lv", "kind", "q", "points", "follow", "trap", "ref", "src")
+
+    def __init__(self, sec, lv, kind, q, points, follow, trap, ref, src):
+        self.sec, self.lv, self.kind, self.q = sec, lv, kind, q
+        self.points, self.follow, self.trap, self.ref, self.src = points, follow, trap, ref, src
+
+
+def O(sec, lv, kind, q, points, follow="", trap="", ref=""):
+    """One open interview question with the points a strong answer covers."""
+    import inspect
+    fr = inspect.stack()[1]
+    src = "%s:%d" % (fr.filename.rsplit("/", 1)[-1], fr.lineno)
+    return Open(sec, lv, kind, q, list(points), follow, trap, ref, src)

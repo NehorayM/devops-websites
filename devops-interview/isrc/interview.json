@@ -1,0 +1,1105 @@
+{
+ "topics": [
+  "Kubernetes",
+  "ArgoCD",
+  "CI: security, testing, building",
+  "AWS",
+  "Helm",
+  "Terraform",
+  "Linux",
+  "Jenkins, GitLab CI & GitHub Actions",
+  "Networking"
+ ],
+ "items": [
+  {
+   "id": "85143d04",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "k",
+   "q": "What is the difference between a Deployment, a StatefulSet and a DaemonSet? When do you use each?",
+   "p": [
+    "Deployment: pods זהים וניתנים להחלפה, stateless. מנהל ReplicaSets ומבצע rolling update.",
+    "StatefulSet: זהות יציבה לכל pod (`db-0`, `db-1`), PVC נפרד לכל pod דרך `volumeClaimTemplates`, ורולאאוט לפי סדר.",
+    "StatefulSet עובד עם headless Service, כך שלכל pod יש שם DNS קבוע.",
+    "DaemonSet: pod אחד על כל node (או על קבוצת nodes). מתאים ל-log agent, CNI, node-exporter.",
+    "לתת דוגמה אמיתית לכל אחד מהשלושה מראה ניסיון."
+   ],
+   "f": "Would you run a production database on Kubernetes? What would worry you?",
+   "w": "לומר ש-StatefulSet \"שומר את המידע\". הוא נותן זהות ואחסון יציבים; את הנתונים שומר ה-PV.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/"
+  },
+  {
+   "id": "a3a83b0f",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod is in CrashLoopBackOff. Walk me through how you debug it.",
+   "p": [
+    "`kubectl describe pod`: לקרוא Events, `Last State`, exit code וסיבה (137 + OOMKilled, 1 = שגיאת אפליקציה).",
+    "`kubectl logs <pod> --previous` כדי לראות את הלוג של הקונטיינר שקרס, לא של זה שעלה עכשיו.",
+    "לבדוק קונפיגורציה: env, ConfigMap/Secret חסרים, `command`/`args` שגויים, הרשאות לקבצים.",
+    "לבדוק אם liveness probe הורג את הקונטיינר לפני שהאפליקציה סיימה לעלות.",
+    "לשחזר: להריץ את אותו image עם אותה פקודה מקומית, או `kubectl debug` עם עותק של ה-pod."
+   ],
+   "f": "The previous logs are empty and the exit code is 1. What next?",
+   "w": "להסתכל רק על `kubectl logs` בלי `--previous`. הקונטיינר הנוכחי בדיוק עלה ואין בו את השגיאה.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/"
+  },
+  {
+   "id": "ff55de2e",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "k",
+   "q": "What are init containers and sidecar containers, and how do they differ?",
+   "p": [
+    "init containers רצים אחד אחרי השני עד סיום, לפני שקונטיינרי האפליקציה עולים.",
+    "שימושים ל-init: לחכות לתלות, להריץ migration, להוריד קונפיגורציה או סרטיפיקט.",
+    "sidecar רץ לצד האפליקציה לאורך כל חיי ה-pod: proxy של service mesh, log shipper, סנכרון קבצים.",
+    "מגרסה 1.29: native sidecar הוא init container עם `restartPolicy: Always`. עולה לפני האפליקציה ונסגר אחריה.",
+    "כולם חולקים את ה-network namespace ואת ה-volumes של ה-pod."
+   ],
+   "f": "What problem did native sidecars solve for Jobs?",
+   "w": "לומר ש-init container רץ במקביל לאפליקציה.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/"
+  },
+  {
+   "id": "b818cef8",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between a Job and a CronJob, and how do you handle failures in them?",
+   "p": [
+    "Job מריץ pods עד הצלחה; `completions` ו-`parallelism` קובעים כמה ובמקביל.",
+    "כישלונות: `backoffLimit` לניסיונות חוזרים, `activeDeadlineSeconds` לזמן מקסימלי, `restartPolicy` OnFailure/Never.",
+    "CronJob יוצר Job לפי schedule; `concurrencyPolicy` (Allow/Forbid/Replace) קובע מה קורה בחפיפה.",
+    "`startingDeadlineSeconds` להרצות שהתפספסו, ו-`ttlSecondsAfterFinished` לניקוי Jobs ישנים.",
+    "ה-job צריך להיות idempotent, כי הרצה יכולה לקרות פעמיים או להתפספס."
+   ],
+   "f": "Your CronJob ran twice at the same time. How do you prevent it?",
+   "w": "להניח ש-CronJob מבטיח הרצה אחת בדיוק בכל פעם.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/"
+  },
+  {
+   "id": "fb9f784d",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "k",
+   "q": "What are liveness, readiness and startup probes? What happens when each one fails?",
+   "p": [
+    "liveness נכשל: kubelet עושה restart לקונטיינר.",
+    "readiness נכשל: ה-pod יוצא מה-endpoints של ה-Service ולא מקבל תנועה. אין restart.",
+    "startup: מחזיק את שאר ה-probes עד שהאפליקציה עלתה. מתאים לאפליקציות שעולות לאט.",
+    "סוגים: `httpGet`, `tcpSocket`, `exec`, `grpc`, עם `periodSeconds`, `failureThreshold` ו-timeout.",
+    "liveness שבודק תלויות (DB) יכול לגרום ל-restart לכל ה-pods בבת אחת כשה-DB איטי."
+   ],
+   "f": "Should a liveness probe check the database? Why or why not?",
+   "w": "להשתמש באותו endpoint עמוק גם ל-liveness וגם ל-readiness.",
+   "r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+  },
+  {
+   "id": "b6a364a3",
+   "t": 0,
+   "s": 0,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod is stuck in ImagePullBackOff. What are the common causes, and how do you check?",
+   "p": [
+    "לקרוא את ההודעה המלאה ב-Events של `kubectl describe pod`. היא בדרך כלל אומרת בדיוק מה קרה.",
+    "שם image או tag שגוי, או tag שנמחק מה-registry.",
+    "registry פרטי: `imagePullSecrets` חסר או שגוי; ב-ECR, הרשאות IAM של ה-node לקריאה.",
+    "rate limit (Docker Hub מחזיר 429), או שה-node לא מגיע ל-registry (subnet פרטי בלי NAT או VPC endpoint).",
+    "לבדוק ידנית: `crictl pull` מה-node, או pull מקומי עם אותם credentials."
+   ],
+   "f": "How do you avoid Docker Hub rate limits across a whole cluster?",
+   "w": "לבדוק רק את שם ה-image ולא לקרוא את הודעת השגיאה המלאה ב-Events.",
+   "r": "https://kubernetes.io/docs/concepts/containers/images/"
+  },
+  {
+   "id": "4d658292",
+   "t": 0,
+   "s": 0,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain how a Deployment rolling update works and which settings control it.",
+   "p": [
+    "נוצר ReplicaSet חדש שגדל בהדרגה, וה-ReplicaSet הישן קטן בהתאם.",
+    "`maxSurge` קובע כמה pods מעבר ל-replicas מותר להוסיף; `maxUnavailable` כמה מותר שיחסרו.",
+    "ה-rollout מתקדם רק כש-pods חדשים Ready, כלומר readiness probe הוא מה שמגן על התהליך.",
+    "`progressDeadlineSeconds`: אם אין התקדמות, ה-condition `Progressing` הופך ל-False (ProgressDeadlineExceeded).",
+    "rollback עם `kubectl rollout undo`, לפי ההיסטוריה ש-`revisionHistoryLimit` שומר."
+   ],
+   "f": "How do you get a truly zero-downtime rollout, including in-flight requests?",
+   "w": "לשכוח שבלי readiness probe ה-pod נחשב Ready מיד, והתנועה מגיעה לפני שהאפליקציה עלתה.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+  },
+  {
+   "id": "d3417120",
+   "t": 0,
+   "s": 0,
+   "lv": 1,
+   "k": "t",
+   "q": "A Deployment rollout is stuck and `kubectl rollout status` never finishes. How do you approach it?",
+   "p": [
+    "`kubectl describe deployment`: conditions, ו-ProgressDeadlineExceeded אם הוגדר deadline.",
+    "להסתכל על ה-pods החדשים: Pending (משאבים, affinity, PVC) מול Running אבל לא Ready (readiness probe).",
+    "לקרוא events של ה-ReplicaSet החדש: ResourceQuota או admission webhook יכולים לחסום יצירת pods.",
+    "`maxUnavailable: 0` כשאין מקום ל-pod נוסף בקלאסטר = rollout תקוע עד שה-autoscaler מוסיף node.",
+    "להחליט: לתקן קדימה, או `kubectl rollout undo` אם יש השפעה על משתמשים."
+   ],
+   "f": "How would you make the pipeline detect a stuck rollout automatically?",
+   "w": "למחוק pods ידנית במקום לקרוא את ה-events של ה-ReplicaSet החדש.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#deployment-status"
+  },
+  {
+   "id": "fb979e8b",
+   "t": 0,
+   "s": 0,
+   "lv": 1,
+   "k": "t",
+   "q": "Pods get OOMKilled under load, but the memory graphs look fine. What could be going on?",
+   "p": [
+    "לוודא ב-`describe`: exit code 137 וסיבה OOMKilled (cgroup OOM), לא Evicted (לחץ על ה-node).",
+    "גרפים ממוצעים לפי scrape interval מפספסים spikes קצרים. להסתכל על max ולא על avg.",
+    "runtime שלא מכבד את ה-limit: heap של JVM/Node פלוס off-heap, threads ו-buffers עוברים את ה-limit.",
+    "kubelet מסתכל על `container_memory_working_set_bytes`, שכולל page cache פעיל.",
+    "תיקון: למדוד peak אמיתי, להגדיר heap לפי ה-limit (`MaxRAMPercentage`), ורק אז להעלות limit."
+   ],
+   "f": "How would you size requests and limits for this service?",
+   "w": "להעלות את ה-limit בלי להבין מה צורך את הזיכרון, או לבלבל בין OOMKilled ל-Evicted.",
+   "r": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/"
+  },
+  {
+   "id": "b37d908f",
+   "t": 0,
+   "s": 0,
+   "lv": 1,
+   "k": "t",
+   "q": "Users see a burst of 502s on every rollout, even though new pods pass readiness. What's going on?",
+   "p": [
+    "במחיקת pod, ההוצאה מה-EndpointSlices וה-SIGTERM קורים במקביל, לא אחד אחרי השני.",
+    "kube-proxy וה-load balancer מתעדכנים באיחור, ושולחים בקשות ל-pod שכבר נסגר.",
+    "תיקון: `preStop` עם sleep של כמה שניות, ואז graceful shutdown של האפליקציה על SIGTERM.",
+    "`terminationGracePeriodSeconds` צריך להיות ארוך מה-sleep ומזמן סיום הבקשות.",
+    "לוודא שהאפליקציה היא PID 1 ומקבלת SIGTERM (exec form ולא `sh -c`). ב-ALB: deregistration delay ו-readiness gates."
+   ],
+   "f": "Your container starts with `sh -c \"node server.js\"`. Why might it never see SIGTERM?",
+   "w": "להניח שה-pod יוצא מה-endpoints לפני שה-SIGTERM מגיע.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
+  },
+  {
+   "id": "8046d763",
+   "t": 0,
+   "s": 0,
+   "lv": 1,
+   "k": "k",
+   "q": "What is a PodDisruptionBudget and when does it matter?",
+   "p": [
+    "מגביל disruptions יזומים: `kubectl drain`, scale-down של autoscaler, שדרוג nodes.",
+    "מוגדר עם `minAvailable` או `maxUnavailable`, ונאכף דרך ה-Eviction API.",
+    "לא מגן מקריסת node או מ-OOM. אלה disruptions לא יזומים.",
+    "טעות נפוצה: `minAvailable` שווה למספר ה-replicas, וה-drain נתקע לנצח.",
+    "עובד יחד עם כמה replicas ו-topology spread, אחרת אין מה להגן עליו."
+   ],
+   "f": "A node drain hangs during a cluster upgrade. What do you check?",
+   "w": "לחשוב ש-PDB מגן גם מקריסת node.",
+   "r": "https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
+  },
+  {
+   "id": "a00d9331",
+   "t": 0,
+   "s": 1,
+   "lv": 0,
+   "k": "k",
+   "q": "Explain the Service types: ClusterIP, NodePort, LoadBalancer and headless.",
+   "p": [
+    "ClusterIP: IP וירטואלי יציב בתוך הקלאסטר. ברירת המחדל.",
+    "NodePort: פותח פורט (30000–32767) על כל node ומעביר ל-Service.",
+    "LoadBalancer: מבקש load balancer מהענן (NLB/ALB/CLB) שמפנה ל-nodes או ישירות ל-pod IPs.",
+    "headless (`clusterIP: None`): אין IP וירטואלי, ה-DNS מחזיר את כתובות ה-pods. משמש StatefulSets.",
+    "ExternalName: רשומת CNAME לשירות חיצוני, בלי proxy."
+   ],
+   "f": "How does a packet sent to a ClusterIP actually reach a pod?",
+   "w": "לומר ש-ClusterIP הוא IP של pod או של node.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/service/"
+  },
+  {
+   "id": "e858f4af",
+   "t": 0,
+   "s": 1,
+   "lv": 0,
+   "k": "k",
+   "q": "What is an Ingress, and how is it different from a LoadBalancer Service?",
+   "p": [
+    "Ingress מגדיר ניתוב HTTP ב-L7: לפי host ו-path, כולל TLS.",
+    "צריך Ingress controller (ingress-nginx, AWS Load Balancer Controller). בלעדיו המשאב לא עושה כלום.",
+    "load balancer אחד לשירותים רבים, לעומת load balancer לכל Service מסוג LoadBalancer.",
+    "Service מסוג LoadBalancer עובד ב-L4 (TCP/UDP), בלי הבנה של HTTP.",
+    "Gateway API הוא היורש: הפרדת תפקידים (infra מול app) ויכולות ניתוב עשירות יותר."
+   ],
+   "f": "What does Gateway API give you that Ingress doesn't?",
+   "w": "לשכוח שבלי Ingress controller משאב ה-Ingress לא עושה כלום.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/ingress/"
+  },
+  {
+   "id": "821319c9",
+   "t": 0,
+   "s": 1,
+   "lv": 0,
+   "k": "k",
+   "q": "What is a NetworkPolicy, and what's the default behaviour without one?",
+   "p": [
+    "בלי policies, כל pod יכול לדבר עם כל pod בקלאסטר.",
+    "policy בוחרת pods לפי labels ומגדירה חוקי ingress ו-egress מותרים.",
+    "ברגע ש-pod נבחר ע\"י policy בכיוון מסוים, כל מה שלא מותר בכיוון הזה נחסם.",
+    "נאכף רק אם ה-CNI תומך (Calico, Cilium, VPC CNI עם network policy). ב-flannel לבד אין אכיפה.",
+    "ב-default-deny egress חייבים לאפשר DNS (פורט 53 ל-kube-dns)."
+   ],
+   "f": "You applied default-deny egress and everything broke. What did you forget?",
+   "w": "לחשוב ש-NetworkPolicy עובדת בכל CNI.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+  },
+  {
+   "id": "16aab48d",
+   "t": 0,
+   "s": 1,
+   "lv": 0,
+   "k": "k",
+   "q": "How does service discovery work inside a Kubernetes cluster?",
+   "p": [
+    "CoreDNS יוצר רשומות: `<svc>.<ns>.svc.cluster.local` מצביע ל-ClusterIP.",
+    "באותו namespace מספיק השם הקצר, בזכות search domains ב-`resolv.conf`.",
+    "headless Service מחזיר רשומת A לכל pod; ב-StatefulSet יש גם `pod-0.<svc>` קבוע.",
+    "משתני סביבה של Services קיימים, אבל רק ל-Services שנוצרו לפני ה-pod. DNS עדיף."
+   ],
+   "f": "How does a pod in namespace `web` call the Service `api` in namespace `data`?",
+   "w": "לשכוח את ה-namespace בשם כשקוראים לשירות מ-namespace אחר.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/"
+  },
+  {
+   "id": "2a5b0c8b",
+   "t": 0,
+   "s": 1,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod in namespace `web` can't reach a database Service in namespace `data`, but it works from inside `data`. What do you check?",
+   "p": [
+    "השם: `db.data.svc.cluster.local` (או לפחות `db.data`), לא רק `db`.",
+    "NetworkPolicy ב-`data` שמאפשרת רק את אותו namespace. צריך `namespaceSelector` ל-`web`.",
+    "policy של egress ב-`web` שחוסמת יציאה.",
+    "פורט ה-Service נכון, ובדיקה עם `nc -zv` מ-pod דיבאג ב-`web`."
+   ],
+   "f": "Write the NetworkPolicy rule that lets only `web` reach the database.",
+   "w": "לפתוח את כל התנועה ל-namespace במקום להוסיף `namespaceSelector` ממוקד.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors"
+  },
+  {
+   "id": "560cc034",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "t",
+   "q": "A Service exists, but requests to it time out. Walk me through debugging it.",
+   "p": [
+    "`kubectl get endpointslices -l kubernetes.io/service-name=<svc>`: אם ריק, ה-selector לא תואם labels או שה-pods לא Ready.",
+    "`targetPort` תואם לפורט שהאפליקציה מאזינה עליו, והאפליקציה מאזינה על `0.0.0.0` ולא על `127.0.0.1`.",
+    "לבדוק מ-pod דיבאג בשלבים: pod IP ישירות, אחר כך ה-ClusterIP, אחר כך שם ה-DNS.",
+    "NetworkPolicy שחוסמת את התנועה.",
+    "בעיה ב-kube-proxy או ב-CNI על ה-node (לוגים של ה-pods שלהם)."
+   ],
+   "f": "Endpoints are populated and the pod IP works, but the ClusterIP doesn't. What now?",
+   "w": "לקפוץ ל-NetworkPolicy לפני שבודקים שיש endpoints ושה-selector נכון.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/"
+  },
+  {
+   "id": "58f6696a",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "t",
+   "q": "Pods intermittently fail to resolve DNS names inside the cluster. How do you troubleshoot it?",
+   "p": [
+    "לשחזר מ-pod דיבאג (`nslookup`, `dig`) ולבדוק את ה-`resolv.conf` של ה-pod.",
+    "pods של CoreDNS: לוגים, restarts, CPU throttling, ומספר replicas ביחס לגודל הקלאסטר.",
+    "`ndots:5` גורם לכל שם חיצוני לעבור קודם דרך search domains, כלומר הרבה שאילתות מיותרות.",
+    "race ב-conntrack עם UDP (A ו-AAAA במקביל) גורם ל-timeouts של 5 שניות. פתרון: NodeLocal DNSCache.",
+    "לשקול FQDN עם נקודה בסוף לשמות חיצוניים, ו-autoscaler ל-CoreDNS."
+   ],
+   "f": "What does `ndots:5` do to a lookup of `api.example.com`?",
+   "w": "להאשים את ה-DNS החיצוני בלי לבדוק את CoreDNS ואת ה-`resolv.conf` של ה-pod.",
+   "r": "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/"
+  },
+  {
+   "id": "603d59c7",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "k",
+   "q": "How does kube-proxy implement Services, and what changes between iptables, IPVS and eBPF?",
+   "p": [
+    "kube-proxy עוקב אחרי Services ו-EndpointSlices ומתכנת חוקי DNAT על כל node.",
+    "iptables: בחירה אקראית של backend, עדכונים איטיים כשיש אלפי Services.",
+    "IPVS: hash tables, סקיילינג טוב יותר, ואלגוריתמים כמו round robin ו-least connections.",
+    "eBPF (למשל Cilium) יכול להחליף את kube-proxy לגמרי, עם ביצועים ו-observability טובים יותר.",
+    "תנועה בין pods היא אחריות ה-CNI, לא של kube-proxy."
+   ],
+   "f": "Why might long-lived gRPC connections not be balanced across pods?",
+   "w": "לחשוב ש-kube-proxy הוא proxy שכל התנועה עוברת דרכו. במצבים הרגילים אלה חוקי kernel.",
+   "r": "https://kubernetes.io/docs/reference/networking/virtual-ips/"
+  },
+  {
+   "id": "bc2f89ab",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "t",
+   "q": "An Ingress returns 502 or 504 for one service while the others work. How do you find the cause?",
+   "p": [
+    "לוגים של ה-Ingress controller: שגיאות upstream, connection refused, timeout.",
+    "ה-Service וה-endpoints של ה-backend קיימים ו-Ready.",
+    "שם או מספר הפורט ב-Ingress תואמים ל-Service; פרוטוקול נכון (backend ב-HTTPS צריך annotation).",
+    "504: timeout של ה-proxy (למשל `proxy-read-timeout`) קצר מזמן התגובה של האפליקציה.",
+    "pods שעושים restart או נכשלים ב-readiness גורמים ל-502 לסירוגין."
+   ],
+   "f": "On an AWS ALB, the target group shows the targets as unhealthy. Where do you look?",
+   "w": "לחפש בעיית DNS כשה-502 מגיע מה-controller. הבקשה הגיעה; ה-backend הוא הבעיה.",
+   "r": "https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/"
+  },
+  {
+   "id": "71aa7fb2",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "t",
+   "q": "Behind a cloud load balancer, your app logs node IPs instead of client IPs. Why, and what are your options?",
+   "p": [
+    "`externalTrafficPolicy: Cluster`: ה-node מעביר ל-pod על node אחר ועושה SNAT, וה-IP המקורי הולך לאיבוד.",
+    "`externalTrafficPolicy: Local`: רק nodes עם pod מקבלים תנועה, ו-source IP נשמר.",
+    "המחיר של Local: חלוקת עומס לא שווה, ו-health check שמוציא nodes בלי pods.",
+    "ב-L7 load balancer: לקרוא את ה-IP מ-`X-Forwarded-For`, ולסמוך עליו רק כשהוא מגיע מה-LB.",
+    "ב-NLB: IP target mode שולח ישירות ל-pod, או proxy protocol."
+   ],
+   "f": "How do you stop clients from spoofing `X-Forwarded-For`?",
+   "w": "לומר ש-Local תמיד עדיף. הוא עלול ליצור חלוקת עומס לא שווה.",
+   "r": "https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
+  },
+  {
+   "id": "e34eabd2",
+   "t": 0,
+   "s": 1,
+   "lv": 1,
+   "k": "k",
+   "q": "What is the CNI, and what does it do in a cluster?",
+   "p": [
+    "ממשק שה-container runtime קורא לו כדי לחבר pod לרשת: IP מ-IPAM, veth, routes.",
+    "דרישות המודל: לכל pod IP ייחודי, ותקשורת בין pods בלי NAT.",
+    "AWS VPC CNI: ה-pods מקבלים IPs מה-VPC, ולכן מספר ה-pods ל-node מוגבל ע\"י ENIs ו-IPs.",
+    "Calico ו-Cilium: overlay (VXLAN) או routing ישיר, ואכיפת NetworkPolicy. Cilium מבוסס eBPF."
+   ],
+   "f": "On EKS, why might a node stop accepting pods even though it has free CPU?",
+   "w": "לבלבל בין CNI ל-kube-proxy. אחד מחבר pods לרשת, השני מממש Services.",
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/networking/"
+  },
+  {
+   "id": "0f0366df",
+   "t": 0,
+   "s": 2,
+   "lv": 0,
+   "k": "k",
+   "q": "ConfigMap vs Secret: what's the difference, and are Secrets actually secure?",
+   "p": [
+    "שניהם key/value שנכנסים כ-env או כקבצים. Secret מיועד לערכים רגישים.",
+    "Secret מקודד ב-base64. זה קידוד, לא הצפנה.",
+    "ההגנה האמיתית: RBAC על `secrets`, encryption at rest של etcd (KMS), והגבלת גישה ל-etcd.",
+    "בפרודקשן: External Secrets Operator או Secrets Store CSI מ-Secrets Manager/Vault.",
+    "קבצים מתעדכנים בלי restart; env vars לא. env גם עלול לדלוף ל-logs ו-crash dumps."
+   ],
+   "f": "How do you get secrets into the cluster in a GitOps setup?",
+   "w": "לומר ש-base64 הוא הצפנה.",
+   "r": "https://kubernetes.io/docs/concepts/configuration/secret/"
+  },
+  {
+   "id": "363eefff",
+   "t": 0,
+   "s": 2,
+   "lv": 0,
+   "k": "t",
+   "q": "You updated a ConfigMap, but the application still uses the old value. Why, and how do you fix it?",
+   "p": [
+    "env vars נקראים רק בעליית הקונטיינר, ולכן צריך restart.",
+    "volume mount מתעדכן אחרי כדקה (sync של kubelet), אבל לא כשמשתמשים ב-`subPath`.",
+    "גם כשהקובץ מתעדכן, האפליקציה עשויה לקרוא אותו רק פעם אחת בעלייה.",
+    "תיקון: `kubectl rollout restart`, או checksum annotation בתבנית (Helm) שגורם ל-rollout בכל שינוי.",
+    "Kustomize `configMapGenerator` מוסיף hash לשם, ולכן כל שינוי יוצר rollout אוטומטית."
+   ],
+   "f": "How does Kustomize's configMapGenerator solve this?",
+   "w": "לחכות שה-ConfigMap \"יתעדכן\" כשהוא נטען כמשתנה סביבה.",
+   "r": "https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically"
+  },
+  {
+   "id": "0dfc67fe",
+   "t": 0,
+   "s": 2,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you pass configuration to a container, and which method do you prefer for what?",
+   "p": [
+    "env vars: פשוט לערכים קטנים, דורש restart לשינוי.",
+    "`envFrom` מ-ConfigMap או Secret: כל המפתחות בבת אחת.",
+    "קבצים מ-volume: לקונפיגורציה גדולה ולסודות, ואפשר לרענן בלי restart.",
+    "`command`/`args` לפרמטרים של הרצה.",
+    "Downward API: שם ה-pod, namespace, labels ו-limits, כ-env או כקבצים."
+   ],
+   "f": "How can an app find out its own pod name and namespace?",
+   "w": "לשים ערכים סודיים כ-env רגיל בתוך manifest שנשמר ב-Git.",
+   "r": "https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/"
+  },
+  {
+   "id": "6a14cd37",
+   "t": 0,
+   "s": 2,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod fails with `CreateContainerConfigError`. What does that usually mean?",
+   "p": [
+    "ב-Events: ConfigMap, Secret או מפתח שה-pod מפנה אליו לא קיים.",
+    "האובייקט נמצא ב-namespace אחר. pod יכול להפנות רק לאובייקטים ב-namespace שלו.",
+    "שגיאת כתיב בשם המפתח. `optional: true` מאפשר להמשיך בלעדיו.",
+    "סדר פריסה: ה-Secret צריך להיווצר לפני ה-Deployment (ב-Argo CD: sync waves)."
+   ],
+   "f": "How would you stop this from reaching production through the pipeline?",
+   "w": "לחפש את הבעיה בקוד האפליקציה. הקונטיינר בכלל לא נוצר.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/"
+  },
+  {
+   "id": "d5e98bf7",
+   "t": 0,
+   "s": 2,
+   "lv": 0,
+   "k": "k",
+   "q": "What are namespaces for, and what do they not isolate?",
+   "p": [
+    "קיבוץ לוגי ו-scope לשמות; נקודת חיבור ל-RBAC, ResourceQuota, LimitRange ו-NetworkPolicy.",
+    "הרשת פתוחה בין namespaces כברירת מחדל.",
+    "nodes משותפים, ומשאבים cluster-scoped (nodes, PVs, CRDs, ClusterRoles) לא שייכים ל-namespace.",
+    "multi-tenancy אמיתי דורש policies, ולפעמים קלאסטר נפרד."
+   ],
+   "f": "When would you give a team its own cluster instead of a namespace?",
+   "w": "לומר ש-namespace מבודד רשת כברירת מחדל.",
+   "r": "https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/"
+  },
+  {
+   "id": "f6d68436",
+   "t": 0,
+   "s": 2,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain PersistentVolumes, PersistentVolumeClaims and StorageClasses, and how dynamic provisioning works.",
+   "p": [
+    "PVC הוא בקשה לאחסון; PV הוא הדיסק בפועל; StorageClass מגדיר provisioner ופרמטרים.",
+    "dynamic: PVC עם `storageClassName` גורם ל-CSI driver ליצור דיסק ו-PV.",
+    "`volumeBindingMode: WaitForFirstConsumer` יוצר את הדיסק ב-AZ של ה-node שה-pod תוזמן אליו.",
+    "`reclaimPolicy`: Delete מוחק את הדיסק עם ה-PVC; Retain משאיר אותו.",
+    "access modes: RWO, ROX, RWX, RWOP. EBS הוא RWO; EFS תומך ב-RWX."
+   ],
+   "f": "Why does WaitForFirstConsumer matter in a multi-AZ cluster?",
+   "w": "לשכוח ש-`reclaimPolicy: Delete` מוחק את הדיסק כשמוחקים את ה-PVC.",
+   "r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+  },
+  {
+   "id": "62a73e14",
+   "t": 0,
+   "s": 2,
+   "lv": 1,
+   "k": "t",
+   "q": "A StatefulSet pod is stuck Pending after its node died, with a volume error. What's happening?",
+   "p": [
+    "ב-`describe` רואים volume node affinity conflict, או Multi-Attach error.",
+    "EBS קשור ל-AZ אחד ו-RWO, ולכן ה-pod יכול לרוץ רק על node באותו AZ.",
+    "ה-VolumeAttachment עדיין מוחזק ע\"י ה-node המת; ה-detach הכפוי מגיע רק אחרי timeout (כ-6 דקות).",
+    "לבדוק שיש nodes עם מקום באותו AZ, ושה-node group יכול לגדול שם.",
+    "ה-taint `node.kubernetes.io/out-of-service` על node שבוודאות כבוי משחרר את הדיסקים מיד."
+   ],
+   "f": "How would you design this database to survive an AZ failure?",
+   "w": "למחוק את ה-PVC כדי \"לשחרר\" את ה-pod. זה מוחק את הנתונים.",
+   "r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#node-affinity"
+  },
+  {
+   "id": "4124b0bd",
+   "t": 0,
+   "s": 2,
+   "lv": 1,
+   "k": "k",
+   "q": "What's the difference between emptyDir, hostPath and a PVC volume, and what are the risks of hostPath?",
+   "p": [
+    "emptyDir חי כמו ה-pod ומשותף בין הקונטיינרים שלו. עם `medium: Memory` הוא נספר בזיכרון.",
+    "hostPath מחבר תיקייה מה-node. קושר את ה-pod ל-node מסוים.",
+    "סיכון hostPath: גישה לקבצי ה-node, ל-socket של ה-runtime, ובריחה מהקונטיינר.",
+    "PVC: אחסון קבוע שלא תלוי ב-pod או ב-node.",
+    "Pod Security ברמת baseline כבר אוסר hostPath."
+   ],
+   "f": "When is hostPath legitimately needed?",
+   "w": "להשתמש ב-hostPath כדי לשמור נתוני אפליקציה. הם נשארים על node אחד בלבד.",
+   "r": "https://kubernetes.io/docs/concepts/storage/volumes/"
+  },
+  {
+   "id": "042062a6",
+   "t": 0,
+   "s": 2,
+   "lv": 1,
+   "k": "t",
+   "q": "A PersistentVolumeClaim is stuck in Pending. How do you debug it?",
+   "p": [
+    "`kubectl describe pvc`: ה-Events אומרים מה חסר.",
+    "`WaitForFirstConsumer`: PVC נשאר Pending עד שיש pod שמשתמש בו. זה תקין.",
+    "`storageClassName` שגוי, או שאין StorageClass ברירת מחדל.",
+    "ה-CSI driver לא מותקן או נכשל: לוגים של ה-controller, והרשאות IAM (ל-EBS CSI צריך IRSA או Pod Identity).",
+    "access mode לא נתמך (RWX על EBS), או PV סטטי שלא תואם בגודל או ב-labels."
+   ],
+   "f": "The EBS CSI controller logs show AccessDenied. What do you fix?",
+   "w": "להניח שיש תקלה כשה-PVC Pending רק כי עדיין אין pod (WaitForFirstConsumer).",
+   "r": "https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode"
+  },
+  {
+   "id": "da3bc96a",
+   "t": 0,
+   "s": 2,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you manage secrets for Kubernetes in production on AWS?",
+   "p": [
+    "מקור האמת ב-Secrets Manager או ב-SSM Parameter Store, לא ב-Git.",
+    "External Secrets Operator מסנכרן ל-Secrets עם IRSA/Pod Identity; לחלופין Secrets Store CSI מחבר כקבצים.",
+    "ב-EKS: KMS envelope encryption ל-Secrets ב-etcd.",
+    "רוטציה: `refreshInterval`, ואפליקציה שיודעת לטעון מחדש או rollout אוטומטי.",
+    "least privilege: role נפרד לכל namespace או אפליקציה."
+   ],
+   "f": "How do you rotate a database password without downtime?",
+   "w": "לשמור Secret ב-Git ב-base64 \"כי זה מוצפן\".",
+   "r": "https://kubernetes.io/docs/concepts/security/secrets-good-practices/"
+  },
+  {
+   "id": "00fbc7cf",
+   "t": 0,
+   "s": 3,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between resource requests and limits?",
+   "p": [
+    "requests: מה שה-scheduler משתמש בו כדי לשבץ, ומה שמובטח ל-pod.",
+    "limits: נאכפים בזמן ריצה. מעבר ל-CPU = throttling; מעבר לזיכרון = OOMKilled.",
+    "QoS: Guaranteed (requests = limits), Burstable, BestEffort. קובע את סדר ה-eviction.",
+    "CPU limits יכולים לגרום ל-throttling גם כשהממוצע נמוך.",
+    "גישה נפוצה: memory limit = request, ו-CPU בלי limit."
+   ],
+   "f": "Would you set CPU limits? Why or why not?",
+   "w": "לומר שחריגה מ-CPU limit גורמת ל-kill. היא רק מאטה (throttling).",
+   "r": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+  },
+  {
+   "id": "8c1c3863",
+   "t": 0,
+   "s": 3,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod stays in Pending. How do you find out why?",
+   "p": [
+    "`kubectl describe pod`: ה-scheduler כותב ב-Events למה אף node לא מתאים.",
+    "Insufficient cpu/memory: ה-requests גדולים מהמקום הפנוי.",
+    "taints בלי toleration מתאים, או nodeSelector/affinity שאף node לא עונה עליו.",
+    "PVC לא קשור, או דיסק ב-AZ אחר.",
+    "יותר מדי pods ל-node (ב-VPC CNI: מגבלת IPs). אם יש autoscaler, לבדוק את ה-Events והלוגים שלו."
+   ],
+   "f": "The event says `5 Insufficient cpu`, but the nodes show low CPU usage. Why?",
+   "w": "להסתכל על ניצולת CPU בפועל. ה-scheduler מחליט לפי requests, לא לפי שימוש.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/#my-pod-stays-pending"
+  },
+  {
+   "id": "8fbc0861",
+   "t": 0,
+   "s": 3,
+   "lv": 0,
+   "k": "k",
+   "q": "What does the Cluster Autoscaler (or Karpenter) do, and how is it different from HPA?",
+   "p": [
+    "HPA משנה מספר pods; Cluster Autoscaler ו-Karpenter משנים מספר nodes.",
+    "Cluster Autoscaler מגיב ל-pods במצב Pending ומגדיל node group קיים.",
+    "מקטין nodes לא מנוצלים, תוך כיבוד PDBs.",
+    "Karpenter בוחר instance type שמתאים ל-pods הממתינים, ומאחד nodes (consolidation).",
+    "pods בלי requests שוברים את החישוב של שניהם."
+   ],
+   "f": "Why might the autoscaler refuse to remove an almost-empty node?",
+   "w": "לחשוב שה-autoscaler מוסיף nodes כשה-CPU גבוה. הוא מוסיף כשיש pods שלא נכנסו.",
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/"
+  },
+  {
+   "id": "4e44deba",
+   "t": 0,
+   "s": 3,
+   "lv": 0,
+   "k": "k",
+   "q": "What are topology spread constraints and pod anti-affinity used for?",
+   "p": [
+    "לפזר replicas בין zones או nodes, כך שתקלה אחת לא מורידה את כולם.",
+    "`topologyKey`: `topology.kubernetes.io/zone` או `kubernetes.io/hostname`.",
+    "`maxSkew` ו-`whenUnsatisfiable` (DoNotSchedule או ScheduleAnyway) קובעים כמה קשוח הפיזור.",
+    "required anti-affinity קשוח: עם יותר replicas מ-nodes, העודפים נשארים Pending."
+   ],
+   "f": "With 3 zones and 4 replicas, how are they placed with maxSkew 1?",
+   "w": "להשתמש ב-required anti-affinity עם יותר replicas מ-nodes.",
+   "r": "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/"
+  },
+  {
+   "id": "6b2daab3",
+   "t": 0,
+   "s": 3,
+   "lv": 0,
+   "k": "t",
+   "q": "A team's new Deployment creates no pods, and the ReplicaSet events say `exceeded quota`. What's happening?",
+   "p": [
+    "ResourceQuota ב-namespace מגביל את הסכום הכולל של requests, limits, pods או אובייקטים.",
+    "כשיש quota על CPU או זיכרון, כל pod חייב להצהיר requests/limits, אחרת הוא נדחה.",
+    "`kubectl describe quota`: לראות used מול hard.",
+    "LimitRange יכול לתת ברירות מחדל ל-pods שלא הגדירו.",
+    "תיקון: להקטין requests, או להגדיל quota עם הצדקה."
+   ],
+   "f": "Why does the error show on the ReplicaSet and not on the Deployment?",
+   "w": "לחפש את הבעיה ב-scheduler. ה-pods בכלל לא נוצרו; ה-admission דחה אותם.",
+   "r": "https://kubernetes.io/docs/concepts/policy/resource-quotas/"
+  },
+  {
+   "id": "465f09ae",
+   "t": 0,
+   "s": 3,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain taints and tolerations versus node affinity. When do you use which?",
+   "p": [
+    "taint על node דוחה pods שאין להם toleration מתאים: NoSchedule, PreferNoSchedule, NoExecute (גם מפנה).",
+    "toleration רק מתיר. הוא לא מושך את ה-pod ל-node.",
+    "node affinity מושך pods ל-nodes לפי labels: required או preferred.",
+    "nodes ייעודיים (GPU, spot) צריכים את שניהם: taint שמרחיק אחרים, ו-affinity שמושך את הנכונים."
+   ],
+   "f": "How do you make sure GPU workloads run only on GPU nodes, and nothing else does?",
+   "w": "לחשוב ש-toleration מושך את ה-pod ל-node המסומן.",
+   "r": "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+  },
+  {
+   "id": "e0264429",
+   "t": 0,
+   "s": 3,
+   "lv": 1,
+   "k": "k",
+   "q": "How does the Horizontal Pod Autoscaler decide how many replicas to run?",
+   "p": [
+    "מקור מדדים: metrics-server (CPU/זיכרון), או custom/external metrics דרך adapter.",
+    "הנוסחה: `desired = ceil(current × currentMetric / target)`.",
+    "אחוז ניצולת מחושב ביחס ל-requests. בלי requests אין HPA על CPU.",
+    "`behavior` ו-stabilization window מונעים flapping; ירידה מחכה 5 דקות כברירת מחדל.",
+    "KEDA לסקיילינג לפי אירועים (אורך תור, Kafka lag), כולל ירידה לאפס."
+   ],
+   "f": "Your HPA keeps flapping between 3 and 10 replicas. What do you tune?",
+   "w": "לשכוח שאחוז ה-CPU מחושב ביחס ל-requests.",
+   "r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+  },
+  {
+   "id": "e812f8f3",
+   "t": 0,
+   "s": 3,
+   "lv": 1,
+   "k": "t",
+   "q": "The HPA shows `<unknown>` for its target and never scales. What's wrong?",
+   "p": [
+    "`kubectl describe hpa`: ה-conditions וה-Events מסבירים למה אין מדד.",
+    "metrics-server לא מותקן או לא תקין. סימן: `kubectl top pods` נכשל.",
+    "ל-pods אין CPU requests, ולכן אי אפשר לחשב אחוז.",
+    "custom metric: ה-adapter (prometheus-adapter) חסר, או ששם המדד שגוי.",
+    "`scaleTargetRef` מפנה לשם או ל-kind שגוי."
+   ],
+   "f": "How would you scale this service on queue depth instead of CPU?",
+   "w": "לשנות את ה-target בלי לבדוק שבכלל מגיעים מדדים.",
+   "r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/"
+  },
+  {
+   "id": "b7f4877a",
+   "t": 0,
+   "s": 3,
+   "lv": 1,
+   "k": "t",
+   "q": "Latency spikes on a service, but CPU usage looks low. You suspect CPU throttling. How do you confirm and fix it?",
+   "p": [
+    "CFS quota נמדד בחלונות של 100ms. burst קצר מגיע ל-limit גם כשהממוצע נמוך.",
+    "לאשר עם `container_cpu_cfs_throttled_periods_total` ביחס ל-`container_cpu_cfs_periods_total`.",
+    "runtimes עם הרבה threads (GC של JVM, Go עם GOMAXPROCS כמספר ליבות ה-node) שורפים את ה-quota מהר.",
+    "תיקון: להעלות או להסיר את ה-CPU limit, להגדיר GOMAXPROCS או ActiveProcessorCount, ולוודא requests נכונים."
+   ],
+   "f": "Why does a Go app on a 64-core node get throttled with a 1-CPU limit?",
+   "w": "להסתכל על ממוצע CPU ולקבוע שאין בעיה.",
+   "r": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#how-pods-with-resource-limits-are-run"
+  },
+  {
+   "id": "1637c2bf",
+   "t": 0,
+   "s": 3,
+   "lv": 1,
+   "k": "t",
+   "q": "Pods are being evicted with `The node was low on resource: memory`. What's going on, and what do you do?",
+   "p": [
+    "זה node-pressure eviction של kubelet, לא OOMKill של קונטיינר.",
+    "סדר הפינוי: BestEffort, ואחריהם Burstable שחורגים מה-requests.",
+    "הסיבה השורשית בדרך כלל: requests נמוכים מהשימוש האמיתי, כלומר overcommit של ה-node.",
+    "תיקון: requests נכונים, LimitRange עם ברירות מחדל, ו-`kube-reserved`/`system-reserved` לתהליכי המערכת.",
+    "לבדוק גם DaemonSets כבדים ו-ephemeral storage."
+   ],
+   "f": "How do QoS classes affect which pods get evicted first?",
+   "w": "להגדיל את ה-nodes בלי לתקן requests שלא משקפים את השימוש.",
+   "r": "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/"
+  },
+  {
+   "id": "174e98e0",
+   "t": 0,
+   "s": 4,
+   "lv": 0,
+   "k": "k",
+   "q": "Explain Kubernetes RBAC: Role, ClusterRole, RoleBinding and ClusterRoleBinding.",
+   "p": [
+    "Role: הרשאות (verbs על resources) בתוך namespace אחד.",
+    "ClusterRole: הרשאות ברמת הקלאסטר, או תבנית לשימוש חוזר בכמה namespaces.",
+    "RoleBinding נותן Role או ClusterRole בתוך namespace; ClusterRoleBinding נותן בכל הקלאסטר.",
+    "ה-subjects יכולים להיות users, groups או ServiceAccounts.",
+    "RBAC רק מוסיף הרשאות. אין חוקי deny."
+   ],
+   "f": "How do you check what a given ServiceAccount is allowed to do?",
+   "w": "לחשוב שיש חוקי deny ב-RBAC.",
+   "r": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/"
+  },
+  {
+   "id": "73affaa2",
+   "t": 0,
+   "s": 4,
+   "lv": 0,
+   "k": "k",
+   "q": "What's a ServiceAccount, and how do pods get credentials to call the API server?",
+   "p": [
+    "ServiceAccount הוא הזהות של pod מול ה-API server.",
+    "ה-pod מקבל projected token: קשור ל-pod, עם audience, ופג תוקף אוטומטית.",
+    "`automountServiceAccountToken: false` כשהאפליקציה לא צריכה לדבר עם ה-API.",
+    "ההרשאות מגיעות מ-RBAC שקשור ל-ServiceAccount.",
+    "ב-EKS אותו מנגנון נותן הרשאות AWS (IRSA או Pod Identity)."
+   ],
+   "f": "Why are projected tokens safer than the old secret-based tokens?",
+   "w": "להשתמש ב-default ServiceAccount עם הרשאות רחבות לכל האפליקציות.",
+   "r": "https://kubernetes.io/docs/concepts/security/service-accounts/"
+  },
+  {
+   "id": "928569d3",
+   "t": 0,
+   "s": 4,
+   "lv": 0,
+   "k": "t",
+   "q": "A developer asks for `kubectl exec` access to production pods. How do you handle it?",
+   "p": [
+    "`pods/exec` נותן גישה מלאה לקונטיינר, כולל לסודות שלו.",
+    "ברירת מחדל: הרשאות קריאה (get, logs) בלבד.",
+    "גישה זמנית (just-in-time / break-glass) עם אישור ותפוגה.",
+    "audit log על כל exec.",
+    "observability טובה מקטינה את הצורך ב-exec מלכתחילה."
+   ],
+   "f": "How would you audit who exec'd into which pod?",
+   "w": "לתת exec קבוע לכל המפתחים בלי audit.",
+   "r": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-resources"
+  },
+  {
+   "id": "cf5e03e2",
+   "t": 0,
+   "s": 4,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you keep the container images running in your cluster secure?",
+   "p": [
+    "סריקה ב-CI (Trivy, Grype) שנכשלת על critical עם fix זמין.",
+    "base image מינימלי (distroless/alpine), ו-pin לפי digest.",
+    "חתימה (cosign) ואימות ב-admission (Kyverno, policy-controller).",
+    "registries מורשים בלבד, וסריקה חוזרת של images שכבר רצים.",
+    "להריץ כ-non-root."
+   ],
+   "f": "Why pin images by digest instead of by tag?",
+   "w": "להשתמש ב-`:latest` בפרודקשן.",
+   "r": "https://kubernetes.io/docs/concepts/containers/images/#image-names"
+  },
+  {
+   "id": "8782b158",
+   "t": 0,
+   "s": 4,
+   "lv": 1,
+   "k": "t",
+   "q": "A CI pipeline's kubectl gets `Forbidden: cannot list pods in namespace`. How do you troubleshoot and fix it properly?",
+   "p": [
+    "לזהות מי הזהות בפועל: `kubectl auth whoami`. ב-EKS: איזה IAM role ממופה ל-user/group.",
+    "`kubectl auth can-i list pods -n <ns> --as <subject>` כדי לאמת.",
+    "לבדוק שיש RoleBinding ב-namespace הנכון שמחבר את ה-subject ל-Role.",
+    "תיקון least privilege: Role עם ה-verbs הנדרשים בלבד, לא cluster-admin.",
+    "זהות נפרדת לכל pipeline וסביבה."
+   ],
+   "f": "On EKS, how does an IAM role become a Kubernetes user?",
+   "w": "לתת cluster-admin ל-pipeline כדי לפתור את זה מהר.",
+   "r": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#checking-api-access"
+  },
+  {
+   "id": "aec919e8",
+   "t": 0,
+   "s": 4,
+   "lv": 1,
+   "k": "k",
+   "q": "What are Pod Security Standards, and how do you enforce them?",
+   "p": [
+    "שלוש רמות: privileged, baseline, restricted.",
+    "Pod Security Admission: labels על namespace עם מצבי `enforce`, `audit` ו-`warn`.",
+    "restricted דורש: `runAsNonRoot`, drop ALL capabilities, בלי privilege escalation, seccomp RuntimeDefault.",
+    "החליף את PodSecurityPolicy, שהוסר ב-1.25.",
+    "לחוקים מותאמים: Kyverno, OPA Gatekeeper, או ValidatingAdmissionPolicy."
+   ],
+   "f": "How would you roll out `restricted` without breaking existing workloads?",
+   "w": "להציע את PodSecurityPolicy כפתרון נוכחי. הוא הוסר.",
+   "r": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  },
+  {
+   "id": "be7fe8b9",
+   "t": 0,
+   "s": 4,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you harden a container's securityContext? Which settings do you set, and why?",
+   "p": [
+    "`runAsNonRoot: true` ו-`runAsUser` מפורש.",
+    "`readOnlyRootFilesystem: true`, עם emptyDir לתיקיות שצריך לכתוב אליהן.",
+    "`allowPrivilegeEscalation: false` כדי שתהליך לא יקבל יותר הרשאות מההורה שלו.",
+    "`capabilities: drop: [ALL]`, ולהוסיף רק מה שצריך (למשל NET_BIND_SERVICE).",
+    "`seccompProfile: RuntimeDefault`; בלי privileged, hostNetwork או hostPID."
+   ],
+   "f": "Your app needs temp files but the root filesystem is read-only. What do you do?",
+   "w": "להריץ כ-root \"כי זה רק בתוך קונטיינר\".",
+   "r": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"
+  },
+  {
+   "id": "c4b70deb",
+   "t": 0,
+   "s": 4,
+   "lv": 1,
+   "k": "t",
+   "q": "You suspect a pod in production has been compromised. What do you do?",
+   "p": [
+    "להכיל: NetworkPolicy של deny-all על ה-labels שלו. לא למחוק מיד, כדי לשמור ראיות.",
+    "לאסוף: לוגים, describe, עותק של מערכת הקבצים, ומידע מה-node.",
+    "audit logs והרשאות ה-ServiceAccount: למה הוא יכול היה לגשת? לבצע רוטציה לסודות האלה.",
+    "למצוא את נקודת הכניסה: CVE ב-image, endpoint חשוף, credentials שדלפו.",
+    "לבנות מחדש מ-image נקי, ולהוסיף runtime detection (Falco)."
+   ],
+   "f": "What in your cluster setup limits the blast radius here?",
+   "w": "למחוק את ה-pod מיד. הראיות נעלמות, וה-ReplicaSet מעלה עותק עם אותה חולשה.",
+   "r": "https://kubernetes.io/docs/concepts/security/security-checklist/"
+  },
+  {
+   "id": "7b6dc81c",
+   "t": 0,
+   "s": 4,
+   "lv": 1,
+   "k": "t",
+   "q": "A validating webhook's pods crashed, and now nobody can create pods. How do you recover, and prevent it?",
+   "p": [
+    "ה-API server קורא ל-webhook; עם `failurePolicy: Fail`, כל בקשה נדחית כשה-webhook לא זמין.",
+    "ה-webhook עלול לחסום גם את התיקון של עצמו. `namespaceSelector` צריך להחריג את ה-namespace שלו ואת kube-system.",
+    "התאוששות: לתקן את ה-deployment שלו, או זמנית לשנות את ה-ValidatingWebhookConfiguration ל-Ignore.",
+    "מניעה: כמה replicas עם PDB, timeout קצר, ניטור של latency ושגיאות ה-webhook.",
+    "ValidatingAdmissionPolicy (CEL) רץ בתוך ה-API server, בלי שירות חיצוני שיכול ליפול."
+   ],
+   "f": "When is `failurePolicy: Fail` the right choice anyway?",
+   "w": "לשכוח ש-webhook שנפל עם `failurePolicy: Fail` חוסם יצירת משאבים בכל הקלאסטר.",
+   "r": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/"
+  },
+  {
+   "id": "db525704",
+   "t": 0,
+   "s": 5,
+   "lv": 0,
+   "k": "t",
+   "q": "A node shows `NotReady`. How do you investigate?",
+   "p": [
+    "`kubectl describe node`: conditions (MemoryPressure, DiskPressure, PIDPressure) ו-\"kubelet stopped posting status\".",
+    "על ה-node (SSH/SSM): `systemctl status kubelet` ו-`journalctl -u kubelet`.",
+    "בריאות ה-container runtime (containerd).",
+    "דיסק מלא, סרטיפיקטים שפגו, או node שלא מגיע ל-API server.",
+    "pods של ה-CNI על ה-node."
+   ],
+   "f": "What happens to the pods on a NotReady node, and after how long?",
+   "w": "למחוק את ה-node מיד בלי למצוא סיבה. אותה בעיה תחזור על nodes אחרים.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-cluster/"
+  },
+  {
+   "id": "abe35057",
+   "t": 0,
+   "s": 5,
+   "lv": 0,
+   "k": "t",
+   "q": "A user reports the app is slow. Where do you start in a Kubernetes environment?",
+   "p": [
+    "להגדיר היקף: אילו endpoints, ממתי, כולם או חלק. לבדוק אם היה deploy או שינוי.",
+    "golden signals בדשבורד: latency, traffic, errors, saturation.",
+    "pods: restarts, CPU throttling, HPA שהגיע ל-max.",
+    "תלויות: DB, APIs חיצוניים, DNS.",
+    "traces כדי למצוא את ה-span האיטי."
+   ],
+   "f": "Which metrics would you alert on for this service?",
+   "w": "לקפוץ ישר ללוגים של pod אחד בלי להבין את היקף הבעיה.",
+   "r": "https://kubernetes.io/docs/tasks/debug/"
+  },
+  {
+   "id": "6b54a54b",
+   "t": 0,
+   "s": 5,
+   "lv": 0,
+   "k": "t",
+   "q": "`kubectl` commands are slow or time out against the cluster. What could be wrong?",
+   "p": [
+    "`kubectl -v=6` מראה איזו קריאה איטית ומה הסטטוס שלה.",
+    "הדרך ל-API endpoint: VPN, private endpoint, security group.",
+    "API server עמוס: controller שעושה LIST/WATCH מוגזם, או throttling של APF (429).",
+    "credentials: exec plugin איטי (`aws eks get-token`) או token שפג.",
+    "הרבה CRDs מאטים את ה-discovery; ה-cache ב-`~/.kube/cache` עוזר."
+   ],
+   "f": "How would you find which client is hammering the API server?",
+   "w": "להניח שהבעיה ב-kubectl המקומי בלי לבדוק את ה-API server.",
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/flow-control/"
+  },
+  {
+   "id": "f2ff0f04",
+   "t": 0,
+   "s": 5,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you debug a container that has no shell, like a distroless image?",
+   "p": [
+    "`kubectl debug -it <pod> --image=busybox --target=<container>` מוסיף ephemeral container עם כלים.",
+    "`--target` משתף את ה-process namespace, כך שרואים את התהליכים של הקונטיינר.",
+    "`kubectl debug node/<node>` לדיבאג של ה-node עצמו.",
+    "`--copy-to` יוצר עותק של ה-pod עם image אחר או פקודה אחרת.",
+    "`kubectl port-forward` לבדוק endpoints, ולוגים ו-events כרגיל."
+   ],
+   "f": "What exactly does `--target` give the debug container?",
+   "w": "לבנות מחדש את ה-image עם shell רק כדי לדבג.",
+   "r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container"
+  },
+  {
+   "id": "39d87054",
+   "t": 0,
+   "s": 5,
+   "lv": 0,
+   "k": "k",
+   "q": "Walk me through what happens when you run `kubectl apply -f deployment.yaml`.",
+   "p": [
+    "kubectl שולח ל-API server: authentication, authorization (RBAC), admission.",
+    "האובייקט נשמר ב-etcd.",
+    "ה-Deployment controller יוצר ReplicaSet, וה-ReplicaSet controller יוצר pods.",
+    "ה-scheduler משבץ כל pod ל-node.",
+    "kubelet מושך image דרך ה-runtime, ה-CNI נותן IP, ה-probes עוברים, וה-pod נכנס ל-endpoints."
+   ],
+   "f": "Pods are created but never scheduled. Which component do you check?",
+   "w": "לדלג על ה-controllers ולומר שה-API server מריץ את ה-pods על ה-nodes.",
+   "r": "https://kubernetes.io/docs/concepts/overview/components/"
+  },
+  {
+   "id": "302740f0",
+   "t": 0,
+   "s": 5,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you design logging for a Kubernetes cluster?",
+   "p": [
+    "האפליקציות כותבות ל-stdout/stderr, רצוי JSON מובנה.",
+    "agent כ-DaemonSet (Fluent Bit, Vector) קורא מ-`/var/log/containers` ומוסיף metadata של Kubernetes.",
+    "שליחה ל-backend: Loki, OpenSearch, CloudWatch.",
+    "retention ועלויות: לסנן או לדגום לוגים רועשים.",
+    "trace ID בכל שורה כדי לקשר לוגים ל-traces."
+   ],
+   "f": "Logs from short-lived Job pods are sometimes missing. Why?",
+   "w": "לכתוב לוגים לקובץ בתוך הקונטיינר. הם נעלמים עם ה-pod.",
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/logging/"
+  },
+  {
+   "id": "107c094d",
+   "t": 0,
+   "s": 5,
+   "lv": 1,
+   "k": "k",
+   "q": "What would you monitor and alert on for the Kubernetes cluster itself, not the apps?",
+   "p": [
+    "control plane: latency ושגיאות של ה-API server, ו-etcd אם הוא בניהולך.",
+    "nodes: NotReady, disk/memory pressure, conntrack מלא.",
+    "workloads: CrashLoopBackOff, pods ב-Pending לאורך זמן, Jobs שנכשלו.",
+    "קיבולת: allocatable מול requests, IPs פנויים, תפוגת סרטיפיקטים.",
+    "כלים: kube-state-metrics, node-exporter, Prometheus. להתריע על סימפטומים, לא על רעש."
+   ],
+   "f": "What's the difference between kube-state-metrics and metrics-server?",
+   "w": "להתריע על כל restart של pod. זה יוצר alert fatigue.",
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/kube-state-metrics/"
+  },
+  {
+   "id": "f8c872b0",
+   "t": 0,
+   "s": 5,
+   "lv": 1,
+   "k": "t",
+   "q": "After a deploy, error rates jump, but the pods are healthy and Ready. How do you find and fix it fast?",
+   "p": [
+    "לקשר בזמן ל-deploy: היסטוריה ב-Argo CD או `kubectl rollout history`.",
+    "להשוות לפי גרסה: שגיאות ולוגים לפי label של version, ו-traces.",
+    "אם יש השפעה על משתמשים: rollback קודם (revert ב-Git או rollout undo), חקירה אחר כך.",
+    "לבדוק גם שינויי קונפיגורציה: ConfigMap, feature flags, תלות שהתעדכנה.",
+    "לשפר: canary עם analysis, ו-readiness שבודק פונקציונליות אמיתית."
+   ],
+   "f": "How would a canary with automated analysis have caught this earlier?",
+   "w": "לדבג בפרודקשן בזמן שמשתמשים חווים שגיאות, במקום לעשות rollback.",
+   "r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment"
+  },
+  {
+   "id": "4eccab12",
+   "t": 0,
+   "s": 5,
+   "lv": 1,
+   "k": "t",
+   "q": "A namespace has been stuck in `Terminating` for hours. What's going on?",
+   "p": [
+    "finalizers על ה-namespace או על משאבים בתוכו מחכים לניקוי.",
+    "למצוא מה נשאר: `kubectl api-resources --namespaced -o name` ולעבור על כל סוג.",
+    "נפוץ: מופעים של CRD שה-controller שלהם הוסר.",
+    "APIService לא זמין (למשל metrics-server נפל) חוסם את ה-discovery ואת המחיקה.",
+    "לתקן את ה-controller או את ה-APIService. הסרת finalizers ידנית רק כשמבינים מה לא ינוקה."
+   ],
+   "f": "Why is just removing the finalizers dangerous?",
+   "w": "למחוק finalizers מיד, בלי להבין איזה משאב חיצוני הם היו אמורים לנקות.",
+   "r": "https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/"
+  },
+  {
+   "id": "2436c9ec",
+   "t": 0,
+   "s": 5,
+   "lv": 1,
+   "k": "t",
+   "q": "A node is under DiskPressure, and pods are being evicted. What's using the disk, and how do you fix it?",
+   "p": [
+    "`kubectl describe node`, ואז על ה-node: `du` על `/var/lib/containerd` ו-`/var/log`.",
+    "images ישנים: ה-image GC של kubelet לפי thresholds.",
+    "לוגים של קונטיינרים בלי rotation, ו-emptyDir גדול.",
+    "אפליקציה שכותבת למערכת הקבצים של הקונטיינר במקום ל-volume.",
+    "תיקון: ephemeral-storage requests/limits, log rotation, root volume גדול יותר."
+   ],
+   "f": "How do ephemeral-storage limits help here?",
+   "w": "למחוק קבצים ידנית בלי למצוא מה ממלא את הדיסק.",
+   "r": "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/"
+  }
+ ]
+}
