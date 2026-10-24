@@ -111,6 +111,60 @@ SUBJECT = {
          "The scheduler",
          x="KEDA מוסיף scalers לאירועים (SQS, Kafka ועוד) ויכול להוריד replicas לאפס כשאין עבודה."),
       ]),
+
+  MOD("sched-in-practice", "בפועל: Pending, preemption, PDB ו-drain",
+      "לקרוא הודעת Pending של ה-scheduler, להבין priority ו-preemption, ולתכנן PodDisruptionBudget שלא חוסם תחזוקה.",
+      [P("שיבוץ נראה כמו קסם עד שמשהו נתקע. כאן עוברים על ההודעות האמיתיות של ה-scheduler ועל המנגנונים שמחליטים מי רץ ומי מפונה."),
+       H("לקרוא הודעת Pending"),
+       CODE("""$ kubectl describe pod worker-5c4b7d-hx2fz | tail -4
+Events:
+  Warning  FailedScheduling  default-scheduler  0/6 nodes are available:
+  2 Insufficient memory, 3 node(s) had untolerated taint {dedicated: gpu},
+  1 node(s) didn't match pod topology spread constraints.""", cap="ההודעה מפרקת את כל ה-nodes לפי הסיבה"),
+       TABLE(["חלק בהודעה", "מה עושים"],
+             ["`Insufficient memory`", "requests גבוהים מהמקום הפנוי; להקטין requests או להוסיף nodes (autoscaler אמור להגיב)"],
+             ["`untolerated taint`", "ה-nodes שמורים למשהו אחר; להוסיף toleration רק אם ה-pod באמת שייך לשם"],
+             ["`topology spread constraints`", "אין דרך לפזר לפי החוק; `whenUnsatisfiable: ScheduleAnyway` מרכך"],
+             ["`volume node affinity conflict`", "ה-PVC ב-AZ אחר; לבדוק את ה-StorageClass"]),
+       H("PriorityClass ו-preemption"),
+       P("PriorityClass נותן ל-pod מספר עדיפות. כשאין מקום ל-pod בעדיפות גבוהה, ה-scheduler יכול לפנות (preempt) pods בעדיפות נמוכה כדי לפנות לו מקום. כך רכיבי מערכת ו-workloads קריטיים מקבלים מקום גם בלחץ."),
+       TRAP("PriorityClass עם `globalDefault: true` ועדיפות גבוהה גורם לכל pod חדש לפנות אחרים. preemption מכבד PDB רק ב-best effort, אז עדיפויות צריכות לשקף חשיבות אמיתית."),
+       H("PodDisruptionBudget ו-drain"),
+       P("PDB מגביל disruptions יזומים: `kubectl drain`, שדרוג node group, consolidation של Karpenter. הוא לא מגן מנפילת node. `kubectl drain` משתמש ב-Eviction API ומכבד את ה-PDB."),
+       CODE("""apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: api}
+spec:
+  minAvailable: 2          # או maxUnavailable: 1
+  selector: {matchLabels: {app: api}}""", cap="PDB בסיסי"),
+       KEY("PDB עם `minAvailable` שווה למספר ה-replicas (או `maxUnavailable: 0`) חוסם כל drain לנצח, ושדרוג של ה-cluster נתקע. כלל אצבע: `maxUnavailable: 1` ומספר replicas שמאפשר את זה."),
+       SPLIT(("HPA", ["משנה מספר replicas לפי metrics", "`behavior.scaleDown.stabilizationWindowSeconds` מונע קפיצות", "צריך requests כדי לחשב אחוז CPU"]),
+             ("Karpenter / CA", ["מוסיף nodes כשיש pods ב-Pending", "consolidation מפנה nodes לא מנוצלים", "מכבד PDB ו-`karpenter.sh/do-not-disrupt`"])),
+       ASK("pod תקוע ב-Pending. איך אתה מוצא את הסיבה ומה הסיבות הנפוצות?",
+           "מה זה PodDisruptionBudget, וממה הוא לא מגן?",
+           "למה שדרוג node group נתקע, ומה ה-PDB קשור לזה?",
+           "מה זה preemption ומתי הוא קורה?"),
+      ],
+      [C("What does a PodDisruptionBudget protect against?",
+         "Voluntary disruptions such as `kubectl drain` and node upgrades",
+         "A node crashing suddenly",
+         "Containers running out of memory",
+         "Image pull failures",
+         x="PDB מגביל רק disruptions יזומים שעוברים דרך Eviction API. נפילת node היא לא יזומה, ו-PDB לא מונע אותה."),
+       C("A PDB has `minAvailable` equal to the replica count. What happens on `kubectl drain`?",
+         "The drain can never evict those pods and gets stuck",
+         "The pods are evicted anyway",
+         "The PDB is deleted automatically",
+         "The replicas double",
+         x="אם אסור שאף pod יהיה לא זמין, Eviction API ידחה כל פינוי, וה-drain יחכה לנצח."),
+       C("What does preemption do when a high-priority pod can't be scheduled?",
+         "Evicts lower-priority pods to make room",
+         "Adds a new node immediately",
+         "Lowers the pod's requests",
+         "Moves the pod to another cluster",
+         x="ה-scheduler מפנה pods עם PriorityClass נמוך יותר כדי לשבץ את ה-pod החשוב. הוספת node היא עבודה של autoscaler."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -190,11 +244,11 @@ SUBJECT = {
      ("The Service type", "סוג ה-Service לא קשור לסקיילינג."),
      ("The image tag", "tag לא קשור ל-HPA."),
      x="ב-`behavior` מגדירים כמה מהר מותר לעלות ולרדת, ו-stabilization window שמחכה לפני ירידה. זה מייצב את מספר ה-replicas."),
-   F("autoscaling", "What does Karpenter do differently from the Cluster Autoscaler?",
-     ("It launches right-sized instances for pending pods directly, and consolidates nodes", "נכון. הוא לא מוגבל ל-node groups קבועים."),
-     ("It scales pods instead of nodes", "Karpenter מנהל nodes, לא replicas."),
-     ("It replaces the scheduler", "ה-scheduler של Kubernetes ממשיך לשבץ."),
-     ("It only works on Fargate", "Karpenter עובד עם EC2 instances."),
-     x="Cluster Autoscaler מגדיל ASGs קיימים. Karpenter בוחר instance type לפי צרכי ה-pods הממתינים, ומאחד nodes לא מנוצלים כדי לחסוך."),
+   F("sched-in-practice", "A node group upgrade has been stuck for an hour on draining one node. What is the most likely cause?",
+     ("A PodDisruptionBudget that allows zero disruptions for pods on that node", "נכון. Eviction API דוחה את הפינוי, וה-drain מחכה."),
+     ("The node has too much free memory", "מקום פנוי לא מונע פינוי."),
+     ("The pods have no liveness probes", "probes לא משפיעים על eviction."),
+     ("The HPA is set to scale on CPU", "HPA לא חוסם drain."),
+     x="drain משתמש ב-Eviction API שמכבד PDB. PDB עם minAvailable שווה ל-replicas, או pod יחיד עם PDB, חוסם את הפינוי. בודקים עם `kubectl get pdb -A` ומתקנים את ה-PDB או מוסיפים replicas."),
  ],
 }

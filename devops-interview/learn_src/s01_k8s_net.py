@@ -119,6 +119,59 @@ spec:
          "The node has too little disk",
          x="EndpointSlices ריקים אומרים שאין pods שתואמים ל-selector ושהם Ready. זה הדבר הראשון לבדוק."),
       ]),
+
+  MOD("net-in-practice", "בפועל: מסלול של בקשה, EndpointSlices ו-externalTrafficPolicy",
+      "לעקוב אחרי בקשה מה-load balancer עד ה-pod, לקרוא EndpointSlices, ולהסביר מתי מאבדים את ה-IP של הלקוח.",
+      [P("רוב שאלות הרשת בראיון הן בעצם 'תעקוב אחרי הבקשה'. כאן עוברים על המסלול, על הפקודות שמראות כל שלב, ועל ההגדרות שמשנות את ההתנהגות."),
+       FLOW("DNS של הלקוח מחזיר את ה-load balancer", "LB שולח ל-node (או ישר ל-pod IP)", "kube-proxy או eBPF מתרגם ClusterIP ל-pod", "ה-pod עונה", cap="מסלול של בקשה מבחוץ"),
+       H("EndpointSlices: מי באמת מקבל traffic"),
+       CODE("""$ kubectl get endpointslices -l kubernetes.io/service-name=api
+NAME        ADDRESSTYPE   PORTS   ENDPOINTS                AGE
+api-x7k2d   IPv4          8080    10.0.3.17,10.0.5.88      3h
+
+$ kubectl get endpointslice api-x7k2d -o yaml | grep -A3 conditions
+    conditions:
+      ready: false        # ה-pod לא עובר readiness
+      serving: true
+      terminating: true   # ה-pod בתהליך כיבוי""", cap="Service בלי endpoints מוכנים = אף pod לא מקבל traffic"),
+       KEY("Service שלא עונה: קודם `kubectl get endpointslices`. אם הרשימה ריקה, ה-selector לא תואם ל-labels של ה-pods, או שאף pod לא Ready. רק אם יש endpoints בודקים את הרשת עצמה."),
+       H("externalTrafficPolicy"),
+       TABLE(["הגדרה", "IP הלקוח", "פיזור עומס", "סיכון"],
+             ["`Cluster` (ברירת מחדל)", "אובד: עובר SNAT ל-IP של ה-node", "שווה בין כל ה-pods", "hop נוסף בין nodes"],
+             ["`Local`", "נשמר", "רק ל-pods על ה-node שקיבל", "node בלי pod נכשל ב-health check של ה-LB"]),
+       P("ב-EKS עם AWS Load Balancer Controller ו-`target-type: ip`, ה-LB שולח ישר ל-IP של ה-pod, בלי לעבור דרך NodePort. כך שומרים על מסלול קצר, ואפשר לשמור IP לקוח עם proxy protocol או עם `X-Forwarded-For` ב-ALB."),
+       H("DNS ו-ndots"),
+       CODE("""$ kubectl exec -it api-7d9f8c6b5-2xkqp -- cat /etc/resolv.conf
+search prod.svc.cluster.local svc.cluster.local cluster.local
+nameserver 172.20.0.10
+options ndots:5""", cap="ה-resolv.conf שכל pod מקבל"),
+       P("עם `ndots:5`, שם כמו `api.example.com` (שתי נקודות) נחשב 'קצר', וה-resolver מנסה קודם את כל ה-search domains: `api.example.com.prod.svc.cluster.local` ועוד. כל בקשה חיצונית הופכת לכמה שאילתות. פתרון: נקודה בסוף השם, או `dnsConfig` עם `ndots: 2`, ו-NodeLocal DNSCache."),
+       TRAP("headless Service (`clusterIP: None`) לא מקבל IP ולא עובר דרך kube-proxy: DNS מחזיר ישר את כתובות ה-pods. זה מה ש-StatefulSet צריך (`db-0.db.prod.svc.cluster.local`), אבל אין בו load balancing ברמת הקלאסטר."),
+       ASK("מה קורה מרגע שבקשה מגיעה ל-NodePort ועד שהיא מגיעה ל-pod?",
+           "למה האפליקציה רואה את ה-IP של ה-node ולא של הלקוח, ואיך מתקנים?",
+           "מה ההבדל בין Service רגיל ל-headless Service?",
+           "למה שאילתות DNS חיצוניות מקלאסטר איטיות לפעמים?"),
+      ],
+      [C("A Service exists but its EndpointSlices list no endpoints. What do you check first?",
+         "That the Service selector matches the pod labels and the pods are Ready",
+         "The node's kernel version",
+         "The load balancer's TLS certificate",
+         "The CoreDNS cache size",
+         x="EndpointSlice ריק אומר שאף pod לא נבחר או שאף pod לא Ready. selector שגוי או readiness שנכשל הם הסיבות הנפוצות."),
+       C("Which `externalTrafficPolicy` keeps the client's source IP?",
+         "`Local`",
+         "`Cluster`",
+         "`Preserve`",
+         "`Direct`",
+         x="Local לא עושה SNAT ושולח רק ל-pods על אותו node, ולכן ה-IP של הלקוח נשמר. המחיר: פיזור לא שווה."),
+       C("Why can lookups of external names from a pod be slow with `ndots:5`?",
+         "Names with fewer than five dots are first tried with every search domain",
+         "ndots limits DNS to five queries per second",
+         "ndots disables the DNS cache",
+         "ndots forces TCP for every query",
+         x="שם עם פחות מ-5 נקודות עובר קודם דרך כל ה-search domains, וכל אחד הוא שאילתה נוספת שנכשלת."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -200,11 +253,11 @@ spec:
      ("The client's browser is misconfigured", "502 מגיע מה-proxy, לא מהדפדפן."),
      ("The TLS certificate expired", "cert שפג גורם לשגיאת TLS בצד הלקוח, לא ל-502."),
      x="502 מה-Ingress controller אומר שהוא קיבל את הבקשה אבל קיבל תשובה לא תקינה או חיבור שנכשל מה-backend: endpoints, פורט, פרוטוקול או pods שקורסים."),
-   F("services", "What assigns a pod its IP address?",
-     ("The CNI plugin", "נכון. ה-CNI מקצה IP ומחבר את ה-pod לרשת."),
-     ("kube-proxy", "kube-proxy מתכנת חוקים ל-Services, לא IPs ל-pods."),
-     ("CoreDNS", "CoreDNS עונה על שמות, לא מקצה כתובות."),
-     ("The Ingress controller", "Ingress controller מטפל ב-HTTP מבחוץ."),
-     x="ה-CNI (AWS VPC CNI, Calico, Cilium) אחראי לרשת של ה-pods: IP, ממשק ו-routes. kube-proxy אחראי רק על ה-Services."),
+   F("net-in-practice", "Your app logs show the node IP instead of the client IP behind a NodePort Service. What setting changes that?",
+     ("`externalTrafficPolicy: Local` on the Service", "נכון. בלי SNAT, ה-IP של הלקוח נשמר."),
+     ("`sessionAffinity: ClientIP`", "זה דביקות לפי IP, אבל ה-IP עדיין עובר SNAT בדרך."),
+     ("`clusterIP: None`", "headless Service לא רלוונטי לתנועה מבחוץ דרך NodePort."),
+     ("`type: ExternalName`", "ExternalName הוא רק CNAME ב-DNS, בלי תנועה דרך nodes."),
+     x="עם Cluster (ברירת המחדל) הבקשה יכולה לעבור ל-node אחר ועוברת SNAT. עם Local היא נשארת על ה-node שקיבל אותה, וה-IP של הלקוח נשמר."),
  ],
 }

@@ -115,6 +115,68 @@ df -h /var/lib/containerd /var/log
          "The kubelet blocks file writes",
          x="מערכת הקבצים של הקונטיינר נמחקת עם ה-pod. log agent אוסף רק מה שנכתב ל-stdout ו-stderr."),
       ]),
+
+  MOD("incident-drill", "בפועל: תרגיל תקלה מההתראה עד הסיבה",
+      "לעבור תקלה אמיתית צעד אחרי צעד עם הפקודות והפלטים, ולדעת מה כל פלט מוכיח ומה הוא שולל.",
+      [P("ההתראה: שיעור השגיאות של ה-API עלה ל-8%. זה תרגיל של ראיון troubleshooting: אומרים בקול מה בודקים ולמה, וכל פקודה מצמצמת את האפשרויות."),
+       STEPS("**היקף:** כל ה-pods או חלק? כל ה-endpoints או אחד? מתי התחיל, והאם היה deploy?",
+             "**שינויים אחרונים:** `kubectl rollout history`, ה-history של Argo CD, שינויי תשתית.",
+             "**סימנים:** pods, events, logs, metrics, בסדר הזה.",
+             "**השערה ובדיקה:** כל השערה נבדקת בפקודה אחת שמאשרת או שוללת."),
+       CODE("""$ kubectl get pods -l app=api
+NAME                  READY   STATUS    RESTARTS        AGE
+api-6f9c8d7b4-4k2lq   1/1     Running   7 (3m ago)      2h
+api-6f9c8d7b4-pz8wn   1/1     Running   6 (11m ago)     2h
+
+$ kubectl describe pod api-6f9c8d7b4-4k2lq | grep -A4 'Last State'
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137""", cap="restarts חוזרים, והסיבה בשדה Last State"),
+       KEY("`OOMKilled` עם exit code 137 אומר שה-container עבר את ה-memory limit שלו. זה לא אומר שה-node נגמר מזיכרון. בודקים `kubectl top pod`, את ה-limit, ואם הזיכרון גדל מאז ה-deploy האחרון: דליפה או limit נמוך מדי."),
+       H("Events לפי זמן"),
+       CODE("""$ kubectl get events -n prod --sort-by=.lastTimestamp | tail -5
+4m   Warning  BackOff     pod/api-6f9c8d7b4-4k2lq  Back-off restarting failed container
+3m   Normal   Pulled      pod/api-6f9c8d7b4-4k2lq  Container image already present
+2m   Warning  Unhealthy   pod/api-6f9c8d7b4-pz8wn  Readiness probe failed: HTTP 503""", cap="events נשמרים כשעה בלבד, אז מסתכלים מהר"),
+       TABLE(["מה רואים", "מה זה אומר", "הצעד הבא"],
+             ["OOMKilled, 137", "חריגה מה-memory limit", "`kubectl top`, השוואה ל-limit, גרף זיכרון מאז ה-deploy"],
+             ["Readiness 503", "ה-pod חי אבל לא מוכן", "לוגים: תלות שנפלה? warm-up ארוך?"],
+             ["Restarts בלי OOM, exit 1", "האפליקציה קורסת", "`kubectl logs --previous`"],
+             ["NodeNotReady", "בעיה ב-node", "`kubectl describe node`, kubelet, disk pressure"]),
+       H("כשהבעיה ב-node"),
+       CODE("""$ kubectl describe node ip-10-0-5-12 | grep -A6 Conditions
+  MemoryPressure   False
+  DiskPressure     True     KubeletHasDiskPressure
+  PIDPressure      False
+  Ready            True
+$ kubectl debug node/ip-10-0-5-12 -it --image=busybox:1.36   # shell על ה-node, ה-filesystem ב-/host""", cap="DiskPressure גורם ל-evictions ולחסימת pods חדשים"),
+       TRAP("להתחיל ב-restart של הכול. זה מוחק את הראיות (logs, state), ולפעמים נותן הקלה שמסתירה את הסיבה עד הפעם הבאה. קודם לאסוף, אחר כך לייצב, ורק אז לתקן."),
+       P("אחרי הייצוב: rollback אם הבעיה התחילה ב-deploy, ואז תיקון אמיתי ו-postmortem בלי האשמה: מה קרה, למה זה לא נתפס קודם (התראה, בדיקה, limit), ומה משנים."),
+       ASK("קיבלת התראה על שגיאות 5xx. מה חמש הפקודות הראשונות שלך?",
+           "pod ב-OOMKilled. איך תדע אם זה דליפה או limit נמוך?",
+           "למה restart של כל ה-pods הוא לא צעד ראשון טוב?",
+           "מה כותבים ב-postmortem?"),
+      ],
+      [C("A container shows `Reason: OOMKilled`, `Exit Code: 137`. What happened?",
+         "It went over its own memory limit and the kernel killed it",
+         "The node ran out of disk",
+         "The image could not be pulled",
+         "The readiness probe failed",
+         x="137 = 128+9 (SIGKILL). OOMKilled אומר שה-container עבר את ה-memory limit שלו, גם אם ל-node יש זיכרון פנוי."),
+       C("Why sort events with `--sort-by=.lastTimestamp` during an incident?",
+         "To see the most recent problems in order, before the events expire",
+         "To delete old events",
+         "To restart failing pods",
+         "To export events to CloudWatch",
+         x="events לא ממוינים כברירת מחדל ונשמרים כשעה. מיון לפי זמן מראה את הרצף שהוביל לתקלה."),
+       C("A node shows `DiskPressure True`. What effect does this have?",
+         "The kubelet evicts pods and the node stops taking new ones",
+         "The node reboots automatically",
+         "Pods get more CPU",
+         "Services lose their ClusterIP",
+         x="בלחץ דיסק ה-kubelet מנקה images, מפנה pods ומוסיף taint שמונע שיבוץ חדש."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -197,11 +259,11 @@ df -h /var/lib/containerd /var/log
      ("Directly to etcd", "etcd לא מיועד ללוגים."),
      ("To a ConfigMap", "ConfigMap מיועד לקונפיגורציה."),
      x="container runtime שומר את stdout ו-stderr בקבצים על ה-node, ו-log agent כמו Fluent Bit שולח אותם ל-backend עם metadata של Kubernetes."),
-   F("method", "Which command shows the logs of the container instance that crashed?",
-     ("`kubectl logs <pod> --previous`", "נכון. --previous מראה את ההרצה הקודמת."),
-     ("`kubectl logs <pod> --all`", "אין דגל כזה ב-kubectl logs."),
-     ("`kubectl describe svc`", "describe svc לא מראה לוגים."),
-     ("`kubectl get events`", "Events לא כוללים את הלוג של האפליקציה."),
-     x="אחרי קריסה ה-kubelet מפעיל קונטיינר חדש. `--previous` מחזיר את הלוג של הקונטיינר שקרס, שם בדרך כלל השגיאה."),
+   F("incident-drill", "During an incident, what is the first thing to do before restarting pods?",
+     ("Collect evidence: describe, events, `logs --previous`, and recent changes", "נכון. restart מוחק את הראיות שצריך כדי להבין את הסיבה."),
+     ("Delete the namespace and redeploy", "זה מוחק הכול ומאריך את ההשבתה."),
+     ("Scale every Deployment to zero", "זה מוריד את השירות לגמרי."),
+     ("Upgrade the cluster version", "שדרוג באמצע תקלה מוסיף סיכון בלי קשר לסיבה."),
+     x="סדר טוב: לאסוף ראיות, לייצב (rollback אם היה deploy), לתקן, ולכתוב postmortem. restart מוקדם מוחק לוגים ו-state ולפעמים מסתיר את הסיבה."),
  ],
 }

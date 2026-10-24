@@ -144,6 +144,50 @@ kubectl -v=6 get pods      # which API call is slow?
         "A namespace is stuck in Terminating. Why?",
         "What would you alert on for the cluster itself?"),
   ]},
+  {"nm": "kubectl power moves", "blocks": [
+    P("בראיון מעשי, או ב-live debugging, מהירות עם kubectl נראית מיד. אלה הפקודות שחוסכות דקות ומראות ניסיון."),
+    TABLE(["צורך", "פקודה"],
+          ["YAML ראשוני בלי לכתוב", "`kubectl create deploy api --image=nginx --dry-run=client -o yaml`"],
+          ["לראות מה apply ישנה", "`kubectl diff -f deploy.yaml`"],
+          ["תיעוד של שדה", "`kubectl explain deployment.spec.strategy.rollingUpdate`"],
+          ["רק שדות שמעניינים", "`kubectl get pods -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName`"],
+          ["ערך אחד", "`kubectl get pod api-0 -o jsonpath='{.status.podIP}'`"],
+          ["צריכה בפועל", "`kubectl top pods --sort-by=memory`"],
+          ["גישה מקומית לשירות", "`kubectl port-forward svc/api 8080:80`"],
+          ["restart מסודר", "`kubectl rollout restart deploy/api`"]),
+    CODE("""
+# כל ה-pods שלא Running בכל הקלאסטר
+kubectl get pods -A --field-selector=status.phase!=Running
+
+# images שרצים כרגע, בלי כפילויות
+kubectl get pods -A -o jsonpath='{.items[*].spec.containers[*].image}' | tr ' ' '\\n' | sort -u
+
+# למה ה-pod נמחק או הוחלף: מי הבעלים שלו
+kubectl get pod api-7d9f -o jsonpath='{.metadata.ownerReferences[0].kind}'
+""", cap="שלוש שורות שכדאי לזכור"),
+    KEY("`--dry-run=server` שולח את הבקשה ל-API server ומריץ admission ו-validation בלי לשמור. זה תופס שגיאות ש-`--dry-run=client` לא רואה, כמו מדיניות Kyverno או שדה לא חוקי."),
+    TRAP("`kubectl edit` ו-`kubectl scale` בקלאסטר שמנוהל ב-GitOps יוצרים drift: Argo CD יחזיר את השינוי, או יציג OutOfSync. בסביבה כזאת משנים ב-Git."),
+    ASK("How would you list every image running in a cluster?",
+        "What's the difference between `--dry-run=client` and `--dry-run=server`?",
+        "How do you preview what `kubectl apply` will change?"),
+  ]},
+  {"nm": "Production readiness checklist", "blocks": [
+    P("שאלה נפוצה ל-Mid-Senior: 'מה בודקים לפני שמעלים שירות חדש לפרודקשן ב-Kubernetes?'. הרשימה הזאת היא תשובה מסודרת."),
+    TABLE(["תחום", "מה צריך להיות", "למה"],
+          ["Probes", "readiness לכל שירות; liveness רק לתקיעה אמיתית; startup לאתחול ארוך", "traffic רק ל-pods מוכנים, בלי restart loops"],
+          ["Resources", "requests לכל container; memory limit", "שיבוץ נכון, HPA, בלי OOM של שכנים"],
+          ["Replicas ו-PDB", "לפחות 2-3 replicas, `maxUnavailable: 1`", "שדרוג nodes בלי downtime"],
+          ["פיזור", "topologySpreadConstraints לפי zone", "AZ שנופל לא מוריד את השירות"],
+          ["כיבוי", "SIGTERM מטופל, preStop sleep", "בלי 502 ב-rollout"],
+          ["אבטחה", "runAsNonRoot, readOnlyRootFilesystem, בלי privileged, ServiceAccount ייעודי", "צמצום נזק אם נפרץ"],
+          ["Images", "tag או digest קבועים, נסרקים, חתומים", "חזרתיות ו-supply chain"],
+          ["Observability", "metrics, לוגים מובנים, traces, התראות על SLO", "לדעת לפני המשתמשים"]),
+    FLOW("PR עם manifests", "CI: lint, kubeconform, policy", "staging + smoke test", "rollout הדרגתי (canary)", "SLO ו-alerts פעילים", cap="המסלול לפרודקשן"),
+    KEY("תשובה טובה מסודרת לפי סיכון: מה מונע downtime (probes, replicas, PDB, כיבוי), מה מונע תקלות עומס (resources, HPA), מה מונע פריצה (securityContext, RBAC, NetworkPolicy), ומה מאפשר לדעת שמשהו לא בסדר (observability)."),
+    ASK("What do you check before a new service goes to production on Kubernetes?",
+        "How do you make a rollout safe for a stateful service?",
+        "Which defaults in Kubernetes are unsafe for production?"),
+  ]},
  ],
  "quiz": [
    QZ("Which probe failure removes a pod from Service endpoints without restarting it?",
@@ -158,5 +202,11 @@ kubectl -v=6 get pods      # which API call is slow?
    QZ("What triggers the Cluster Autoscaler to add a node?",
       "Pods that can't be scheduled", "High average CPU", "A new namespace", "A failed liveness probe",
       x="Cluster Autoscaler מגיב ל-pods ב-Pending שאין להם מקום. ניצולת גבוהה לבדה לא מוסיפה nodes."),
+  QZ("What does `kubectl apply --dry-run=server` catch that `--dry-run=client` doesn't?",
+      "Admission and server-side validation errors, such as policy denials", "YAML indentation errors", "Missing kubeconfig", "Slow nodes",
+      x="dry-run בצד השרת עובר admission ו-validation בלי לשמור, ולכן תופס מדיניות ושדות לא חוקיים."),
+   QZ("Why spread replicas with topologySpreadConstraints by zone?",
+      "So losing one availability zone doesn't take the whole service down", "To lower the image size", "To avoid needing a PDB", "To speed up DNS",
+      x="בלי פיזור, ה-scheduler יכול לשים את כל ה-replicas באותו AZ, ונפילה שלו מורידה את השירות."),
  ],
 }

@@ -117,6 +117,65 @@ kubectl get rolebindings -n shop -o wide
          "Restart the API server",
          x="מחיקה מאבדת ראיות, וה-ReplicaSet מעלה עותק עם אותה חולשה. קודם מבודדים, אוספים מידע, ואז מתקנים."),
       ]),
+
+  MOD("sec-in-practice", "בפועל: can-i, tokens, ValidatingAdmissionPolicy ו-audit",
+      "לבדוק הרשאות בפקודה אחת, להבין tokens של ServiceAccount היום, ולאכוף מדיניות בלי webhook חיצוני.",
+      [P("ראיון אבטחה ב-Kubernetes עובר מהר מתיאוריה לשאלה 'איך תבדוק?'. כאן הכלים שעונים על זה."),
+       H("לבדוק הרשאות"),
+       CODE("""$ kubectl auth can-i delete pods -n prod --as=system:serviceaccount:prod:api
+no
+$ kubectl auth can-i --list -n prod --as=jane@example.com
+Resources        Verbs
+pods             [get list watch]
+deployments.apps [get list watch update patch]
+$ kubectl auth whoami          # מי אני מבחינת ה-API server""", cap="impersonation עם --as דורש הרשאת impersonate"),
+       TRAP("הרשאות שנראות תמימות ומעניקות הכול: `create pods` (אפשר להריץ pod עם כל ServiceAccount בנמספייס ולקבל את ההרשאות שלו), `get secrets`, `escalate` ו-`bind` על roles, ו-`impersonate`. ב-review של RBAC מחפשים אותן קודם."),
+       H("ServiceAccount tokens היום"),
+       TABLE(["פעם", "היום"],
+             ["Secret עם token נוצר אוטומטית לכל ServiceAccount", "לא נוצר אוטומטית (מאז 1.24)"],
+             ["token בלי תפוגה", "projected token עם תפוגה ו-audience, שה-kubelet מחדש"],
+             ["תקף גם אחרי שה-pod נמחק", "קשור ל-pod (bound), ופג כשה-pod נמחק"]),
+       P("pod שלא צריך לדבר עם ה-API server בכלל: `automountServiceAccountToken: false`. token כזה שדולף הוא פחות מסוכן, אבל token שלא קיים בכלל עדיף."),
+       H("ValidatingAdmissionPolicy"),
+       P("מגרסה 1.30 (GA) אפשר לכתוב מדיניות admission בתוך ה-API server עם ביטויי CEL, בלי webhook ובלי pods של Kyverno או Gatekeeper. מתאים לחוקים פשוטים: אין `:latest`, יש limits, אין `hostNetwork`."),
+       CODE("""apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata: {name: no-latest-tag}
+spec:
+  matchConstraints:
+    resourceRules: [{apiGroups: [""], apiVersions: ["v1"], operations: ["CREATE","UPDATE"], resources: ["pods"]}]
+  validations:
+  - expression: "object.spec.containers.all(c, !c.image.endsWith(':latest'))"
+    message: "image tag :latest is not allowed"
+# צריך גם ValidatingAdmissionPolicyBinding שמחבר את המדיניות לנמספייסים""", cap="מדיניות CEL בלי webhook"),
+       KEY("webhook של admission שנפל עם `failurePolicy: Fail` חוסם יצירת pods בכל הקלאסטר. לכן Kyverno ו-Gatekeeper רצים ב-HA, ומחריגים את kube-system. ValidatingAdmissionPolicy חוסך את התלות הזאת."),
+       H("Audit logs"),
+       P("audit log של ה-API server מתעד מי עשה מה ומתי: מי קרא secrets, מי מחק Deployment. ב-EKS מפעילים את סוג הלוג `audit` ל-CloudWatch. בחקירה זה המקור הראשון."),
+       ASK("איך תבדוק אם ServiceAccount מסוים יכול למחוק pods?",
+           "אילו הרשאות RBAC מסוכנות יותר ממה שהן נראות?",
+           "מה השתנה ב-ServiceAccount tokens בגרסאות האחרונות?",
+           "מה הסיכון ב-admission webhook, ואיך מקטינים אותו?"),
+      ],
+      [C("How do you check whether a ServiceAccount may delete pods in `prod`?",
+         "`kubectl auth can-i delete pods -n prod --as=system:serviceaccount:prod:<name>`",
+         "`kubectl get rolebindings --verbose`",
+         "`kubectl describe serviceaccount --permissions`",
+         "`kubectl logs` of the API server",
+         x="can-i עם --as מדמה את ה-ServiceAccount ומחזיר yes או no. זו הדרך המהירה לבדוק RBAC."),
+       C("Why is the `create pods` permission in a namespace dangerous?",
+         "You can run a pod with any ServiceAccount there and use its permissions",
+         "Pods can delete the namespace",
+         "It lets you read node logs",
+         "It disables NetworkPolicies",
+         x="מי שיוצר pod בוחר את ה-ServiceAccount שלו, ומקבל בפועל את כל ההרשאות של כל ServiceAccount בנמספייס."),
+       C("What is ValidatingAdmissionPolicy?",
+         "Admission rules written in CEL that run inside the API server, without a webhook",
+         "A NetworkPolicy for the API server",
+         "A Kyverno feature that needs a sidecar",
+         "An RBAC role for admins",
+         x="ValidatingAdmissionPolicy (GA ב-1.30) מריץ ביטויי CEL בתוך ה-API server, בלי תלות ב-webhook חיצוני."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -196,11 +255,11 @@ kubectl get rolebindings -n shop -o wide
      ("Schedules pods onto nodes", "שיבוץ הוא עבודת ה-scheduler."),
      ("Pulls images from the registry", "kubelet מושך images."),
      x="mutating webhooks רצים לפני validating ומשנים את האובייקט: sidecars, labels, ברירות מחדל. validating מאשר או דוחה את התוצאה."),
-   F("admission-supply", "You suspect a pod was compromised. Why not just delete it?",
-     ("You lose evidence, and the controller recreates it with the same weakness", "נכון. קודם מבודדים ומבינים."),
-     ("Deleting pods requires cluster-admin", "מחיקת pods לא דורשת admin."),
-     ("The pod can't be deleted while running", "אפשר למחוק pod שרץ."),
-     ("Deletion restarts the node", "מחיקת pod לא נוגעת ב-node."),
-     x="מבודדים עם NetworkPolicy, אוספים לוגים ומצב מערכת הקבצים, בודקים את ההרשאות של ה-ServiceAccount, מבצעים רוטציה לסודות, ורק אז מתקנים ופורסים מחדש."),
+   F("sec-in-practice", "A developer has only `create` on pods in a namespace, and no access to Secrets. Why is this still risky?",
+     ("They can run a pod with a privileged ServiceAccount and read whatever it can", "נכון. ההרשאה ליצור pod כוללת לבחור ServiceAccount ולהרכיב Secrets."),
+     ("They can change the cluster's version", "יצירת pods לא נוגעת ב-control plane."),
+     ("They can delete other namespaces", "ההרשאה מוגבלת לנמספייס, ואין בה delete."),
+     ("They can disable RBAC", "RBAC מוגדר ב-API server, לא דרך pods."),
+     x="pod יכול להשתמש בכל ServiceAccount בנמספייס ולהרכיב כל Secret שם כ-volume. לכן create pods שקול כמעט לכל ההרשאות בנמספייס, ו-Pod Security ו-admission policies מגבילים את זה."),
  ],
 }
