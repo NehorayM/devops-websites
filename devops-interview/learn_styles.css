@@ -87,3 +87,22 @@
   .lb-flow .n{font-size:13.2px}
   .lb-tree .q,.lb-tree .v{font-size:13.4px}
 }
+
+/* ---------- Ship It: lessons, explanations and notes are Hebrew ---------- */
+#lrnReadBody,#lrnRecapBody{direction:rtl;text-align:right}
+#lrnReadBody code,#lrnRecapBody code,.lrnfeed code,.rcard .rcwhy code,.rcard .exfoot code{direction:ltr;unicode-bidi:isolate}
+#lrnReadBody .lb-code,#lrnRecapBody .lb-code{direction:ltr;text-align:left}
+#lrnReadBody ul,#lrnReadBody ol,#lrnRecapBody ul,#lrnRecapBody ol{padding-left:0;padding-right:19px}
+#lrnReadBody .lb-split .c ul,#lrnRecapBody .lb-split .c ul{padding-left:0;padding-right:17px}
+#lrnReadBody th,#lrnRecapBody th{text-align:right}
+#lrnReadBody .lb-flow .n+.n::before,#lrnRecapBody .lb-flow .n+.n::before{content:"←";margin-right:0;margin-left:9px}
+#lrnReadBody .lb-tree .v,#lrnRecapBody .lb-tree .v{border-left:0;border-right:1px solid color-mix(in srgb, var(--lime) 28%, transparent)}
+#lrnReadGoal span{flex:1;direction:rtl;text-align:right;unicode-bidi:isolate}
+.lrnfeed{direction:rtl;text-align:right}
+.rcard .rcwhy,.rcard .exfoot{display:block;direction:rtl;unicode-bidi:isolate;text-align:right}
+/* module names and goals are Hebrew too */
+#lrnReadTitle,#lrnQuizTitle,#lrnMapList .lrnmod .nm,#lrnMapList .lrnmod .go,#lrnDoneBreak .ch-t{direction:rtl;unicode-bidi:isolate}
+#lrnReadTitle,#lrnMapList .lrnmod .nm,#lrnMapList .lrnmod .go{text-align:right}
+/* three-column tables wrap on a phone instead of scrolling sideways */
+#lrnReadBody table.wide,#lrnRecapBody table.wide{min-width:0}
+#lrnReadBody table.wide th,#lrnRecapBody table.wide th{white-space:normal}

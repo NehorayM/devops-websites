@@ -31,6 +31,8 @@ window.QA_LEARN = async function (opts) {
     el.click();
     return true;
   }
+  // `code` spans are rendered as <code>, so the text on screen has no backticks
+  const plain = t => String(t).replace(/`/g, '');
   const visible = id => { const e = $(id); return e && !e.classList.contains('hidden'); };
 
   function openGate(btnId) {
@@ -75,7 +77,7 @@ window.QA_LEARN = async function (opts) {
       for (let q = 0; q < n; q++) {
         const item = LT.L.quiz.items[LT.L.quiz.i];
         const qq = m.checks[item.src];
-        ok($('lrnQuizQ').textContent === qq.q, name + ' q' + (q + 1) + ': the question text is on screen');
+        ok($('lrnQuizQ').textContent === plain(qq.q), name + ' q' + (q + 1) + ': the question text is on screen');
         const optEls = [...$('lrnQuizOpts').children];
         ok(optEls.length === qq.o.length, name + ' q' + (q + 1) + ': every option is rendered');
         if (q === 0) ok(optEls.every(hittable), name + ' q' + (q + 1) + ': the options are tappable');
@@ -89,7 +91,7 @@ window.QA_LEARN = async function (opts) {
         $('lrnQuizSubmit').click();
 
         ok(visible('lrnQuizFeed'), name + ' q' + (q + 1) + ': an explanation is shown either way');
-        ok($('lrnQuizFeed').textContent.includes(qq.x.slice(0, 30)),
+        ok($('lrnQuizFeed').textContent.includes(plain(qq.x).slice(0, 30)),
            name + ' q' + (q + 1) + ': the explanation is the authored one');
         const marked = [...$('lrnQuizOpts').children].filter(e => e.classList.contains('ok'));
         ok(marked.length === qq.a.length, name + ' q' + (q + 1) + ': the correct option is marked');
@@ -130,7 +132,7 @@ window.QA_LEARN = async function (opts) {
     ok(hittable($('lrnSimStrip').children[0]), name + ': the question strip is tappable');
     for (let i = 0; i < 10; i++) {
       const it = LT.L.sim.qs[LT.L.sim.i], q = d.final[it.src];
-      ok($('lrnSimQ').textContent === q.q, name + ' exam q' + (i + 1) + ': shows the question');
+      ok($('lrnSimQ').textContent === plain(q.q), name + ' exam q' + (i + 1) + ': shows the question');
       const optEls = [...$('lrnSimOpts').children];
       ok(optEls.length === q.o.length, name + ' exam q' + (i + 1) + ': shows every option');
       const want = (mode === 'half' && i % 2) ? [it.order[0]].filter(oi => !q.a.includes(oi)) : q.a;

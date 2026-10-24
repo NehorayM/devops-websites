@@ -26,9 +26,16 @@ def main():
     s = HTML.read_text()
     for kind, fname, o, c, anchor in PARTS:
         body = (ROOT / fname).read_text()
-        block = band(kind, body, o, c)
         pat = re.compile(re.escape(f"{o}:BEGIN {c}") + r".*?" + re.escape(f"{o}:END {c}") + r"\n", re.S)
-        if pat.search(s):
+        old = pat.search(s)
+        if kind == "js" and old:
+            # inject_study.py puts the Study engine inside this band, just before LEARN_T;
+            # carry it over, or replacing the band would delete Study mode
+            st = re.search(r"/\* STUDY:JS:BEGIN \*/\n.*?/\* STUDY:JS:END \*/\n", old.group(0), re.S)
+            if st and "const LEARN_T={" in body:
+                body = body.replace("const LEARN_T={", st.group(0) + "const LEARN_T={", 1)
+        block = band(kind, body, o, c)
+        if old:
             s = pat.sub(lambda _: block, s, count=1)
             how = "replaced"
         else:

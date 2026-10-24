@@ -30,8 +30,8 @@ function lbHTML(b){
       '<span class="n">'+mdInline(n)+'</span>').join('')+'</div>'+lbCap(b);
     case 'split': return '<div class="lb-split">'+b.cols.map(c=>
       '<div class="c"><h5>'+mdInline(c.nm)+'</h5>'+lbList(c.items,'ul')+'</div>').join('')+'</div>'+lbCap(b);
-    case 'key':   return '<div class="lb-call key"><span class="ic">⭐</span><span><strong>Must know — </strong>'+mdInline(b.x)+'</span></div>';
-    case 'trap':  return '<div class="lb-call trap"><span class="ic">⚠</span><span><strong>Exam trap — </strong>'+mdInline(b.x)+'</span></div>';
+    case 'key':   return '<div class="lb-call key"><span class="ic">⭐</span><span><strong>חשוב לזכור — </strong>'+mdInline(b.x)+'</span></div>';
+    case 'trap':  return '<div class="lb-call trap"><span class="ic">⚠</span><span><strong>מלכודת — </strong>'+mdInline(b.x)+'</span></div>';
     case 'note':  return '<div class="lb-call note"><span class="ic">✎</span><span>'+mdInline(b.x)+'</span></div>';
     case 'code':  return '<pre class="lb-code">'+esc(b.x)+'</pre>'+lbCap(b);
     case 'dtree': return '<div class="lb-tree">'+b.x.map(r=>
@@ -134,11 +134,11 @@ function renderLearnPick(){
     const b=document.createElement('button'); b.className='crsrow';
     b.innerHTML='<span class="cem">'+(rec&&rec.best>=LSIM_PASS?'🎓':secEm(sec))+'</span>'+
       '<span style="flex:1;min-width:0"><span class="cnm">'+esc(SHORT[sec]||d.nm)+'</span>'+
-      '<span class="cmeta">'+d.modules.length+' parts · '+mins+' min · '+
+      '<span class="cmeta">'+plural(d.modules.length,'part')+' · '+mins+' min · '+
       d.modules.reduce((a,m)=>a+m.checks.length,0)+' check questions · 10-question exam'+
-      (done?' · '+done+'/'+d.modules.length+' parts passed':'')+
-      (rec?' · best '+rec.best+'%':'')+'</span></span>'+
-      (rec?'<span class="cdone">✓ '+rec.runs+'</span>':'');
+      (done?' · '+done+'/'+plural(d.modules.length,'part')+' passed':'')+
+      (rec?' · best '+(Number(rec.best)|0)+'%':'')+'</span></span>'+
+      (rec?'<span class="cdone">✓ '+(Number(rec.runs)|0)+'</span>':'');
     b.onclick=()=>startLearn(sec);
     list.appendChild(b);
   });
@@ -183,7 +183,7 @@ function learnMap(){
   const d=learnData(L.sec);
   learnRail('lrnRail');
   $('lrnMapSubject').textContent=(SHORT[L.sec]||d.nm).slice(0,26);
-  $('lrnMapDone').textContent=learnPassedCount()+' / '+d.modules.length+' parts';
+  $('lrnMapDone').textContent=learnPassedCount()+' / '+plural(d.modules.length,'part')+'';
   $('lrnMapTitle').textContent=d.nm;
   $('lrnMapSub').textContent='Work down the parts in order. Each one ends with a few questions on '+
     'that part; pass them and the next part opens. After the last part: the full summary, then a '+
@@ -193,7 +193,7 @@ function learnMap(){
     const st=L.mods[m.id]||{}, done=!!st.passed, now=(i===L.mi&&L.phase!=='recap'&&L.phase!=='sim');
     const row=document.createElement('button');
     row.className='lrnmod'+(done?' done':'')+(now?' now':'')+(i>L.mi?' lock':'');
-    const meta=[m.min+' min', m.checks.length+' questions'];
+    const meta=[m.min+' min', plural(m.checks.length,'question')];
     if(st.attempts) meta.push(st.best+'/'+m.checks.length+' best · '+st.attempts+(st.attempts>1?' attempts':' attempt'));
     row.innerHTML='<span class="st">'+(done?'✓':(i>L.mi?'🔒':i+1))+'</span>'+
       '<span class="bd"><span class="nm">'+esc(m.nm)+'</span>'+
@@ -311,7 +311,7 @@ function learnQuizPaint(){
   $('lrnQuizTitle').textContent=m.nm.slice(0,28);
   $('lrnQuizCount').textContent=(Q.i+1)+' / '+Q.items.length;
   $('lrnQuizNeed').textContent='need '+learnQuizNeed(Q.items.length)+' right';
-  $('lrnQuizProg').style.width=Math.round(Q.i/Q.items.length*100)+'%';
+  $('lrnQuizProg').style.width=pctW(Math.round(Q.i/Q.items.length*100));
   $('lrnQuizQ').innerHTML=qtx(q.q);
   $('lrnQuizResult').classList.add('hidden');
   $('lrnQuizLive').classList.remove('hidden');
@@ -362,8 +362,8 @@ function learnQuizSubmit(){
   const correctText=q.a.map(a=>q.o[a].t).join('  ·  ');
   const feed=$('lrnQuizFeed');
   feed.className='lrnfeed '+(ok?'ok':'no');
-  feed.innerHTML='<b>'+(ok?'✓ That is right':'✗ Not quite')+'</b>'+esc(q.x)+
-    (ok?'':'<span class="ans"><b style="display:inline;color:var(--lime)">Correct: </b>'+esc(correctText)+'</span>');
+  feed.innerHTML='<b>'+(ok?'✓ נכון':'✗ לא בדיוק')+'</b>'+qtx(q.x)+
+    (ok?'':'<span class="ans"><b style="display:inline;color:var(--lime)">התשובה הנכונה: </b><bdi>'+esc(correctText)+'</bdi></span>');
   const sub=$('lrnQuizSubmit');
   sub.disabled=false;
   sub.textContent=(Q.i+1<Q.items.length)?'Next question ▸':'See how you did ▸';
@@ -420,15 +420,14 @@ function learnQuizResult(){
 // ---------- the full written summary ----------
 function learnRecapHTML(){
   const d=learnData(L.sec), out=[];
-  out.push('<div class="lb-call note"><span class="ic">✎</span><span>Everything from the '+
-    d.modules.length+' parts you just worked through, in one place. Read it end to end — the exam '+
-    'right after it is built from these parts.</span></div>');
+  out.push('<div class="lb-call note"><span class="ic">✎</span><span>כל מה שלמדת ב-'+
+    d.modules.length+' החלקים, במקום אחד. כדאי לקרוא עד הסוף: המבחן שאחרי זה בנוי מהחלקים האלה.</span></div>');
   out.push(blocksHTML(d.recap));
-  out.push('<h3>Part by part, in one line each</h3>');
-  out.push('<div class="mdxtable"><table><thead><tr><th>Part</th><th>What it gave you</th></tr></thead><tbody>'+
+  out.push('<h3>חלק אחרי חלק, בשורה אחת</h3>');
+  out.push('<div class="mdxtable"><table><thead><tr><th>חלק</th><th>מה קיבלת ממנו</th></tr></thead><tbody>'+
     d.modules.map((m,i)=>'<tr><td><b>'+(i+1)+'. '+esc(m.nm)+'</b></td><td>'+esc(m.goal)+'</td></tr>').join('')+
     '</tbody></table></div>');
-  if(typeof blueprintHTML==='function'){
+  if(false&&typeof blueprintHTML==='function'){   // the AWS reference material; Ship It has none yet
     out.push('<details class="fullwrite"><summary>The reference material for this subject — services, decision matrix, trade-offs</summary>'+
              '<div class="mdx">'+blueprintHTML(L.sec)+'</div></details>');
     out.push('<details class="fullwrite"><summary>Traps, hard limits and the long write-up from the study guide</summary>'+
@@ -443,7 +442,7 @@ function learnRecap(){
   learnRail('lrnRecapRail');
   $('lrnRecapSubject').textContent=(SHORT[L.sec]||d.nm).slice(0,22);
   $('lrnRecapTitle').textContent='Full summary — '+d.nm;
-  $('lrnRecapSub').textContent='All '+d.modules.length+' parts passed in '+fmtMS(learnTotal())+
+  $('lrnRecapSub').textContent='All '+plural(d.modules.length,'part')+' passed in '+fmtMS(learnTotal())+
     '. Next: ten exam questions, '+LSIM_MIN+' minutes, on this subject only.';
   $('lrnRecapBody').innerHTML=learnRecapHTML();
   $('lrnRecapClock').textContent='0:00';
@@ -482,6 +481,10 @@ function learnSimPaint(){
   S.qs.forEach((_,i)=>{
     const b=document.createElement('button');
     b.className='lrndot'+(i===S.i?' now':'')+((S.ans[i]||[]).length?' done':'');
+    // the dots announced only their digit, with no hint of which one you are on
+    b.setAttribute('aria-label','Question '+(i+1)+
+      ((S.ans[i]||[]).length?', answered':', not answered')+(i===S.i?', the one you are on':''));
+    b.setAttribute('aria-current',i===S.i?'true':'false');
     b.textContent=i+1; b.onclick=()=>{ S.i=i; learnSimPaint(); };
     strip.appendChild(b);
   });
@@ -528,16 +531,16 @@ function learnReviewCard(q,picked,n){
   bits.push('<div class="rcq"><b style="color:var(--dim);font-family:var(--mono);font-size:11px">Q'+n+'  </b>'+qtx(q.q)+'</div>');
   q.o.forEach((o,oi)=>{
     const right=q.a.includes(oi), chose=picked.includes(oi);
-    const pillar=pillarFor(o.t);
+    const pillar=null;   // the AWS pillar hints do not apply to DevOps options
     bits.push('<div class="rcopt '+(right?'good':(chose?'bad':''))+'">'+
       '<span class="exl">'+String.fromCharCode(65+oi)+'</span><span>'+
       (right?'<b>'+esc(o.t)+'</b>':esc(o.t))+
       (chose?'<span class="rcpick">you picked this</span>':'')+
-      (o.w?'<span class="rcwhy">'+(right?'✔ ':'✘ ')+esc(o.w)+'</span>':'')+
+      (o.w?'<span class="rcwhy">'+(right?'✔ ':'✘ ')+qtx(o.w)+'</span>':'')+
       (!right&&pillar?'<span class="rcpillar">'+esc(pillar)+'</span>':'')+
       '</span></div>');
   });
-  bits.push('<div class="exfoot">'+esc(q.x)+'</div>');
+  bits.push('<div class="exfoot">'+qtx(q.x)+'</div>');
   return '<div class="rcard">'+bits.join('')+'</div>';
 }
 function learnFinish(){

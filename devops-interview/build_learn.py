@@ -11,7 +11,6 @@ import importlib.util, json, random, re, sys, pathlib, collections, zlib
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "learn_src"
 HTML = ROOT / "index.html"
-OUT = ROOT / "learn_data.json"
 
 BLOCK_TYPES = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree"}
 VISUAL = {"table", "flow", "split", "dtree"}
@@ -53,7 +52,7 @@ def text_of(block):
     return " ".join(out)
 
 
-# Capitalised words are the signal for "a named AWS thing". The first word of a sentence is
+# Capitalised words are the signal for "a named tool or service". The first word of a sentence is
 # capitalised for grammar, not meaning, so it is dropped before looking.
 STOP = {"Use", "Using", "With", "For", "And", "But", "Not", "Only", "Both", "All", "Each",
         "Its", "Their", "There", "These", "Those", "AWS", "Amazon", "Every", "Any", "Some",
@@ -260,6 +259,9 @@ def validate(s, sections, shorts, errs):
         errs.append(f"{pre}: recap has {len(recap)} blocks, want >= 6")
     if sum(1 for b in recap if b["t"] == "table") < 2:
         errs.append(f"{pre}: recap needs >= 2 tables")
+    rlen = sum(len(text_of(b)) for b in recap)
+    if rlen < 1400:
+        errs.append(f"{pre}: recap is {rlen} chars, want >= 1400 — it is the whole subject on one page")
     for i, b in enumerate(recap):
         if b["t"] not in BLOCK_TYPES:
             errs.append(f"{pre} recap block{i}: unknown type {b['t']!r}")
@@ -325,6 +327,7 @@ def normalize(s):
 
 
 def load():
+    sys.path.insert(0, str(SRC))      # the subject files share learn_src/_h.py
     subs = []
     for p in sorted(SRC.glob("s*.py")):
         spec = importlib.util.spec_from_file_location(p.stem, p)
@@ -359,7 +362,6 @@ def main():
 
     payload = {"v": 1, "subjects": out}
     blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    OUT.write_text(blob)
 
     html = HTML.read_text()
     tag = '<script id="learndata" type="application/json">'
