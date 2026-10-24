@@ -26,28 +26,28 @@ function hittable(el,label){
 function bankChecks(){
   const t=T(), QS=t.QS;
   ok(QS.length>0,'bank is not empty');
-  eq(t.SECTIONS.length,23,'23 sections');
-  eq(t.SHORT.length,23,'23 short names');
+  eq(t.SECTIONS.length,24,'24 sections');
+  eq(t.SHORT.length,24,'24 short names');
   const stems=new Set(); const bySec={};
   QS.forEach((q,i)=>{
     const where='q'+i;
-    ok(typeof q.q==='string'&&q.q.length>40, where+': stem too short');
+    ok(typeof q.q==='string'&&q.q.length>=25, where+': stem too short');   // build_bank.py's own minimum
     ok(Array.isArray(q.o)&&q.o.length>=3, where+': fewer than three options');
     const ltrs=q.o.map(o=>o[0]);
     eq(new Set(ltrs).size, ltrs.length, where+': repeated option letter');
     const texts=q.o.map(o=>o[1].trim().toLowerCase());
     eq(new Set(texts).size, texts.length, where+': repeated option text');
-    q.o.forEach(o=>ok(typeof o[1]==='string'&&o[1].trim().length>1, where+': empty option '+o[0]));
+    q.o.forEach(o=>ok(typeof o[1]==='string'&&o[1].trim().length>0, where+': empty option '+o[0]));   // "8" is a fine answer
     ok(q.a.length>=1&&q.a.length<q.o.length, where+': answer count '+q.a.length+' of '+q.o.length);
     q.a.forEach(a=>ok(ltrs.includes(a), where+': answer '+a+' is not an option'));
     eq(new Set(q.a).size, q.a.length, where+': repeated answer letter');
-    ok(Number.isInteger(q.s)&&q.s>=0&&q.s<23, where+': section out of range');
+    ok(Number.isInteger(q.s)&&q.s>=0&&q.s<t.SECTIONS.length, where+': section out of range');
     const k=q.q.toLowerCase().replace(/\W+/g,'').slice(0,400);
     ok(!stems.has(k), where+': duplicates an earlier question');
     stems.add(k);
     (bySec[q.s]=bySec[q.s]||[]).push(i);
   });
-  for(let s=0;s<23;s++) ok((bySec[s]||[]).length>0, 'section '+s+' ('+t.SHORT[s]+') has no questions');
+  for(let s=0;s<t.SECTIONS.length;s++) ok((bySec[s]||[]).length>0, 'section '+s+' ('+t.SHORT[s]+') has no questions');
   // the answer must not sit on the same option position over and over
   const pos={};
   QS.forEach(q=>q.a.forEach(a=>{ pos[a]=(pos[a]||0)+1; }));
@@ -95,7 +95,8 @@ async function runPaper(n,{answerAll=true,rightRatio=0.6,flagEvery=7}={}){
   const rows=$('paperList').querySelectorAll('.item');
   eq(rows.length, t.PAPER_COUNT, 'one row per paper');
   eq(rows[0].querySelector('.nm').textContent,'Exam 1','the first row names Exam 1');
-  ok(/^Exam \d+ · short paper \(\d+ questions\)$/.test(rows[rows.length-1].querySelector('.nm').textContent),'the last row is marked short');
+  const lastNm=rows[rows.length-1].querySelector('.nm').textContent;
+  ok(t.QS.length%65===0?lastNm==='Exam '+t.PAPER_COUNT:/^Exam \d+ · short paper \(\d+ questions\)$/.test(lastNm),'the last row is named for its length');
   // Start is the row's LAST button: a restart arrow or a finish-later button can sit before it
   const btn=[...rows[n-1].querySelectorAll('button')].pop();
   hittable(btn,'Start button on exam '+n);
@@ -265,14 +266,14 @@ function homeCheck(){
 async function appChecks(){
   const t=T(), $=id=>document.getElementById(id);
   // practice, one section at a time
-  for(let sec=0;sec<23;sec++){
+  for(let sec=0;sec<t.SECTIONS.length;sec++){
     t.startSession(sec); await sleep(0);
     eq(t.route,'quizScreen','practice opened for section '+sec);
     const q=t.QS[t.curQ];
     ok(!!q,'section '+sec+' served a question');
     eq(q.s,sec,'the question comes from section '+sec);
     eq($('qOpts').children.length,q.o.length,'section '+sec+': options rendered');
-    ok($('qText').textContent===q.q,'section '+sec+': stem rendered');
+    ok($('qText').textContent===q.q.replace(/`/g,''),'section '+sec+': stem rendered');   // `code` renders as <code>
     // answer it correctly through the real buttons
     q.a.forEach(l=>t.toggleOpt(l));
     t.submitAnswer(); await sleep(0);
@@ -319,11 +320,11 @@ async function appChecks(){
   eq(r.domains.reduce((a,d)=>a+d.pool,0), t.QS.length, 'the domain pools add up to the whole bank');
   r.domains.forEach(d=>ok(d.pool>0,'domain '+d.short+' has questions'));
   t.domainStats();
-  for(let d=0;d<4;d++) ok(t.DOMAINS[d].secs.every(s=>s>=0&&s<23),'domain '+d+' maps to real sections');
+  for(let d=0;d<4;d++) ok(t.DOMAINS[d].secs.every(s=>s>=0&&s<t.SECTIONS.length),'domain '+d+' maps to real sections');
   // every section belongs to exactly one domain
   const covered=new Set();
   t.DOMAINS.forEach(d=>d.secs.forEach(s=>{ ok(!covered.has(s),'section '+s+' is in two domains'); covered.add(s); }));
-  eq(covered.size,23,'every section belongs to a domain');
+  eq(covered.size,t.SECTIONS.length,'every section belongs to a domain');
   t.go('homeScreen');
 }
 
@@ -398,7 +399,7 @@ async function studyChecks(){
   ok(!!S,'the study engine is exposed');
   if(!S) return;
   const CH=S.STU_CH;
-  eq(CH.length,13,'thirteen chapters');
+  eq(CH.length,9,'nine chapters, one per topic');
   const titles=new Set();
   CH.forEach((c,i)=>{
     ok(!!c.nm&&!!c.em&&!!c.sub, 'chapter '+i+' is labelled');
@@ -424,7 +425,11 @@ async function studyChecks(){
       ok(q.a>=0&&q.a<q.o.length,'chapter '+i+' check '+qi+' has a valid answer');
     });
   });
-  eq(titles.size,76,'every topic from the notes is present exactly once');
+  eq(titles.size,30,'every reference page is present exactly once');
+  // every question sector belongs to exactly one chapter, so the shares add up to the bank
+  const owned=CH.flatMap(c=>c.secs||[]);
+  eq(new Set(owned).size,owned.length,'no sector is in two chapters');
+  eq(owned.length,t.SECTIONS.length,'and every sector is in one');
 
   // the picker, through the nav the way a user reaches it
   $('navPlay').click(); await sleep(40);
@@ -466,8 +471,11 @@ async function studyChecks(){
   cards[1].querySelectorAll('.stuo')[wrong].click(); await sleep(5);
   ok(cards[1].querySelectorAll('.stuo')[wrong].classList.contains('no'),'a wrong pick is marked wrong');
   ok(cards[1].querySelectorAll('.stuo')[q1.a].classList.contains('ok'),'and the right one is shown');
-  const q2=CH[0].quiz[2];
-  cards[2].querySelectorAll('.stuo')[q2.a].click(); await sleep(20);
+  // the score is recorded once every check in the chapter is answered
+  for(let k=2;k<CH[0].quiz.length;k++){
+    cards[k].querySelectorAll('.stuo')[CH[0].quiz[k].a].click(); await sleep(10);
+  }
+  ok(/[\u0590-\u05FF]/.test(cards[1].querySelector('.stufeed').textContent),'the feedback explains in Hebrew');
   const rec=S.stuRec(0);
   ok(rec&&rec.best>0,'finishing the check records a score, got '+(rec&&rec.best));
   // a second click must not double-score
@@ -564,99 +572,6 @@ function fmtMs(ms){
 
 function renderClockSafe(t){ try{ t.renderClock(); }catch(e){} }
 
-// ---------- every option carries its own reasoning ----------
-// Every defect the ninth audit measured, as a standing check. These are the ways the
-// splitter went wrong, and each one was live in the bank before it was found.
-function whyQualityChecks(){
-  const t=T();
-  const L4=['A','B','C','D'];
-
-  // "A gp3 volume tops out at 16,000 IOPS" opens with an article. Matched as option A, it
-  // took the case for the answer away from the answer.
-  const art=t.whyByOption(
-    'A gp3 volume tops out at 16,000 IOPS, so the workload has hit a ceiling. '+
-    'io2 supports up to 64,000 IOPS.',L4,['D'],
-    [['A','Magnetic volume'],['B','RDS storage'],['C','gp3 volume'],['D','io2 volume']]);
-  ok(!art.byLetter.A,'a capitalised article is not option A');
-  ok(/tops out/.test(art.byLetter.D||''),'so the answer keeps the case for itself');
-  // but a real reference to A in the same shape still counts
-  const ref=t.whyByOption('A controls console access, and B is a network path.',L4,['C']);
-  ok(/controls console access/.test(ref.byLetter.A||''),'a real reference to A still counts');
-
-  // "the R&D account" is not option D
-  const amp=t.whyByOption(
-    'An account can belong to one organization, so the R&D account must leave it first. '+
-    'D means rebuilding every resource.',L4,['B']);
-  ok(!/R&D account must leave/.test(amp.byLetter.D||''),'"R&D" is not option D');
-  ok(/R&D account must leave/.test(amp.byLetter.B||''),'that sentence stays with the answer');
-
-  // a verdict list keyed on service names, not letters, is split per option
-  const list=t.whyByOption(
-    'C cannot push gp3 past its limit, RDS does not let you stripe two volumes (B), '+
-    'and magnetic (A) is far slower.',L4,['D'],
-    [['A','Magnetic'],['B','RDS'],['C','gp3'],['D','io2']]);
-  ok(list.byLetter.A!==list.byLetter.B,'each option gets its own verdict, not the whole list');
-  ok(/magnetic/i.test(list.byLetter.A||''),'A is told about magnetic');
-  ok(/stripe/.test(list.byLetter.B||''),'B is told about striping');
-
-  // an enumeration of subjects is one clause, not three
-  const enu=t.whyByOption('B, C, and D all still involve keys to maintain.',L4,['A']);
-  ok((enu.byLetter.B||'').split(/\s+/).length>4,'"B, C, and D all ..." is not split into "B, C"');
-
-  // a clause that continues the thought before it keeps its antecedent
-  const anaph=t.whyByOption(
-    'An account belongs to one organization at a time, so it must leave the old one; '+
-    'C is impossible for that reason.',L4,['A']);
-  ok(!/^C is impossible/.test(anaph.byLetter.A||''),'the reason is not stranded from its clause');
-
-  // two clauses joined against one option read as two sentences
-  const join=t.whyByOption('C cannot push gp3 past its limit, and C is also slower.',L4,['D']);
-  ok(!/limit and/.test(join.byLetter.C||''),'joined clauses are punctuated, not run together');
-
-  // and across the whole bank, measured the way the panel shows it
-  let misled=0,dupe=0,blank=0,thin=0,ocr=0,opts=0;
-  const lead=(txt)=>{
-    let best=null,at=1e9;
-    const other=L4.some(L=>L!=='A'&&new RegExp('(^|[\\s("\\[])'+L+'(?=[ ,.;:)]|$)').test(txt));
-    const nx=/^A\s+([A-Za-z][A-Za-z0-9-]*)/.exec(txt);
-    const verby=nx&&(/s$/i.test(nx[1])||/^(cannot|can|could|will|would|should|must|may|might|do|did|only|still|never|also|again|both|alone|then|just|simply|merely)$/i.test(nx[1]));
-    const artA=!!nx&&!verby&&!other;
-    L4.forEach(L=>{
-      if(L==='A'&&artA) return;
-      const m=new RegExp('(^|[\\s("\\[])'+L+'(?=[ ,.;:)]|$)').exec(txt);
-      if(m&&m.index<at){ at=m.index; best=L; }
-    });
-    return best;
-  };
-  t.QS.forEach(q=>{
-    if(!q.w) return;
-    const letters=q.o.map(x=>x[0]);
-    const w=t.whyByOption(q.w,letters,q.a,q.o);
-    const ctxt=q.o.filter(x=>q.a.includes(x[0])).map(x=>x[1]).join(' ');
-    const pk=(t.exFind(ctxt,3)[0]||{}).t||'';
-    const pivot=pk?t.asWritten(ctxt,pk):'';
-    const seen={};
-    q.o.forEach(([L,txt])=>{
-      opts++;
-      const line=w.byLetter[L]||'';
-      if(!line) blank++;
-      const dup=letters.filter(o=>(w.byLetter[o]||'')&&w.byLetter[o]===line).length>1;
-      const shown=(t.optionLine(q,L,txt,line,pivot,dup)||{}).text||'';
-      if(!shown) thin++;
-      if(seen[shown]) dupe++; else seen[shown]=1;
-      if(line){ const l=lead(line); if(l&&l!==L&&line.indexOf(L)<0) misled++; }
-      if(/\b[a-z]{2,}\.\s+[a-z]/.test(txt)) ocr++;
-    });
-  });
-  ok(thin===0,'every option in the bank is shown something ('+opts+' options)');
-  ok(misled<120,'few lines open by discussing a different option ('+misled+')');
-  ok(dupe<450,'few options are shown a line identical to another\'s ('+dupe+')');
-  ok(blank<200,'most options get a line from the write-up itself ('+blank+' without)');
-  ok(ocr<20,'the OCR damage in the option text is repaired ('+ocr+' left)');
-}
-// The exam cue under an answer must be about that answer. It used to clear its threshold on
-// generic stem words alone, so a Site-to-Site VPN question was cued with CloudFront Signed
-// Cookies, and "Global Accelerator (not CloudFront)" qualified under a CloudFront answer.
 // An imported profile is untrusted: every value in it is replaced with markup that runs code
 // if it ever becomes an element, the result goes through the same door a real import does, and
 // every screen and every renderer is drawn. The exam log, the simulation log and the score
@@ -722,68 +637,6 @@ function sriChecks(){
   ok(/supabase-js@2\.\d+\.\d+\//.test(src),'supabase-js is pinned to an exact version, not @2');
   ok(/s\.integrity='sha384-[A-Za-z0-9+\/=]{64}'/.test(src),'and carries an integrity hash the browser checks');
   ok(/s\.crossOrigin='anonymous'/.test(src),'with the CORS mode integrity checking needs');
-}
-function cueChecks(){
-  const t=T();
-  const t0=performance.now();
-  let shown=0, wrongLead=0; const bad=[];
-  t.QS.forEach((q,i)=>{
-    const c=t.exCue(q); if(!c) return;
-    shown++;
-    const correct=' '+q.o.filter(x=>q.a.includes(x[0])).map(x=>x[1]).join(' ').toLowerCase()+' ';
-    const lead=c._lead;
-    if(!lead||!lead._re.some(re=>re.test(correct))){ wrongLead++; if(bad.length<3) bad.push('q'+i+' '+c.a); }
-  });
-  const ms=performance.now()-t0;
-  ok(shown>500,'most questions still get a cue ('+shown+')');
-  eq(wrongLead,0,'every cue shown names a service the correct answer actually uses '+bad.join('; '));
-  ok(ms<t.QS.length*2,'picking cues for the whole bank is fast ('+Math.round(ms)+' ms)');
-  const vpn=t.exCue(t.QS[226]);
-  ok(!vpn||!/Signed Cookies/.test(vpn.a),'the VPN question is not cued with CloudFront Signed Cookies');
-}
-function whyChecks(){
-  const t=T(), $=id=>document.getElementById(id);
-  const withW=t.QS.filter(q=>q.w).length;
-  ok(withW>1100,withW+' of '+t.QS.length+' questions carry a written explanation');
-  // the 24 without one are where the source disagreed with this bank's answer, or matched
-  // nothing confidently — an explanation arguing for a different letter is worse than none
-  ok(t.QS.length-withW<40,'and the ones without are the handful that could not be trusted');
-
-  // the splitter puts each sentence against the option it names
-  const w=t.whyByOption(
-    'EventBridge matches the call directly - one rule, one target. '+
-    'B and D require Lambda to poll the logs. A adds a queue for no benefit.',
-    ['A','B','C','D'],['C']);
-  eq(w.byLetter.A,'A adds a queue for no benefit.','a sentence naming one option goes to it');
-  ok(/B and D/.test(w.byLetter.B),'one naming two goes to both');
-  eq(w.byLetter.D,'D and B require Lambda to poll the logs.',
-     'and each is named first in its own copy, so the line is about the option it sits under');
-  ok(/EventBridge matches/.test(w.byLetter.C),
-     'and the part naming nobody explains the right answer, which is what it is for');
-  eq(w.rest,'','so nothing is left over');
-  // a sentence naming every option is too general to pin on any one
-  const gen=t.whyByOption('A, B, C and D all use S3.',['A','B','C','D'],['A']);
-  ok(/all use S3/.test(gen.byLetter.A),'a line naming everything lands with the right answer');
-
-  // and it renders: one row per option, right and wrong, each marked
-  const q=t.QS.find(x=>x.w&&x.o.length===4);
-  ok(!!q,'there is a four-option question with a write-up');
-  t.renderExplain(q,new Set([q.o.find(o=>!q.a.includes(o[0]))[0]]),false);
-  const rows=[...document.querySelectorAll('#explain .exeach .exopt')];
-  eq(rows.length,q.o.length,'every option gets a row, not just the ones that were picked');
-  rows.forEach((el,i)=>{
-    const L=q.o[i][0], right=q.a.includes(L);
-    const k=el.querySelector('.k').textContent;
-    ok(k.indexOf(L)===0,'row '+i+' is labelled '+L);
-    ok(/[\u2713\u2717]/.test(k),'and marked right or wrong');
-    eq(el.classList.contains('good'),right,'with the marking matching the answer');
-    ok((el.querySelector('i').textContent||'').length>10,'and carries a line of reasoning');
-  });
-  // English, so it must not inherit the Hebrew glossary's direction
-  const b=document.querySelector('#explain .exeach .exopt b');
-  eq(getComputedStyle(b).direction,'ltr','the write-up reads left to right');
-  eq(getComputedStyle(b).textAlign,'left','and is aligned that way');
-  t.hideExplain();
 }
 
 // ---------- a mini-game stops when you leave it ----------
@@ -1046,6 +899,8 @@ async function refreshChecks(){
 // A tap past the limit on a multi-answer question used to vanish without a trace.
 async function pickCapChecks(){
   const t=T();
+  // every Ship It question has one answer; the cap only matters if a two-answer one is added
+  if(!t.QS.some(q=>q.a.length===2)){ ok(true,'no two-answer questions in the bank, so nothing to cap'); return; }
   let k=-1;
   for(let n=11;n<=t.PAPER_COUNT&&k<0;n++){
     t.simClearSave(); t.startPaper(n,'exam'); await sleep(30);
@@ -1556,65 +1411,6 @@ async function hunt10Checks(){
   } finally { t.cloudForTest(was[0],was[1]); t.histTable='unknown'; t.P.examHist={}; }
   ok(($('simCont').textContent||'').trim().length>10,'the finish-later button has a label before it is shown');
 }
-// Reported: "The services in this question" rendered as one underlined paragraph with the
-// service names glued into the Hebrew. Its container was a <u> and its layout rules only matched
-// inside an option.
-async function svcBlockChecks(){
-  const t=T(), $=id=>document.getElementById(id);
-  const txt=q=>q.o.map(o=>o[1]).join(' ');
-  const qi=t.QS.findIndex(q=>/RDS Proxy/.test(txt(q)));
-  const q=t.QS[qi];
-  t.simClearSave(); t.startPaper(Math.floor(qi/65)+1,'practice'); await sleep(200);
-  t.simJump(qi%65); await sleep(50);
-  t.simPick(q.o.map(o=>o[0]).find(l=>!q.a.includes(l))); await sleep(200);
-  const d=[...$('explain').querySelectorAll('details.exmore')].find(x=>/services/.test(x.textContent));
-  ok(!!d,'the services block is there');
-  d.open=true; await sleep(20);
-  eq(d.querySelectorAll('u').length,0,'nothing in it is an underline element');
-  eq(getComputedStyle(d.querySelector('.exsvc')).textDecorationLine,'none','and nothing is underlined');
-  const rows=[...d.querySelectorAll('.svcline')];
-  ok(rows.length>=2,'one row per service');
-  const tops=rows.map(r=>Math.round(r.getBoundingClientRect().top));
-  ok(tops.every((y,i)=>i===0||y>tops[i-1]),'each on its own line, not run together');
-  ok(rows.every(r=>{ const b=r.querySelector('b'), sp=r.querySelector('span');
-      return b&&sp&&b.getBoundingClientRect().bottom<=sp.getBoundingClientRect().top+1; }),
-     'the service name sits above its Hebrew, not inside it');
-  ok(rows.every(r=>getComputedStyle(r.querySelector('span')).direction==='rtl'),'the Hebrew reads right to left');
-  ok(rows.every(r=>getComputedStyle(r.querySelector('b')).direction==='ltr'),'the name left to right');
-  t.simAbandon(); await sleep(20); t.simClearSave(); t.go('homeScreen'); await sleep(20);
-}
-// Asked for: explanations that talk about what happened in THIS question. The story block
-// quotes the stem's situation and requirements, the write-up's reason, and why your pick fails.
-async function storyChecks(){
-  const t=T(), $=id=>document.getElementById(id);
-  const st=t.qStory(t.QS[700]);
-  ok(/5 minutes to 20 minutes/.test(st.prob),'Q700: the situation keeps the fact that decides it (5 to 20 minutes)');
-  ok(st.ask.some(x=>/scale automatically/.test(x)),'and the ask is the requirement, not only "which solution"');
-  const s900=t.qStory(t.QS[900]);
-  ok(s900.ask.filter(x=>/must|requires/.test(x)).length>=2,'Q900: requirements in the middle of the stem are found');
-  let noAsk=0, noSit=0; t.QS.forEach(q=>{ const s=t.qStory(q); if(!s.ask.length) noAsk++; if(!s.prob) noSit++; });
-  eq(noAsk,0,'every question says what it asked for');
-  ok(noSit<120,'and nearly every one has a situation ('+noSit+' without)');
-  ok(/<b>LEAST operational overhead<\/b>/.test(t.hiQual('with the LEAST operational overhead?')),'the deciding qualifier is bolded');
-  // rendered: Q700, picking a Lambda option
-  const qi=700, q=t.QS[qi];
-  t.simClearSave(); t.startPaper(Math.floor(qi/65)+1,'practice'); await sleep(200);
-  t.simJump(qi%65); await sleep(50); t.simPick('A'); await sleep(200);
-  const box=$('explain').querySelector('.exstory');
-  ok(!!box,'the explanation opens with what happened in this question');
-  const txt=box?box.textContent:'';
-  ok(/THE SITUATION|The situation/i.test(txt)&&/What they asked for/i.test(txt),'with the situation and the ask');
-  ok(/Why C is the answer/i.test(txt)&&/ECS on Fargate/.test(txt),'why the answer is right, in the write-up\'s words');
-  ok(/Why A — your pick — is not it/i.test(txt)&&/Lambda's 15-minute limit/.test(txt),
-     'and why your pick fails — the Lambda sentence, found by service though it names no letter');
-  const each=[...$('explain').querySelectorAll('.exeach .exopt')];
-  ok(/above/.test(each.find(x=>/^C/.test(x.querySelector('.k').textContent)).textContent),'the list points up instead of repeating the answer');
-  ok(/above/.test(each.find(x=>/^A/.test(x.querySelector('.k').textContent)).textContent),'or your pick');
-  ok(/Lambda's 15-minute limit/.test(each.find(x=>/^D/.test(x.querySelector('.k').textContent)).textContent),
-     'the other Lambda option gets the same sentence, not "the write-up does not name this one"');
-  eq($('explain').querySelectorAll('.exrest').length,0,'the leftover paragraph is not printed a second time at the bottom');
-  t.simAbandon(); await sleep(20); t.simClearSave(); t.go('homeScreen'); await sleep(20);
-}
 // Asked for: a Read button on the explanation. It reads the block in order, on every exam —
 // including the ones where the question's own Read is tapered away, which used to stop any speech.
 async function exReadChecks(){
@@ -1638,11 +1434,11 @@ async function exReadChecks(){
     ok(!!b,'the explanation has a Read button');
     ok(b.getBoundingClientRect().height>=32,'big enough to tap');
     const txt=t.exReadText();
-    ok(/answer is/i.test(txt)&&/What they asked for/i.test(txt)&&/is the answer/i.test(txt),'it reads the verdict, the ask and why');
-    ok(/your pick/i.test(txt),'and why your pick is not it');
+    ok(/answer is/i.test(txt)&&/התשובה הנכונה/.test(txt)&&/איך לענות בראיון/.test(txt),'it reads the verdict, why the answer is right, and the tip');
+    ok(/הבחירה שלך/.test(txt),'and why your pick is not it');
     ok(!/[—↑→✅❌]/.test(txt),'without reading out dashes, arrows or emoji');
     b.click(); await sleep(120);
-    ok(said.join(' ').indexOf('What they asked for')>=0,'tapping Read speaks it');
+    ok(said.join(' ').indexOf('התשובה הנכונה')>=0,'tapping Read speaks it');
     ok(t.ttsOn&&t.exTts,'even on a question where the question\'s own Read is off');
     eq($('explain').querySelector('.exread').textContent.trim(),'⏹ Stop','the button turns into Stop');
     ok(!$('simTts').classList.contains('on'),'and the question\'s button does not claim it');
@@ -2008,9 +1804,12 @@ async function leaderboardReviewChecks(){
     // ---- 4. before the session is read, a signed-in user is not told to sign in
     t.go('homeScreen');
     t.lbAuthKnown=false; t.renderLeaderboard(false);
+    // with no Supabase project the leaderboard card is hidden and there is nothing to sign in to
+    if(!document.documentElement.classList.contains('nocloud')){
     ok(/Loading/.test($('lbNote').textContent)&&$('lbSignIn').classList.contains('hidden'),'while the session loads it says Loading, not Sign in');
     t.lbAuthChanged();
     ok(!$('lbSignIn').classList.contains('hidden'),'once it is known to be signed out, it offers to sign in');
+    }
 
     // ---- 2. a board belongs to one user
     t.P.wk={key:k,dev:{[t.DEVICE_ID]:4}};
@@ -2067,7 +1866,7 @@ async function studyReadChecks(){
         ok(paras.length>0,'a Study chapter has read buttons');
     eq(body.querySelectorAll('.mdxtable .parread, .rdpara .mdxtable').length,0,'no table has one');
     ok(body.querySelectorAll('.mdxtable').length===0||[...body.querySelectorAll('.mdxtable')].every(x=>!x.closest('.rdpara')),'tables stand on their own');
-    ok([...body.querySelectorAll('.stutopic > p, .stutopic > .lb-call')].length===0,'every paragraph and callout is wrapped with a button');
+    ok([...body.querySelectorAll('.stutopic > p:not(.lb-cap), .stutopic > .lb-call')].length===0,'every paragraph and callout is wrapped with a button');   // a caption belongs to its table
     const b0=paras[0].querySelector('.parread');
     ok(b0.getBoundingClientRect().width>=32&&b0.getBoundingClientRect().height>=32,'the button is big enough to tap');
     b0.click(); await sleep(80);
@@ -2079,7 +1878,7 @@ async function studyReadChecks(){
     // another paragraph takes over
     const p1=paras[1]; said.length=0;
     p1.querySelector('.parread').click(); await sleep(80);
-    ok(said.join(' ').length>0&&p1.textContent.indexOf(said.join(' ').slice(0,15))>=0,'another paragraph moves the reading there');
+    ok(said.join(' ').length>0&&t.paraText(p1).indexOf(said.join(' ').slice(0,15))>=0,'another paragraph moves the reading there');
     eq(b0.textContent,'\u{1f50a}','the first one goes back to Read');
     eq(p1.querySelector('.parread').textContent,'⏹','the new one shows Stop');
     p1.querySelector('.parread').click(); await sleep(20);
@@ -3446,7 +3245,7 @@ async function qClockChecks(){
 
   t.simAbandon(); await sleep(20); t.simClearSave();
   t.startPaper(t.PAPER_COUNT); await sleep(30);
-  ok(t.simLen()<65,'the last paper is shorter ('+t.simLen()+')');
+  ok(t.simLen()<=65,'the last paper is at most a full paper ('+t.simLen()+')');   // 1,300 = 20 × 65
   eq(t.simTotalLeft(),t.simLen()*t.SIM_QSEC,'and totals its own question count');
 
   t.simAbandon(); await sleep(20); t.simClearSave();
@@ -3626,7 +3425,7 @@ async function briefChecks(){
     ok(rules.length>0,'exam '+n+': with decision rules under it');
     rules.forEach((r,k)=>{
       const sp=r.querySelector('span:last-child');
-      eq(getComputedStyle(sp).direction,'ltr','rule '+k+' reads left to right beside the Hebrew');
+      eq(getComputedStyle(sp).direction,'rtl','rule '+k+' is Hebrew and reads right to left');   // from the Learn subject's callouts
       ok(sp.textContent.trim().length>15,'rule '+k+' says something');
     });
     // Measured across the ten briefed papers: median 1,286 characters, min 728 where the
@@ -3906,78 +3705,63 @@ async function qToolChecks(){
 }
 
 // ---------------------------------------------------------------- Hebrew
-// The three glossaries that explain the services are generated by
-// build_course_data.py and translated afterwards by hebrew_codex.py,
-// hebrew_glossary.py and hebrew_blueprint.py. Re-running the generator without
-// the translators would put them back in English, silently — these fail loudly.
+// Every bank question is authored with a Hebrew line per option (y), a Hebrew interview tip (x)
+// and the documentation page the answer was checked against (r). The panel prints exactly
+// those, so a question missing one shows a blank row or an English panel.
 const HEB=/[\u0590-\u05FF]/;
-function hebrewChecks(){
-  const t=T();
-  const ex=JSON.parse(document.getElementById('explaindata').textContent.replace(/<\\\//g,'</'));
-  ok(ex.glossary.length===154,'the explanation glossary still has its 154 terms');
-  const enG=ex.glossary.filter(e=>!HEB.test(e.d));
-  ok(enG.length===0,'every glossary definition is Hebrew'+(enG.length?' — English: '+enG.slice(0,4).map(e=>e.t).join(', '):''));
-  ok(ex.glossary.every(e=>!HEB.test(e.t)),'the term names stay English — exFind matches them against the options');
-
-  const codex=t.CODEX;
-  const enC=Object.keys(codex).filter(k=>!HEB.test(codex[k]));
-  ok(enC.length===0,'every codex definition is Hebrew'+(enC.length?' — English: '+enC.slice(0,4).join(', '):''));
-
-  const sd=JSON.parse(document.getElementById('subjectdata').textContent.replace(/<\\\//g,'</'));
-  const roles=[],bens=[];
-  Object.values(sd.subjects).forEach(v=>{
-    v.blueprint.forEach(b=>roles.push(b));
-    v.tradeoffs.forEach(x=>bens.push(x));
+function authoredChecks(){
+  const t=T(), $=id=>document.getElementById(id);
+  let noY=0, short=0, stub=0, enY=0, enX=0, badR=0; const bad=[];
+  t.QS.forEach((q,i)=>{
+    if(!Array.isArray(q.y)||q.y.length!==q.o.length){ noY++; if(bad.length<4) bad.push('q'+i); return; }
+    q.y.forEach((l,j)=>{ const right=q.a.includes(q.o[j][0]);
+      if(String(l).length<15){ if(right) short++; else stub++; }
+      if(!HEB.test(l)) enY++; });
+    if(!q.x||!HEB.test(q.x)) enX++;
+    if(!/^https:\/\//.test(q.r||'')) badR++;
   });
-  ok(roles.length>0&&roles.every(b=>HEB.test(b.role)),'every Learn service card is Hebrew');
-  ok(bens.length>0&&bens.every(x=>HEB.test(x.benefit)),'every trade-off benefit is Hebrew');
+  eq(noY,0,'every question has a line for each of its options '+bad.join(' '));
+  eq(short,0,'the line under every right answer explains it');
+  // A wrong option is often answered with a word ("לא.", "לא קשור."). It is honest but teaches
+  // little; the count can only go down.
+  ok(stub<=1558,'terse lines under wrong options do not grow ('+stub+')');
+  eq(enY,0,'every option line is Hebrew');
+  eq(enX,0,'every question has a Hebrew interview tip');
+  eq(badR,0,'and an https documentation link');
+  const enC=Object.keys(t.CODEX).filter(k=>!HEB.test(t.CODEX[k]));
+  eq(enC.join(', '),'','every glossary definition is Hebrew');
+  ['explaindata','subjectdata','coursedata'].forEach(id=>{
+    const el=$(id); ok(!el||el.textContent.trim().length<40,'the retired '+id+' blob is empty');
+  });
 
-  // and the panel actually renders it, right-aligned, with the service name left
-  const bank=JSON.parse(document.getElementById('data').textContent.replace(/<\\\//g,'</')).questions;
-  let q=null;
-  for(const b of bank){ const e=t.buildExplain(b,new Set([b.a[0]]),true);
-    if(e.correctTerms.length&&e.distractors.some(d=>d.terms.length)){ q=b; break; } }
-  ok(!!q,'a question exists that fills both halves of the panel');
-  if(q){
-    t.renderExplain(q,new Set([q.o.find(o=>!q.a.includes(o[0]))[0]]),false);
-    const box=$('explain');
-    // The Hebrew definitions used to sit in two blocks of their own. They now live under the
-    // option that names them, where they say what that option is actually proposing.
-    // They are folded into one "services in this question" block now, one tap away.
-    const svc=[...box.querySelectorAll('.exmore .svcline')];
-    ok(svc.length>0,'the service definitions are there, folded');
-    ok(!box.querySelector('.exmore').open,'and folded by default, so the panel is not a wall');
-    svc.forEach((el,i)=>{
-      const sp=el.querySelector('span');
-      ok(HEB.test(sp.textContent),'service line '+i+' is in Hebrew');
-      eq(getComputedStyle(sp).direction,'rtl','service line '+i+' reads right to left');
-      const nm=el.querySelector('b');
-      ok(nm&&!HEB.test(nm.textContent),'and its service name stays Latin');
-    });
-    // the English around them must NOT have inherited that direction
-    const optB=box.querySelector('.exeach .exopt>span>b');
-    if(optB) eq(getComputedStyle(optB).direction,'ltr','the option text reads left to right');
-    const ruleI=box.querySelector('.exrules .exopt i');
-    if(ruleI) eq(getComputedStyle(ruleI).direction,'ltr','and so do the decision rules');
-    // one service may explain only one distractor, or the panel repeats itself
-    const e=t.buildExplain(q,new Set([q.a[0]]),true);
-    const names=e.distractors.filter(d=>d.terms.length).map(d=>d.terms[0].t.toLowerCase());
-    ok(names.length===new Set(names).size,'no two distractors share an explanation');
-    t.hideExplain();
-  }
-  // across the bank, not just one question
-  let dup=0,en=0,seen=0;
-  for(let i=0;i<bank.length;i+=5){
-    const e=t.buildExplain(bank[i],new Set([bank[i].a[0]]),true);
-    if(!e.correctTerms.length) continue;
-    seen++;
-    if(!e.correctTerms.every(x=>HEB.test(x.d))) en++;
-    const n=e.distractors.filter(d=>d.terms.length).map(d=>d.terms[0].t.toLowerCase());
-    if(n.length!==new Set(n).size) dup++;
-  }
-  ok(seen>100,'sampled enough questions to mean something ('+seen+')');
-  ok(en===0,en+' sampled questions still explain in English');
-  ok(dup===0,dup+' sampled questions repeat a service across two distractors');
+  // and the panel renders it: one row per option, marked, Hebrew right to left, options left to right
+  const q=t.QS.find(x=>x.o.length===4&&/`/.test(x.o.map(o=>o[1]).join(' ')))||t.QS[0];
+  const wrong=q.o.find(o=>!q.a.includes(o[0]))[0];
+  t.renderExplain(q,new Set([wrong]),false);
+  const box=$('explain');
+  const rows=[...box.querySelectorAll('.exeach .exopt')];
+  eq(rows.length,q.o.length,'every option gets a row, not just the ones that were picked');
+  rows.forEach((el,i)=>{
+    const L=q.o[i][0], right=q.a.includes(L);
+    const k=el.querySelector('.k').textContent;
+    ok(k.indexOf(L)===0&&/[\u2713\u2717]/.test(k),'row '+i+' is labelled '+L+' and marked');
+    eq(el.classList.contains('good'),right,'row '+i+' is marked to match the answer');
+    eq(el.classList.contains('mine'),L===wrong,'row '+i+' shows whether it was your pick');
+    const he=el.querySelector('.exhe');
+    ok(he&&HEB.test(he.textContent),'row '+i+' carries its Hebrew line');
+    if(he) eq(getComputedStyle(he).direction,'rtl','row '+i+' Hebrew reads right to left');
+    eq(getComputedStyle(el.querySelector('.exbrief1')).direction,'ltr','row '+i+' option reads left to right');
+  });
+  ok(!!box.querySelector('.exbrief1 code'),'code in an option is rendered as code, not backticks');
+  ok(!/`/.test(box.textContent),'and no raw backtick is left in the panel');
+  const tip=box.querySelector('.extip');
+  ok(tip&&HEB.test(tip.textContent),'the interview tip is shown');
+  if(tip) eq(getComputedStyle(tip).direction,'rtl','and reads right to left');
+  const a=box.querySelector('.exref a');
+  ok(a&&a.href===q.r&&a.target==='_blank'&&/noopener/.test(a.rel),'the documentation link opens the checked page in a new tab');
+  eq(box.querySelectorAll('.exstory,.exmore,.svcline').length,0,'none of the retired AWS panel parts are drawn');
+  ok(!/SAA|AWS Certified|Solutions Architect/.test(box.textContent),'and nothing in it mentions the old exam');
+  t.hideExplain();
 }
 
 // ---------- the recent work, in combination ----------
@@ -4036,14 +3820,14 @@ async function integrationChecks(){
   const q=t.QS[t.sim.qs[0]];
   q.a.forEach(l=>t.simPick(l)); await sleep(30);
   ok($('explain').classList.contains('show'),'paper 1 explains');
-  // An option's outer span now holds English text with Hebrew service lines nested inside it,
+  // An option's outer span holds the English option with its Hebrew line nested inside it,
   // so testing the outer one finds Hebrew in its descendants and LTR on the element itself.
-  // The Hebrew leaf is .svcline > span.
-  const heb=[...$('explain').querySelectorAll('.svcline>span')];
-  ok(heb.length>0,'the options carry Hebrew service definitions');
+  // The Hebrew leaf is .exhe.
+  const heb=[...$('explain').querySelectorAll('.exeach .exhe')];
+  ok(heb.length>0,'the options carry their Hebrew lines');
   heb.forEach((e,i)=>{
-    ok(HEB.test(e.textContent),'service line '+i+' is Hebrew');
-    eq(getComputedStyle(e).direction,'rtl','service line '+i+' reads right to left');
+    ok(HEB.test(e.textContent),'option line '+i+' is Hebrew');
+    eq(getComputedStyle(e).direction,'rtl','option line '+i+' reads right to left');
   });
   const eng=$('explain').querySelector('.exeach .exopt>span>b');
   if(eng) eq(getComputedStyle(eng).direction,'ltr','while the option text stays left to right');
@@ -4110,6 +3894,11 @@ window.QA_INTEG=async function(){
   return {pass, failed:fails.length, fails};
 };
 
+// One crashing group used to stop the whole run and hide everything after it. Each group
+// now runs on its own: a crash is recorded as a failure, and the rest still run.
+async function step(name,fn){
+  try{ await fn(); }catch(e){ fails.push('CRASH in '+name+': '+String(e&&e.message||e).slice(0,240)); }
+}
 window.QA_BANK=async function(opts){
   opts=opts||{};
   pass=0; fails=[];
@@ -4117,21 +3906,21 @@ window.QA_BANK=async function(opts){
   ok(!!t,'the test surface is exposed (load with ?test=1)');
   if(!t) return {pass,fails};
   t.go('homeScreen');
-  homeCheck();
-  bankChecks();
-  paperChecks();
-  hebrewChecks();
-  if(opts.app!==false) await appChecks();
-  if(opts.study!==false){ await studyChecks(); await retiredDrillChecks(); }
-  if(opts.extras!==false){ whyChecks(); whyQualityChecks(); cueChecks(); sriChecks(); arithmeticChecks(); await gameLifetimeChecks(); await refreshChecks(); await breakChecks(); await modeChecks(); await dialogChecks(); await saveFlushChecks(); await pickCapChecks(); await oneClockChecks(); await continueChecks(); await saaChecks(); await multiDeviceChecks(); await hunt9Checks(); await readTaperChecks(); await histChecks(); await histSyncChecks(); await pauseBarChecks(); await redoSyncChecks(); await hunt10Checks(); await svcBlockChecks(); await storyChecks(); await exReadChecks(); await redoCsvChecks(); await mistakesChecks(); await mistakesReviewChecks(); await leaderboardChecks(); await leaderboardReviewChecks(); await studyReadChecks(); await studyReadReviewChecks(); await tournamentChecks(); await tournamentReviewChecks(); mergeLossChecks(); await duelChecks(); await xssChecks(); await paperRowChecks(); await voiceChecks(); await hardeningChecks(); await deviceChecks(); await qClockChecks(); await resumeChecks(); await ttsChecks(); await briefChecks();
-    await freeChecks(); await feedbackChecks(); await cheerChecks(); await qToolChecks();
-    await statsChecks(); await weightChecks(); }
+  await step('homeCheck',homeCheck);
+  await step('bankChecks',bankChecks);
+  await step('paperChecks',paperChecks);
+  await step('authoredChecks',authoredChecks);
+  if(opts.app!==false) await step('appChecks',appChecks);
+  if(opts.study!==false){ await step('studyChecks',studyChecks); await step('retiredDrillChecks',retiredDrillChecks); }
+  if(opts.extras!==false){ await step('sriChecks',sriChecks); await step('arithmeticChecks',arithmeticChecks); await step('gameLifetimeChecks',gameLifetimeChecks); await step('refreshChecks',refreshChecks); await step('breakChecks',breakChecks); await step('modeChecks',modeChecks); await step('dialogChecks',dialogChecks); await step('saveFlushChecks',saveFlushChecks); await step('pickCapChecks',pickCapChecks); await step('oneClockChecks',oneClockChecks); await step('continueChecks',continueChecks); await step('saaChecks',saaChecks); await step('multiDeviceChecks',multiDeviceChecks); await step('hunt9Checks',hunt9Checks); await step('readTaperChecks',readTaperChecks); await step('histChecks',histChecks); await step('histSyncChecks',histSyncChecks); await step('pauseBarChecks',pauseBarChecks); await step('redoSyncChecks',redoSyncChecks); await step('hunt10Checks',hunt10Checks); await step('exReadChecks',exReadChecks); await step('redoCsvChecks',redoCsvChecks); await step('mistakesChecks',mistakesChecks); await step('mistakesReviewChecks',mistakesReviewChecks); await step('leaderboardChecks',leaderboardChecks); await step('leaderboardReviewChecks',leaderboardReviewChecks); await step('studyReadChecks',studyReadChecks); await step('studyReadReviewChecks',studyReadReviewChecks); await step('tournamentChecks',tournamentChecks); await step('tournamentReviewChecks',tournamentReviewChecks); await step('mergeLossChecks',mergeLossChecks); await step('duelChecks',duelChecks); await step('xssChecks',xssChecks); await step('paperRowChecks',paperRowChecks); await step('voiceChecks',voiceChecks); await step('hardeningChecks',hardeningChecks); await step('deviceChecks',deviceChecks); await step('qClockChecks',qClockChecks); await step('resumeChecks',resumeChecks); await step('ttsChecks',ttsChecks); await step('briefChecks',briefChecks);
+    await step('freeChecks',freeChecks); await step('feedbackChecks',feedbackChecks); await step('cheerChecks',cheerChecks); await step('qToolChecks',qToolChecks);
+    await step('statsChecks',statsChecks); await step('weightChecks',weightChecks); }
   if(opts.quick!==true){
-    await runPaper(1,{});
-    csvChecks();
-    await timeoutCheck();
-    await abandonCheck();
-    await shortPaperCheck();
+    await step('runPaper(1)',()=>runPaper(1,{}));
+    await step('csvChecks',csvChecks);
+    await step('timeoutCheck',timeoutCheck);
+    await step('abandonCheck',abandonCheck);
+    await step('shortPaperCheck',shortPaperCheck);
   }
   t.go('homeScreen');
   console.log(fails.length?('QA_BANK: '+pass+' passed, '+fails.length+' FAILED'):('QA_BANK: '+pass+' assertions, all passing'));

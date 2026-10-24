@@ -147,7 +147,7 @@ for i, q in enumerate(qs):
     for l, t in q["o"]:
         if len(t.strip()) < 8:
             report("MED", "bank", f"question {i} option {l} is suspiciously short: {t!r}")
-        if re.match(r"^[A-F][\).\s]", t.strip()):
+        if re.match(r"^[A-F][).]\s", t.strip()):
             report("MED", "bank", f"question {i} option {l} starts with a stray letter marker: {t[:40]!r}")
     # the stems say this three ways: "(Select TWO.)", "(Choose two.)", "(Select THREE.)".
     # Matching only "Select" reported three perfectly healthy questions as damaged.

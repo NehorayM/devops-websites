@@ -97,5 +97,9 @@ docs.gitlab.com/ee/ci · jenkins.io/doc · man7.org. Every question carries a `r
    `study_src/c*.py`; `python3 build_study.py` validates (every sector in exactly one chapter) and injects.
    The Study engine's sources are now real files (`study_engine.js`, `study_styles.css`,
    `study_screens.html`) that `inject_study.py` reads; chapters carry their own sectors and domain.
-7. **Hebrew explanations, QA** (`QA_BANK`, `QA_UI`, and the rest) run in a real browser, then update `STATE.md`.
+7. *(done)* **Hebrew explanations, QA** (`QA_BANK`, `QA_UI`, and the rest) run in a real browser, then update `STATE.md`.
+   AWS remnants removed from the screens (glossary, ranks, badges, path, briefing, readiness, voice). Answer
+   explanations are the authored Hebrew lines, with a Read button that switches to a Hebrew voice. The QA
+   checks for the old explanation pipeline were replaced by `authoredChecks`. Every suite passes (numbers in
+   `STATE.md`). Open item: 1,558 wrong-option lines are a word or two and could be expanded.
 8. **Games:** adapt the duel and casino to the new bank (the SQL is ready), turned on once there is a new Supabase project.

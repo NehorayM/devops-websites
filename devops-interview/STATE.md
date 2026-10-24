@@ -1,28 +1,152 @@
 # Where this project stands
 
-The app is **Skyforge** (renamed from Neon Grid in September 2026 — the forge where cloud
-architects are made). "Neon Grid" survives only as the name of the original colour theme, and in
-the repo name.
+The app is **Ship It**: practice for DevOps job interviews. It was cloned from Skyforge (an AWS
+SAA-C03 trainer, repo `NehorayM/neon-grid-aws`) in October 2026 and rebuilt around DevOps
+topics. The exam engine, clocks, profile, sync and design come from there; every piece of
+content (questions, explanations, lessons, reference pages, interview questions) is new.
 
-Live: **https://nehoraym.github.io/neon-grid-aws/** · repo `NehorayM/neon-grid-aws` (public, GitHub Pages from `main`)
+Repo `NehorayM/devops-websites`, folder `devops-interview/`. `index.html` is the whole app: one
+self-contained file with the content in JSON blobs. `PLAN.md` holds the decisions and the
+stage list; this file says how things work.
 
-`index.html` is the whole app — one self-contained file, ~2.9 MB (well under 1 MB gzipped over the wire),
-including the question bank and every subject's teaching material.
-Push to `main` and Pages redeploys in about a minute.
+**Language rule:** questions, options and code stay in English, as they would be asked in an
+interview. Every explanation, lesson, tip and callout is Hebrew, rendered RTL with English
+terms and code isolated LTR inside it.
 
 ## What exists
 
 | Part | State |
 |---|---|
-| Study guide `AWS-SAA-C03-Combined.md` | Two sources merged into one 24-topic guide |
-| **Question bank** | 1,201 questions, every answer read and verified one by one. The old 2,502-question bank is gone |
-| **Practice Exams** | The **Exam** tab. 19 numbered papers — 65 questions each (the last holds 31), **2:15 a question** (`SIM_QSEC=135`), score, CSV export. A paper you leave is kept and offered back; exams 1–10 brief you before each question and explain every answer; any question's stem can be read aloud on request |
-| **Study** | The **Study** tab. The whole syllabus as 13 readable chapters, 76 topics, with authored comparison tables, decision trees and flows, and 3 checks per chapter |
-| Practice, mock, exam, flashcards | Original app, still running on the new bank |
-| **Learn a Subject** | The main mode. 23 subjects, 97 parts, 388 check questions, 230 exam questions — all authored, none drawn from the bank |
-| **Answer explanations** | Bank questions: glossary-derived. Learn mode: authored per option |
-| **Accounts** | Supabase Auth, optional (guests still work). Username, cross-device sync, merge-best on first sign-in |
-| **Casino** | Chips (server-owned). Shared roulette on a 25s clock, blackjack vs the house, question duel |
+| **Question bank** | 1,300 multiple-choice questions over 24 sectors, weighted by how often a topic comes up in interviews: K8s, Argo CD, CI, AWS, Helm, Terraform, Linux, CI tools, networking. Half junior–mid, half mid–senior; half knowledge, half troubleshooting. Each one has a Hebrew line per option, a Hebrew interview tip and a documentation link |
+| **Practice Exams** | 20 papers of 65 questions, **1:30 a question** (`SIM_QSEC=90`). Papers 1–10 brief and explain; 11–20 are silent until you submit. Scored 100–1000, 720 to pass (the "Ship It score") |
+| **Interview mode** | 300 open questions: the question, then the points a strong answer covers (Hebrew), a likely follow-up, the trap, a doc link, and self-marking (`P.iv`) |
+| **Learn** | 24 subjects × 3 parts: a Hebrew lesson, 3 check questions each, a recap, and a 10-question exam with a Hebrew note on every option |
+| **Study** | 9 quick-reference chapters, 30 pages: commands, comparison tables, numbers, and the questions interviewers ask; 3+ checks per chapter |
+| Flashcards, practice by sector, review, bookmarks, mock, readiness, path, badges | Running on the new content. The `CODEX` glossary (102 terms) feeds flashcards and the exam briefing |
+| **Accounts / Supabase** | Off (`nocloud`). Progress is in `localStorage`. Code and SQL are still here for stage 8 |
+| **Games, casino, duel, tournament** | Hidden until stage 8 (a new Supabase project). The duel answer key in `supabase_duel*.sql` is regenerated from this bank |
+
+## Content pipelines
+
+All content is authored in Python files and built into `index.html` by scripts that validate
+first and **write nothing** if anything is wrong. Never hand-edit a blob or anything between
+`LEARN:` / `STUDY:` markers; the next build overwrites it.
+
+| Content | Source | Build |
+|---|---|---|
+| Question bank (`#data`) | `qsrc/<topic>.py`, shorthand in `qsrc/qlib.py` (`Q(...)`, counts in `COUNTS`) | `python3 build_bank.py && python3 inject_bank.py` |
+| Interview (`#ivdata`) | `isrc/<topic>.py` (`O(...)`, counts in `IV_COUNTS`) | `python3 build_interview.py && python3 inject_interview.py` |
+| Learn (`#learndata`) | `learn_src/s00…s23_*.py`, shorthand in `learn_src/_h.py` | `python3 build_learn.py` |
+| Learn engine | `learn_engine.js`, `learn_screens.html`, `learn_styles.css` | `python3 inject_learn.py` (keeps the `STUDY:JS` block nested inside) |
+| Study (`#studydata`) | `study_src/c*.py` (same block shorthand) | `python3 build_study.py` |
+| Study engine | `study_engine.js`, `study_screens.html`, `study_styles.css` | `python3 inject_study.py` |
+| Duel answer key | the bank | `python3 gen_duel_v2.py && python3 build_duel_key.py` after any bank change |
+
+What the validators refuse, in short:
+
+- **Bank:** counts per sector and level off, a missing Hebrew line for an option, an English
+  tip, a non-https reference, duplicate options, correct answers clustering on one position.
+- **Interview:** counts per topic, 3–6 Hebrew points, the level split.
+- **Learn:** check questions whose terms are never taught in their part, exam questions not
+  tied to a part, a part without a visual block or a key/trap callout, a short recap,
+  unbalanced `**`, short option notes.
+- **Study:** a sector in zero or two chapters, a page with no table/code/flow, no Hebrew, under
+  700 characters, a quiz explanation that is not Hebrew.
+
+The bank is index-keyed: `BANKV` hashes stems, options, answers and sections, and a change
+resets `seen`, `wrong`, `marks` and the review schedule while keeping XP, coins and badges.
+
+## How an answer is explained
+
+`renderExplain()` → `authoredExplain(q,picked)` for every bank question: the topic and level
+tags, then every option with ✓/✗, "your pick" on yours, and its Hebrew line under it; then the
+🎤 interview tip and the documentation link. A 🔊 Read button reads it (Hebrew through a
+`he-IL` voice, English through the English one; `ttsVoiceHe()`).
+
+The old Skyforge machinery that split one English write-up across options (`whyByOption`,
+`exCue`, `renderStory`, the service glossary) is still in the file as a fallback for a question
+without `q.y`. No question takes that path; it can go once nothing else calls `buildExplain`.
+
+The exam briefing on papers 1–10 (`buildBriefing`) uses the `CODEX` terms found in the question
+and the Learn key/trap callouts for its sector (`learnCallouts`).
+
+## Domains and the score
+
+Four topic areas, which `DOMAINS` weights by bank share: **K8s & Helm 31%**, **GitOps & CI 37%**,
+**Cloud & IaC 22%**, **Foundations 10%**. A question's area is its sector's (`examDomainOf`
+returns `domainOf(q.s)` for authored questions). The score keeps Skyforge's arithmetic:
+`saaScore()` weights each area's accuracy by that mix, blending a thin area with the overall
+(`SAA_SHRINK`), and `saaScaled()` maps 0% → 100, 72% → 720, 100% → 1000. The function names
+still say `saa`; the screens say "Ship It score".
+
+Study chapters own sectors (`STU_SECS` from each chapter's `secs`), so each chapter card can say
+what share of the bank it covers and your accuracy on it.
+
+## Testing: use it, do not eyeball
+
+```bash
+python3 -m http.server 8765        # then http://localhost:8765/index.html?test=1
+python3 audit_static.py            # dead code, unstyled classes, bank heuristics (advisory)
+```
+
+In the page (or headless with Playwright: load the file's text, `eval` it, call the function):
+
+| Suite | Last run (stage 7) |
+|---|---|
+| `QA_BANK()` (`qa_bank.js`) | 22,662 assertions, 0 failing |
+| `QA_UI()` | 37 screens, no problems |
+| `QA_INTEG()` | 40 assertions, 0 failing |
+| `QA_LEARN()` (`qa_learn.js`) | 5,710 checks across 24 subjects, 0 failing |
+| `AUDIT()` (`audit_runtime.js`), `AUDIT2()`…`AUDIT9()` | no HIGH or MED findings |
+| `FUZZ_EXAM(3000,7)` (`fuzz_exam.js`) | 3,000 random steps, no problems |
+
+Every group in `QA_BANK` runs inside `step()`, so one that throws is reported and the rest
+still run. `authoredChecks` holds the authored-explanation rules: a Hebrew line per option, a
+Hebrew tip, an https link, the panel's directions, no raw backticks, none of the retired AWS
+panel parts. `AUDIT9` measured the old splitter and now has nothing to measure.
+
+**Syntax-check a harness file before loading it** (`node --check`): one bad line stops the
+whole file defining anything, and it looks like the suite does not exist.
+
+`sql_tests/run.sh` (Docker Postgres) plays the games against the SQL; run it before touching
+`supabase_*.sql` in stage 8.
+
+## Known gaps / next up
+
+- **Terse wrong-option lines.** 1,558 of the bank's Hebrew option lines are a word or two
+  ("לא.", "לא קשור.") across 789 questions; every right-answer line is a real explanation.
+  `authoredChecks` caps the count so it can only go down. Rewriting them is content work, topic
+  by topic in `qsrc/`.
+- **Stage 8:** a new Supabase project, then the games, casino, duel and tournament back on. The
+  SQL is ready and the duel key matches the bank; the badges that need games stay locked until then.
+- The Skyforge explanation fallback (see above) and the empty `#explaindata`, `#subjectdata` and
+  `#coursedata` blobs can be removed with it.
+- `audit_static.py` lists functions and ids that look unused; most are reached through strings
+  (`go('xScreen')`) or the test surface. Read before deleting.
+
+## Things worth not relearning
+
+- `.screen` has `z-index:10` and forms a stacking context, so a `.backbtn` inside it can never
+  rise above `#topbar`. The bar passes clicks through its empty areas; do not undo that.
+- A `<div>` left unclosed inside a `<button>` silently reparents everything after it.
+- A local `const` named the same as a global function shadows it for the whole function body.
+- Programmatic `.click()` sails through dead buttons. Hit-test with `document.elementFromPoint`
+  after `scrollIntoView`, which is what `QA_TAPS` does.
+- `inject_learn.py` replaces the whole `LEARN:JS` band, and the `STUDY:JS` block lives inside
+  it. The script now carries the Study block over; if it ever stops, the page fails with
+  "STUDY_T is not defined".
+- `direction:rtl` on a shared selector mangles any English still rendering through it. Put RTL
+  on the Hebrew element itself and isolate code inside it (`unicode-bidi:isolate`).
+- Text with backticks renders through `qtx()` as `<code>`; compare against the stripped text in
+  tests, not the source.
+- Driving the app with `submitAnswer()` or `qConfirm.click()` runs the **practice** path even
+  during an exam. Tap a real `.opt` instead.
+- Supabase renamed the keys: **Publishable** (`sb_publishable_`) is the old anon key.
+
+# Engine notes (from Skyforge, still accurate)
+
+The sections below describe the exam engine, clocks, sync and games as built for Skyforge.
+They still describe the code; AWS examples in them are history.
 
 ## The look
 
@@ -49,10 +173,10 @@ The rules the design follows:
 The reaction to that pass was "too clean, not interesting". `character.py` put the personality
 back without putting the noise back — decoration that carries meaning:
 
-- **An emoji per sector**, chosen for the service (`SEC_EM`): 🔑 IAM, 🪣 S3, 🐳 containers,
-  🕸️ VPC. It rides along in the sector grid, the Learn subject list and the quiz header.
+- **An emoji per sector**, chosen for the service (`SEC_EM`): ☸️ Kubernetes, 🐙 Argo CD, 🏗️ Terraform,
+  🐧 Linux. It rides along in the sector grid, the Learn subject list and the quiz header.
 - **The four exam domains each own a colour** (`DOMAIN_COL`). Every sector card wears its
-  domain's stripe and states its weight — "PERFORMING · 24%" — so the grid teaches the
+  domain's stripe and states its weight — "K8S & HELM · 31%" — so the grid teaches the
   blueprint instead of just listing topics.
 - **Practice Exams** shows attempted/passed/best, and each paper gets its score, a bar and
   green-or-amber depending on whether it cleared 72%.
@@ -76,24 +200,6 @@ any screen child that has content but no height.
 `QA_UI()` guards the layout side of this: 32 screens at 375px and 1024px, no sideways scroll,
 no clipped text, no covered back buttons, no tap target under 24px.
 
-## Study mode
-
-The **Study** tab is the reference half of the app: read the syllabus, in any order, nothing
-locked. Learn mode teaches and gates; Study mode just explains.
-
-```bash
-python3 build_study.py    # qsrc/aws-saa-study-notes-english.md -> the #studydata blob
-python3 inject_study.py   # screens, styles and engine into index.html (idempotent)
-```
-
-`build_study.py` carries the prose across untouched and adds what prose cannot: 81 authored
-comparison tables, decision trees, flows and must-know / exam-trap callouts, keyed by topic in
-`EXTRAS`, plus three multiple-choice checks per chapter in `QUIZ`. Every `##` in the notes must
-appear in `SECTION_CH` or the build refuses, so a topic can never quietly go missing.
-
-Blocks render through the Learn mode's `blocksHTML`, so both modes share one renderer and one
-visual language. Chapters are coloured by the exam domain they mostly serve.
-
 ## Inside an exam
 
 - **Leaving keeps it.** `simPersist()` writes the question, the answers, the flags and the
@@ -112,7 +218,7 @@ visual language. Chapters are coloured by the exam domain they mostly serve.
   with no voices installed fires `onerror: synthesis-failed`, so the button never lies about
   reading; it also accepts `speak()` silently in some builds, so the page checks 400ms later
   and says so rather than leaving you wondering.
-- **2:15 a question.** `SIM_QSEC=135` (it was 90, 105, 120, then 150 from another session; the user settled on 2:15). The home tiles are written from it at start-up. The top clock counts the current question
+- **1:30 a question.** `SIM_QSEC=90` (Skyforge used 2:15; Ship It questions are shorter). The home tiles are written from it at start-up. The top clock counts the current question
   down, not the whole paper, and the bar above the question drains with it. When it reaches
   zero the paper moves to the next question whether or not anything was answered — a blank
   question scores as wrong, and the clock never waits for a right answer. On the last question
@@ -123,40 +229,23 @@ visual language. Chapters are coloured by the exam domain they mostly serve.
   still be opened and answered from the review list — it shows an empty clock rather than
   bouncing you straight back out, which is what `if(simQLeft<=0){ simQStop(); return; }` at
   the top of `simQTick` is for.
-  On papers 1–10 the same per-question time (SIM_QSEC, now 135 s) covers reading the feedback, so it can move on mid-read.
+  On papers 1–10 the same per-question time (SIM_QSEC, now 90 s) covers reading the feedback, so it can move on mid-read.
   **There is one clock** — see "One clock" below. `simTimeLeft()` is the sum of the question
   clocks, and `simCheckTime` ends the paper when that reaches zero. `simBudget(n)` survives
   only as the headline figure.
-- **Papers 1–10 teach; 11–19 test.** On the first ten, a collapsible panel above each question
-  (`buildBriefing()`) names the services it turns on, the ones it name-drops as distractors and
-  how the exam phrases the ask — capped at four concepts and three distractors. And the moment
+- **Papers 1–10 teach; 11–20 test.** On the first ten, a collapsible panel above each question
+  (`buildBriefing()`) names the concepts it turns on (from the DevOps `CODEX`) and
+  the Learn callouts for its subject — capped at four concepts and three distractors. And the moment
   you commit the required number of picks, the question **settles**: the options lock, right and
   wrong are marked, and `renderExplain()` opens underneath with what you picked, the correct
   answer, why it fits and what each other option actually does. The strip then reads
-  "12 / 65 answered · 9/12 right so far". Papers 11–19 say nothing until you submit, and you can
+  "12 / 65 answered · 9/12 right so far". Papers 11–20 say nothing until you submit, and you can
   still change an answer there — that is what a real exam feels like.
 - **A line that knows where you are.** Sixty-five Hebrew one-liners, one per position in a
   paper, each naming the number you just reached ("ארבעים ושתיים. התשובה לחיים, ליקום ולכל
   השאר. ולשאלה הזאת."). None of them hints at whether you were right, so the silent papers show
   them too — in the explanation panel on 1–10, as a toast on 11–19. Past 65 it falls back to a
   generated line.
-- **174 questions carry the note written when their answer was verified**, and that note leads
-  the explanation panel. `build_bank.py` copies `NOTES` from `qsrc/answers.py` into the question
-  as `x`; `BANKV` deliberately hashes only stems, options, answers and sections, so adding an
-  explanation never throws away anyone's progress.
-
-## Knowing how much to learn
-
-`BANK_STATS` walks the bank once at load and reports, per subject: how many questions there
-are, what share of the bank that is, roughly how many to expect in a 65-question paper, how
-many of the 19 papers it turns up in, and your accuracy on it. Eight subjects appear in **all
-19 papers** — RDS/Aurora/ElastiCache, S3, ELB & ASG, Serverless, VPC, SQS/SNS/Kinesis,
-Containers and EBS/EFS. The Practice Exams screen carries it as a collapsible panel.
-
-Study chapters carry the same arithmetic. `STU_SECS` maps each of the 13 chapters to the
-question sectors it covers — every sector belongs to exactly one chapter, so the weights add up
-to the whole bank — and each chapter card says **"16% of the exam · 192 questions · you are 64%
-right on 40 of them"**. That is the number that tells you how hard to study a subject.
 
 ## Nothing costs coins
 
@@ -167,186 +256,6 @@ returns true for anything without an `earn` condition — the earned themes (Cri
 Platinum, Midnight Mono) are still earned by playing, because a badge is not a price.
 
 The casino is untouched: chips are server-owned and stay that way.
-
-## What happened to the old modes
-
-- The **Exam ×5** drill is gone. The 65-question papers are the real exams, and two things
-  called "exam" in one navigation bar was the confusion. Its badges (`Certified`,
-  `Exam Machine`), its daily quest and its history log were repointed at the papers, so they
-  now mean something a candidate would recognise. The Exam Pass shop item went with it.
-- The **Practice** nav tab became **Study**. Sector practice itself is untouched — it is still
-  reached from the sector grid, Weak spots, Review, Bookmarks and the Practice tile on home.
-- A new badge, **Well Read**, lands when all 13 Study chapters have been opened.
-
-## The question bank
-
-Every question comes from `qsrc/aws_saa_questions_full.csv`, an OCR'd exam dump kept in the repo
-so the pipeline reruns without the original download. Nothing else feeds the bank.
-
-```bash
-python3 clean_csv.py      # CSV  -> qsrc/questions_clean.json   (repairs the OCR damage)
-python3 build_bank.py     # + qsrc/answers.py -> qsrc/bank.json (assigns each question a sector)
-python3 inject_bank.py    # qsrc/bank.json -> the #data blob in index.html
-python3 build_duel_key.py # the same answers -> the server-side key in supabase_duel.sql
-```
-
-`clean_csv.py` undoes what the scan did to the text: glyph lookalikes (`©`→C, `£`/`€`/`3`→E),
-options merged into one cell because their letter marker was lost, hyphens inside words. What it
-cannot repair it refuses to guess at — 20 items are dropped by number with the reason written
-next to them, including three CompTIA Security+ questions the source had mixed in.
-
-`qsrc/answers.py` is the answer key: `V` maps item number to answer letters, `NOTES` says why an
-entry differs from the file or why a close call went the way it did. Every one of the 1,201
-questions was read against its options. 863 arrived with an answer in the CSV and **64 of those
-were wrong** — those carry a note starting "Changed from the file's …". The other 338 had no
-answer in the source at all.
-
-The bank is index-keyed, so `index.html` carries a `BANKV` stamp; when it changes the page clears
-`seen`, `wrong`, `marks` and the spaced-repetition schedule, and keeps XP, coins, badges and the
-readiness history.
-
-**Deploy the page and the SQL together.** The duel picks question ids server-side, so pushing a
-new bank without re-running `supabase_duel.sql` leaves duels handing out ids that no longer exist.
-
-## Why each answer, and the splitter that builds it
-
-`q.w` is the written explanation the CSV carries for 1,177 of the questions. It is one
-paragraph covering every option, so `whyByOption()` pulls it apart and files each clause
-against the option it is about; `optionLine()` then decides what an option is actually shown,
-and both the panel and `audit9.js` call it, so the audit measures what is read rather than an
-intermediate.
-
-`audit9.js` measured the first version and the paragraph-splitting showed up as three numbers:
-**1,922 option lines (40%) opened by discussing a different option**, 1,241 (26%) were a copy of
-another option's line, and **451 of 1,177 correct answers were shown less than a sentence**. All
-three were the same mistake — attributing whole sentences to options when these write-ups pack
-two or three options into one.
-
-Four bugs underneath that were each producing wrong attributions across the whole bank:
-
-- **The letter match was case-insensitive**, so the article in "C and D use a single AZ" matched
-  option A. Every sentence in the bank containing the word "a" was filed under A.
-- **A capitalised article at the start of a sentence.** "A gp3 volume tops out at 16,000 IOPS" is
-  not option A, but "A adds a queue for no benefit" is. The word after the letter decides: a
-  third-person verb or a modal means the option, a modifier means the article.
-- **"the R&D account" matched option D.** The lead-in is now restricted to whitespace or an
-  opening bracket, which also rules out "A/B" and "gp3-D".
-- **The keyword pass stole the answer's own evidence.** "io2 supports up to 64,000 IOPS" was
-  diverted to a distractor sharing a keyword, leaving the correct option with a fragment.
-
-Separators are tried **strongest first** — dash, then semicolon, then comma — and each accepted
-piece is offered the weaker ones. Offering them all at once meant one bad comma candidate vetoed
-a good dash split, which is how q226 (the one in the complaint) had the case for its answer filed
-under D. A split is refused if a piece is too short to be a clause ("B, C, and D all still involve
-keys" is one clause with three subjects), if it strands a continuation ("so the R&D account must
-leave it first", "which is why A and B are wrong"), or if it would leave unbalanced brackets
-("ALB and NLB (C, D)" must not be cut at that comma).
-
-Where a verdict genuinely covers two options, `leadFirst()` puts the option being read at the
-front of the letter list — D is shown "D and B require Lambda to poll the logs" — so the line
-reads as being about the option it sits under. It keeps the list's own punctuation, so "(A, D)"
-becomes "(D, A)" and not "(D and A)".
-
-`whyQualityChecks()` in `qa_bank.js` holds all of this as standing assertions, including
-bank-wide thresholds. **Verify the thresholds can fail before trusting a zero** — replacing
-`whyByOption` with one that hands every option the whole write-up takes misled from 14 to 555 and
-duplicates from 371 to 1,399, which is what makes the passing numbers mean anything.
-
-The OCR repair is in `fix_ocr.py` and `fix_ocr2.py`. In these option texts a sentence never begins
-with a lowercase word, so a period followed by one is always damage ("the put. item method",
-"prevent tag. modification"). The exception that the general rule would wreck is a domain:
-"events. amazonaws. com" was split at every dot, and there the period is real and the space is the
-damage — domains are reassembled first. `BANKV` is a written constant and not a hash of the bank,
-so repairing the text does not reset anyone's progress.
-
-## How the Learn mode works
-
-For each subject: read a part → answer 4 questions written for that part → below 75% the part is
-read again with the missed points listed, above it the next part opens → after the last part, the
-full written summary of the subject → then a ten-question exam built only from those parts, every
-question explained option by option. Everything is timed: a per-part clock against a target, a
-total subject clock, and a 15-minute countdown on the exam.
-
-## Changing the content
-
-Authoring lives in `learn_src/s??_*.py`, one file per subject, each exporting `SUBJECT`.
-
-```bash
-python3 build_learn.py      # validates every subject, then injects it into index.html
-```
-
-The build **refuses** to write anything that would reach a learner broken:
-
-- a question with no correct answer, duplicate options, or every option marked correct
-- a check question whose key terms never appear in the part it claims to test
-- an exam question not tagged to a part of that subject, or a part the exam never touches
-- a part with no table, flow, split or decision tree, or with no key/trap callout
-- a recap with fewer than two tables, a body under 900 characters, unbalanced `**`, placeholder text
-- answers clustering on one option position — it cycles them deterministically at build time
-
-Block types available to an author: `h p list steps table flow split key trap note code dtree`.
-
-## Changing the engine
-
-The Learn mode's source is kept outside the big file and stitched in:
-
-```bash
-python3 inject_learn.py     # learn_styles.css + learn_screens.html + learn_engine.js -> index.html
-```
-
-It also checks that every `$('id')` the engine touches exists in the markup.
-The CSS is injected last in the stylesheet on purpose — source order decides ties.
-
-## Testing — use it, do not eyeball
-
-```bash
-./sql_tests/run.sh          # docker Postgres, installs all SQL, plays the games, 39 assertions
-python3 -m http.server 8765 # then http://localhost:8765/index.html?test=1
-```
-
-In the browser, with the page visible:
-
-```js
-eval(await (await fetch('/qa_learn.js')).text());
-await QA_LEARN();     // walks every subject: read, answer, fail, re-read, pass, summary, exam, result
-QA_TAPS();            // every control is what a finger would actually land on
-
-eval(await (await fetch('/qa_bank.js')).text());
-await QA_BANK();      // the bank, the 19 papers, a full 65-question exam, the CSV, every other mode
-await QA_UI();        // all 32 screens: sideways scroll, clipped text, tap size, covered back buttons
-```
-
-`QA_BANK` last ran at 20,429 assertions, all passing — it answers a whole paper through the real
-option buttons, flags as it goes, lets one exam run out of time, abandons another, and checks the
-practice controls come back afterwards. `QA_UI` reports nothing at 375px and at 1024px.
-
-`QA_LEARN` drives the real screens by clicking real elements — 11,536 assertions across the 23
-subjects at the last full run, all passing. It includes a deliberate failure run to prove the
-gate holds, and a partial run to prove scoring is not always 100%.
-
-`QA_INTEG()` is the cross-feature pass. The blocks above each test one change on its own;
-this one walks where the last four meet — running out of time silences the voice, a takeover
-silences it too and clears the Hebrew panel behind it, taking a paper back restores the
-seconds that question had left rather than a fresh 90, and a paper that was flagged, timed
-out and taken over still exports. 37 assertions.
-
-**Syntax-check a harness file before loading it.** A duplicate `const` inside one function
-stopped the whole of `qa_bank.js` defining anything, and a `<script src>` fails silently — it
-looked exactly like the new suite not existing. Fetch the text and `new Function(txt)` first;
-it names the line.
-
-`QA_BANK` stubs `window.speechSynthesis` to prove the read-aloud wiring — that the reading is
-the position and the stem and nothing else, that the button toggles Read/Stop and resets on
-`onend`, that moving on cancels it and never starts one, that practice never speaks. It cannot
-prove audible output, and the preview browser has no voices installed, so the sound itself has
-only been verified by reading the code path. Try it on a real phone.
-Careful when faking a voice by hand: assigning a plain object to `utterance.voice` throws, the
-`catch` in `ttsSpeak` swallows it, and it looks exactly like the button being broken. Give the
-fake a non-`en` lang so the app leaves `voice` alone. Batch it with
-`QA_LEARN({secs:[0,1,2], extra:false})` to stay under the tool timeout.
-
-Three SQL bugs reached the user before `sql_tests` existed, including one that could pay a duel
-pot twice. Anything touching `supabase_*.sql` should run it first.
 
 ## The build stamp, and cached pages
 
@@ -612,7 +521,7 @@ syncs through the profile copy only, which the Redo screen says. `cloudForTest()
 surface lets the harness plug in a fake client.
 
 Every submit calls `histWrite()`, keeping the exam in `P.examHist[hid]` (hid = the run id; 30
-most recent): paper, date, every answer, flags, SAA score, right/total. Finishing later carries
+most recent): paper, date, every answer, flags, Ship It score, right/total. Finishing later carries
 the hid and updates the same entry. The Exam screen lists them (`renderHist`); **Redo**
 (`histOpen`) starts `sim.mode==='redo'`: no clock anywhere (simQStart/Sync/Tick, simCheckTime,
 the strip and the top clock all check `isRedo()`), answers editable (`simTeaches()` is false, so
@@ -729,7 +638,7 @@ Redo page → 🎯 card → `mistakeScreen` → a timed exam of every question y
   in Redo re-date all its answers. Entries from before `aat` fall back to `d0`, never `at`.
   Sources are counted by entry (`hid`), named "Exam 3 (2026-09-23)" — by label, three mocks were
   "1 exam".
-- **The plan screen**: questions · exams · minutes · subjects; mistakes by SAA domain (`qDom`);
+- **The plan screen**: questions · exams · minutes · subjects; mistakes by topic area (`qDom`);
   subject areas most-first with overall accuracy and a Study button (`STU_SECS` → `stuOpen`);
   CSV of the questions. Resume, when one is under way, comes first.
 - **The exam**: all of them, shuffled, `SIM_QSEC` each (`simBudget(n)`), any n — the strip,
@@ -745,33 +654,6 @@ Redo page → 🎯 card → `mistakeScreen` → a timed exam of every question y
 
 Reviewed by a four-lens workflow plus an adversarial verifier: 19 findings, 16 confirmed (7
 distinct), all fixed; `mistakesChecks` (47) and `mistakesReviewChecks` (32) replay them.
-
-## The SAA-C03 score
-
-From the official exam guide: a scaled score of 100–1,000, 720 to pass; four domains weighted
-30 / 26 / 24 / 20 % of scored content (Secure, Resilient, High-Performing, Cost-Optimized);
-compensatory (only the overall must pass); blanks scored wrong; the raw-to-scaled conversion is
-not published.
-
-- **A question's exam domain is what it asks** (`examDomainOf`, cached in `qDom(qi)`): its
-  requirement line — "MOST cost-effectively", "MOST secure", "highly available" — weighted 3x,
-  the whole stem 1x, the service-based `domainOf(q.s)` breaking ties and filling in when the
-  question states nothing. The service labels read 11/31/55/3; these read 27/16/41/15. The rest
-  of the skew is the bank's own. `domainOf(sec)` is still what readiness and the study views use.
-- **`saaScore(pairs)`** weights each domain's accuracy by the exam's mix, not the paper's. A
-  domain with few questions on a paper is blended with the overall accuracy (`SAA_SHRINK` = 6
-  questions' worth), so two Cost questions move the score by ~60 — about what 2 of 50 scored
-  questions are worth on the real exam — instead of ~200.
-- **`saaScaled(f)`** anchors 0% -> 100, 72% -> 720, 100% -> 1000. It is an estimate, kept at
-  the app's existing 72% line (the stricter of the two common readings).
-- The result headline is the scaled score; the meta line keeps the raw count and the weighted
-  %. `P.papers[n].best` and simLog `p` now hold the weighted %, simLog `sc` the scaled score;
-  entries from before carry only a raw `p` and are shown as a percentage.
-- **"Score so far"** (`renderSimLive`) shows on teaching papers and in practice only. On an
-  exam-conditions paper it would say whether each answer was right, so it waits for Submit.
-
-`saaChecks()` holds the scale anchors, the classification of each kind of requirement line, the
-weighting against a skewed paper, the small-domain blend, and where the live score shows.
 
 ## One clock — and finishing a paper later
 
@@ -1043,110 +925,6 @@ re-runnable). `suite.sql` now starts outside roulette's closing window: `now()` 
 whole `do` block, and a run that began in the last 3 s of a round failed "a roulette bet is
 accepted" at random.
 
-## Older content pipeline
-
-`AWS-SAA-C03-Combined.md` still feeds the reference material shown inside the Learn mode's final
-summary (the two collapsible sections at the bottom of it).
-
-```bash
-python3 build_course_data.py      # subject briefings and explanation data
-python3 build_subject_content.py  # blueprint, trade-offs, traps, limits
-python3 hebrew_glossary.py        # ...then put #explaindata back into Hebrew
-python3 hebrew_blueprint.py       # ...and the Learn service cards with it
-```
-
-**Those last two are not optional.** Both generators write English, and the service
-explanations are meant to be Hebrew. Run them or the panel reverts silently — `QA_BANK()`
-will fail with the name of the first term that slipped back.
-
-## The briefing says how to choose, not just what things are
-
-"Before you answer" listed the services in play with their Hebrew definitions and a note on the
-exam's phrasing — all vocabulary, nothing about how to pick between them, which is the skill the
-question tests. Two sections added, both from material already in the page:
-
-- **How to choose in this area** — the sector's decision rules, from `exFallback(sec)`. Every
-  one of the 23 sectors has them.
-- **What people get wrong here** — the traps in `#subjectdata`, already phrased as mistakes.
-  18 of 23 sectors have them.
-
-Neither names the correct option: they describe the family of questions, which is what makes
-them safe in a panel shown *before* answering. Measured over the ten briefed papers, the
-briefing is now median 1,286 characters, minimum 728 (a sector with no recorded traps), maximum
-1,798 — the assertion floor is set from that measurement rather than guessed.
-
-Both also go into the briefed-drill panel, which shares `buildBriefing()`.
-
-## Every option says why it stands or falls
-
-The panel used to explain the right answer by naming the services in it, and the wrong ones
-only when they happened to name a service the right answer did not — so most distractors got
-nothing. Now every option gets a row, marked ✓ or ✗, with the reasoning for that specific
-option.
-
-The text comes from the `explanation` column of `aws_saa_questions_explained_FIXED_FINAL.csv`,
-attached to each question as `q.w` by `attach_why.py`. 1,177 of 1,201 carry one; the other 24
-are where the CSV disagrees with this bank's recorded answer (22) or matched nothing
-confidently (2). **An explanation arguing for C under a question this app marks D is worse than
-no explanation**, so those keep the sections they had.
-
-**Each option is a block, not a line.** "More than a few sentences" — so an option now shows
-its full text (no truncation), the sentence saying why it stands or falls, and the Hebrew
-definition of every service it names, printed against the first option that names it so nothing
-repeats down the list. Below them, the sector's **decision rules** from the course recap, which
-were only ever shown as a fallback when nothing else matched and are the most transferable thing
-on the page. The panel went from roughly 700 characters to about 2,800.
-
-The two standalone Hebrew blocks are gone — their content is what now sits under each option.
-They still render when a question has no written explanation to hang them from.
-
-`whyByOption()` splits the write-up and puts each sentence against the option it names —
-"B and D require Lambda to poll the logs" lands on both B and D. Sentences naming **no** option
-are the case for the right answer (these write-ups open by saying why the winner wins, then name
-the losers), so they go there rather than into a leftover block. One naming *every* option is
-too general to pin on one and goes to the right answer too. Result: 83% of options across the
-bank get their own line, 52% of questions have every option covered; the rest fall back to an
-honest "the write-up does not single this one out".
-
-**BANKV is not bumped** — it hashes stem, options, answer and sector, none of which changed, so
-adding prose does not invalidate anybody's progress. The page went from 3.11 MB to 3.62 MB.
-
-**Watch the direction.** These rows live inside `.exwhy`, which is RTL for the Hebrew glossary,
-and inherit it — the option text, then the decision rules, each rendered right-aligned with
-their full stops on the wrong side until given `direction:ltr` explicitly. Any English block
-added under `.exwhy` needs the same, and the Hebrew service lines nested inside an option need
-it put back. The assertions look at `.svcline>span` for the Hebrew and at the option's own `<b>`
-for the English: an option's outer span holds both, so testing it finds Hebrew in its
-descendants and LTR on the element itself.
-
-## The service explanations are Hebrew
-
-The same AWS services are defined in three places, and all three now answer in Hebrew:
-
-| where | how many | translated by |
-| --- | --- | --- |
-| `CODEX` in the page — the briefing and the flashcards | 90 | `hebrew_codex.py` |
-| `#explaindata.glossary` — "למה זו התשובה" in the explanation panel | 154 | `hebrew_glossary.py` |
-| `#subjectdata` blueprint + trade-offs — the Learn service cards | 163 + 84 | `hebrew_blueprint.py` |
-
-`hebrew_blueprint.py` imports its wording straight from `hebrew_glossary.py`, so the two never
-drift; every service the blueprint names is in that glossary and every wording matched, which is
-why one dictionary can drive both.
-
-Things deliberately left in English:
-
-- **The term names** (`t`). `exFind()` matches them against the literal text of the options —
-  translate a key and it simply stops matching.
-- **The 216 `cues`.** A cue quotes the exam's own phrasing ("if a question says …"); the point is
-  to recognise those words on the real paper.
-- **The `q.x` verified-answer notes** under "Why". Those are per-question reasoning, not service
-  definitions, and they are still English — so the label above them stays English too.
-
-Hebrew and Latin on one line need `direction:rtl; unicode-bidi:isolate` on the Hebrew and
-`direction:ltr; unicode-bidi:isolate` on the service name inside it, or a term like
-`` `maxReceiveCount` `` loses its backticks to the far end of the line. The English fallback
-("Decision rules for this sector", pulled from the course recap) opts out with `.exitem.ltr`.
-
 ## The bug hunt — what was found and fixed
 
 `python3 audit_static.py`, and in the browser `AUDIT2()` and `AUDIT3()` (load `audit2.js`
@@ -1277,35 +1055,3 @@ Eight review-then-fix rounds, each committed separately so any one can be revert
 
 **Test-profile hygiene:** the fuzz in `xssChecks()` restores and flushes the profile when done.
 Manual fuzzing without that polluted the preview browser's stored profile for several runs.
-
-## Known gaps / next up
-
-- `supabase_duel.sql` must be re-run in the SQL editor whenever the bank changes; the page alone
-  is not enough (see above).
-- **Multiplayer blackjack tables** — asked for, not built. Seats, turn order, a timer for an
-  idle player, dealer acting after everyone. The largest remaining piece.
-- Hard limits are authored for 11 of 23 subjects in `subject_content.json`; the rest render
-  "not yet authored" in the reference section rather than inventing AWS facts.
-- Study coins are still written by the browser. Chips are server-owned; the coins→chips
-  buy-in is capped at 1,000/day precisely because the server cannot verify study coins.
-
-## Things worth not relearning
-
-- `.screen` has `z-index:10` and forms a stacking context, so a `.backbtn` inside it can never
-  rise above `#topbar`. The bar passes clicks through its empty areas; do not undo that.
-- A `<div>` left unclosed inside a `<button>` silently reparents everything after it — that is
-  how the coins vanished from the top bar once.
-- A local `const` named the same as a global function shadows it for the whole function body,
-  including lines above the declaration. `const go = $('lrnMapGo')` broke `go('learnMapScreen')`.
-- Programmatic `.click()` sails through dead buttons. Hit-test with `document.elementFromPoint`
-  after `scrollIntoView`, which is what `QA_TAPS` does.
-- Supabase renamed the keys: **Publishable** (`sb_publishable_`) is the old anon key.
-- Generated blobs are the same trap as the `LEARN:`/`STUDY:` markers: anything hand-edited into
-  `#explaindata` or `#subjectdata` is gone the next time its generator runs. Put the edit in a
-  script that runs after the generator, and add a QA assertion that fails when it has not.
-- `direction:rtl` on a shared selector will quietly mangle any English still rendering through it
-  — trailing full stops jump to the left. Check what else uses the selector before adding it.
-- Driving the app with `submitAnswer()` or `qConfirm.click()` runs the **practice** path even
-  during an exam, because `.click()` fires on a hidden button. It looks exactly like the exam
-  falling apart mid-run. Tap a real `.opt` instead; on a teaching paper that is what settles the
-  question.

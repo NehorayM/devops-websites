@@ -225,7 +225,9 @@ async function examContract(){
   if(seen.size!==t.QS.length) add('HIGH','exam','the papers do not cover the bank: '+seen.size+' of '+t.QS.length);
   // the timer
   t.startPaper(6); await sleep(15);
-  if(Math.abs(t.simTimeLeft()-t.PAPER_MIN*60000)>3000) add('HIGH','exam','a paper does not start at '+t.PAPER_MIN+' minutes');
+  // PAPER_MIN is the label, rounded up; the clock is the per-question limit times the questions
+  const want=t.paperQs(6).length*t.SIM_QSEC*1000;
+  if(Math.abs(t.simTimeLeft()-want)>3000) add('HIGH','exam','a paper does not start at '+(want/60000)+' minutes');
   // a multi-answer question must not accept more than it needs
   const multi=t.sim.qs.findIndex(qi=>t.QS[qi].a.length>1);
   if(multi>=0){

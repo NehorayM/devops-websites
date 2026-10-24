@@ -59,7 +59,7 @@ async function shortPaper(){
   t.simClearSave();
   t.startPaper(t.PAPER_COUNT); await sleep(40);
   const n=t.simLen();
-  if(n>=65) F('LOW','paper','the last paper is not short ('+n+')');
+  if(n>=65&&t.QS.length%t.PAPER_LEN) F('LOW','paper','the last paper is not short ('+n+')');
   if(t.simTotalLeft()!==n*t.SIM_QSEC)
     F('HIGH','clock','the short paper is budgeted wrong',t.simTotalLeft()+' vs '+n*t.SIM_QSEC);
   // run it to the end by timing out every question
