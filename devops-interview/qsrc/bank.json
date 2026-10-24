@@ -167,8 +167,8 @@
 ],
 "y": [
 "השגיאה על kind, לא על namespace.",
-"נתמך.",
-"לא קשור.",
+"Helm מתקין Ingress כמו כל משאב אחר. הבעיה היא ש-`extensions/v1beta1` הוסר מ-Kubernetes ב-1.22, וצריך `networking.k8s.io/v1`.",
+"אורך שם ה-release לא קשור. השגיאה אומרת שה-cluster לא מכיר את גרסת ה-API שה-chart משתמש בה.",
 "Ingress עבר ל-`networking.k8s.io/v1`. lint לא בודק מול ה-cluster. משתמשים ב-`.Capabilities.APIVersions` או מעדכנים."
 ],
 "x": "kubeconform עם גרסת ה-cluster ב-CI תופס את זה לפני deploy.",
@@ -236,10 +236,10 @@
 "B"
 ],
 "y": [
-"לא חובה.",
+"`NOTES.txt` לא חובה לפרסום. זו template שמודפסת אחרי install או upgrade, למשל הוראות גישה לאפליקציה.",
 "מרונדר כמו תבנית, ומוצג למשתמש. נוח להוראות גישה.",
 "maintainers ב-Chart.yaml.",
-"לא."
+"היסטוריית ה-releases נשמרת ב-Secrets ב-namespace. `NOTES.txt` רק מודפס למשתמש אחרי ההתקנה."
 ],
 "x": "`helm status` מציג שוב את ה-notes.",
 "lv": 0,
@@ -517,9 +517,9 @@
 ],
 "y": [
 "פקודה אחת שמתאימה ל-CI, בלי לבדוק אם ה-release קיים.",
-"לא.",
-"לא.",
-"לא."
+"`upgrade --install` פועל על release אחד. הוא לא משדרג את כל ה-charts ב-repo.",
+"`upgrade --install` לא מתקין את Helm. הוא מתקין release אם הוא לא קיים, ואחרת משדרג אותו.",
+"`upgrade --install` לא יוצר עותק שני. אם ה-release קיים הוא משודרג; אם לא, הוא נוצר."
 ],
 "x": "מוסיפים `--create-namespace` אם ה-namespace עשוי לא להיות קיים.",
 "lv": 0,
@@ -657,8 +657,8 @@
 ],
 "y": [
 "תמונה מהירה של ה-release. לפרטים: `helm get`.",
-"לא.",
-"לא.",
+"`helm status` מציג מידע על release אחד, לא על ה-cluster. בריאות ה-cluster בודקים עם kubectl.",
+"`helm status` לא מציג CPU. צריכת משאבים בודקים עם `kubectl top` או monitoring.",
 "זה show values."
 ],
 "x": "status `pending-upgrade` או `failed` מסביר הרבה תקלות.",
@@ -866,7 +866,7 @@
 "D"
 ],
 "y": [
-"לא.",
+"`include` עובד עם כל named template, לא רק ב-`charts/`. ההבדל הוא שהוא מחזיר מחרוזת שאפשר להעביר ב-pipe ל-`nindent`.",
 "יש הבדל בשימוש.",
 "החיסרון של template הוא שאי אפשר לעבד את הפלט.",
 "`template` כותב ישירות לפלט ואי אפשר להעביר אותו בפייפ. לכן `include` הוא הבחירה הנפוצה."
@@ -2058,7 +2058,7 @@
 "y": [
 "PVC שנשאר (resource-policy keep או volumeClaimTemplates) חוסם. מחליטים לפי הנתונים: למחוק או לאמץ.",
 "אין release לחזור אליו.",
-"לא קשור.",
+"ה-kubelet לא קשור לבעיה. PVC יכול לשרוד uninstall (למשל מ-volumeClaimTemplates של StatefulSet, או עם `resource-policy: keep`), וצריך להחליט מה לעשות בו.",
 "לא פותר את השורש."
 ],
 "x": "תמיד לבדוק מה בתוך PVC לפני מחיקה. נתונים לא חוזרים.",
@@ -2512,7 +2512,7 @@
 ],
 "y": [
 "lint בודק chart, לא runtime.",
-"לא עוזר.",
+"מחיקת ההיסטוריה לא תתקן את האפליקציה ותמנע rollback. `deployed` אומר רק שה-manifests הוחלו, ובודקים את הפודים.",
 "בלי לדעת מה הבעיה.",
 "deployed אומר שה-manifests הוחלו. Helm לא מחכה לבריאות בלי `--wait`. בודקים את הפודים."
 ],
@@ -2616,10 +2616,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"ההיסטוריה תקינה. rollback תמיד יוצר revision חדש, ולכן 5 מופיע כ-deployed עם התוכן של 2.",
 "ההיסטוריה מתקדמת תמיד. revision 5 הוא העתק של 2.",
 "לא, זו ההתנהגות הצפויה.",
-"הן נשמרות."
+"rollback לא מוחק revisions 3 ו-4. הם נשארים בהיסטוריה, ו-5 נוסף עם התוכן של 2."
 ],
 "x": "ב-description של ה-revision רואים 'Rollback to 2'.",
 "lv": 0,
@@ -2688,8 +2688,8 @@
 "y": [
 "אפשר, אבל אז מחיקת release מוחקת אותם ואת כל ה-CRs.",
 "Helm מתקין CRDs מ-crds/ רק בהתקנה ראשונה. עדכונים צריך לנהל בנפרד.",
-"אפשר.",
-"לא."
+"אפשר לצרף CRDs ל-chart בתיקיית `crds/`. החיסרון הוא ש-Helm לא משדרג ולא מוחק אותם.",
+"CRDs הם manifests מלאים ולא values. הם נכנסים לתיקיית `crds/`, ו-Helm מתקין אותם לפני שאר המשאבים."
 ],
 "x": "הרבה פרויקטים מפרסמים CRDs כ-chart נפרד, בדיוק בגלל המגבלה הזו.",
 "lv": 0,
@@ -3142,8 +3142,8 @@
 ],
 "y": [
 "הערה היא `{{/* */}}`.",
-"זה `required`.",
-"לא.",
+"ערך חובה מסמנים עם הפונקציה `required`. המקף ב-`{{-` רק חותך whitespace.",
+"המקף לא הופך מספר לשלילי. הוא חלק מהתחביר של Go templates וחותך רווחים ושורות חדשות משמאל לביטוי.",
 "`{{-` מוחק רווחים לפני, ו-`-}}` מוחק אחרי. בלי זה נשארות שורות ריקות או הזחה שגויה."
 ],
 "x": "טעות נפוצה: `{{-` במקום הלא נכון מוחק שורה חדשה ומדביק שני מפתחות יחד.",
@@ -3669,7 +3669,7 @@
 "זה `helm search repo`.",
 "דרך מהירה לראות מה אפשר להגדיר לפני התקנה.",
 "זה `helm get values`.",
-"לא."
+"`helm show values` לא בודק קובץ values. הוא מדפיס את ה-`values.yaml` המקורי של ה-chart; בדיקה עושים עם schema או `helm lint`."
 ],
 "x": "`helm show values bitnami/postgresql > my-values.yaml` כנקודת התחלה.",
 "lv": 0,
@@ -4474,7 +4474,7 @@
 "גורם ל-downtime מלא.",
 "הפודים יחזרו עם אותה גרסה שבורה.",
 "מחזיר את ה-manifests הקודמים מיד. אחר כך חוקרים בשקט.",
-"לא קשור."
+"`helm repo update` רק מרענן את ה-index המקומי של ה-repos. הוא לא נוגע ב-release."
 ],
 "x": "אם ב-GitOps, revert ב-Git, אחרת ה-controller יחזיר את הגרסה השבורה.",
 "lv": 0,
@@ -4541,7 +4541,7 @@
 "D"
 ],
 "y": [
-"מצב release.",
+"`helm status` מציג את המצב של release מותקן ולא בודק את ה-chart. בדיקת מבנה ותבניות עושים עם `helm lint`.",
 "משתני סביבה של Helm.",
 "verify בודק חתימה של chart ארוז.",
 "בודק Chart.yaml, rendering ו-best practices בסיסיים."
@@ -5661,9 +5661,9 @@
 "D"
 ],
 "y": [
-"ישן ולא מספיק.",
-"מותרים.",
-"לא.",
+"`app` לבדו הוא מוסכמה ישנה ולא מספיקה. `app.kubernetes.io/*` מוסיפים שם, instance, גרסה ו-managed-by באופן אחיד.",
+"labels מותרים ומומלצים ב-charts. המוסכמה היא להשתמש ב-`app.kubernetes.io/*` דרך helper אחד.",
+"אין דרישה לכלול מייל ב-labels, וזה גם מידע אישי. ה-labels המומלצים מתארים את האפליקציה וה-release.",
 "name, instance, version, component, part-of ו-managed-by. כלים (Argo CD, dashboards) מבינים אותם."
 ],
 "x": "`app.kubernetes.io/managed-by: Helm` הוא גם מה ש-Helm בודק באימוץ משאבים.",
@@ -6397,9 +6397,9 @@
 ],
 "y": [
 "אם ה-env נלקח מ-ConfigMap, שינוי בו לא מאתחל פודים בלי checksum annotation.",
-"לא קשור.",
+"DNS לא משפיע על ערכים של משתני סביבה. בודקים מאיפה הערך מגיע, ואם ה-ConfigMap עודכן לפני שהפודים עלו.",
 "לא קשור לערך env.",
-"תומך."
+"Helm תומך במשתני סביבה ב-templates. הבעיה היא שהערך מגיע מ-ConfigMap, ושינוי בו לא תמיד מגיע לפודים."
 ],
 "x": "`helm get manifest` מראה מה הוחל. `kubectl exec ... env` מראה מה הפוד רואה.",
 "lv": 0,
@@ -6431,9 +6431,9 @@
 "D"
 ],
 "y": [
-"לא פותר.",
+"מעבר ל-JSON לא משנה את הטיפוס שה-template מוציא. הבעיה היא ה-quote סביב שדה מספרי.",
 "quote על מספרים יוצר מחרוזת, וה-API ידחה.",
-"לא מעשי.",
+"values בלי מספרים לא מעשי, כי replicas, ports ו-limits הם מספרים. מספיק להשתמש ב-`int` או בלי `quote`.",
 "`{{ .Values.replicaCount | int }}` מבטיח מספר. quote מתאים רק לשדות שהם מחרוזת."
 ],
 "x": "values.schema.json עם `type: integer` תופס את זה עוד בהתקנה.",
@@ -6677,9 +6677,9 @@
 ],
 "y": [
 "מאפשר לקרוא את התבניות לפני התקנה, או לשמור עותק ב-repo שלך.",
-"לא מתקין.",
-"לא.",
-"לא."
+"`helm pull` לא מתקין. הוא רק מוריד את ה-chart ופורס אותו לתיקייה מקומית.",
+"`helm pull` מוריד chart מ-repo, לא מה-cluster. היסטוריית release רואים עם `helm history`.",
+"`helm pull` מוריד את ה-chart בלבד. images של קונטיינרים נמשכים על ידי ה-nodes בזמן ריצה."
 ],
 "x": "vendoring של charts חיצוניים מגן מפני מקור שנעלם או משתנה.",
 "lv": 0,
@@ -6816,9 +6816,9 @@
 "B"
 ],
 "y": [
-"אפשר.",
+"אפשר לדרוס values גם ב-chart ארוז, וזו בדיוק המטרה של `-f` ו-`--set`. ה-`values.yaml` של ה-chart הוא רק ברירת המחדל.",
 "סדר: values.yaml של ה-chart, אחר כך קבצים לפי הסדר, ואחר כך --set. האחרון גובר.",
-"האחרון גובר.",
+"ההפך: כשמעבירים כמה `-f`, הקובץ האחרון ברשימה גובר על הקודמים.",
 "זה הבסיס, והכי חלש."
 ],
 "x": "ב-CI עדיף קבצי values לכל סביבה על פני הרבה `--set`. קריא יותר ונשמר ב-Git.",
@@ -6956,9 +6956,9 @@
 "D"
 ],
 "y": [
-"ההפך.",
-"לא.",
-"לא.",
+"ההפך: Helm שומר releases ב-cluster, ו-Kustomize לא שומר שום state.",
+"Helm עובד בלי Argo CD, ישירות מול ה-cluster. Argo CD רק משתמש בו לרינדור.",
+"הם כלים שונים: Helm עובד עם templates ו-packages, ו-Kustomize עם patches על YAML רגיל.",
 "Helm: תבניות, values, releases ו-hooks. Kustomize: overlays על YAML רגיל, בלי templating."
 ],
 "x": "הרבה צוותים משלבים: Helm ל-charts חיצוניים, Kustomize ל-patches של סביבה.",
@@ -7166,10 +7166,10 @@
 "B"
 ],
 "y": [
-"אין מושג כזה.",
+"ל-namespace אין מושג של 'מלא'. השגיאה אומרת ששם ה-release כבר תפוס, גם אם ה-release הקודם נכשל.",
 "install לא דורס release קיים. משתמשים ב-`helm upgrade --install`, או בשם אחר.",
-"לא.",
-"לא קשור."
+"השגיאה לא קשורה ל-kinds של Kubernetes. היא אומרת שכבר קיים release בשם הזה ב-namespace.",
+"גרסה קודמת של Helm לא קשורה. השגיאה אומרת שקיים release בשם הזה, ואפשר לראות אותו עם `helm list -a`."
 ],
 "x": "גם release שנכשל נשאר ברשימה (failed). `helm list -a` מראה את כולם.",
 "lv": 0,
@@ -7272,9 +7272,9 @@
 ],
 "y": [
 "אם אין פודים, הבעיה לפני ה-scheduler: quota, PSA או webhook שדוחה. events של ה-ReplicaSet מראים.",
-"לא קשור.",
+"ה-repo index רלוונטי רק להורדת ה-chart, וזה כבר הצליח. הבעיה היא שה-ReplicaSet לא יכול ליצור פודים.",
 "Helm יוצר Deployment, ה-controller יוצר פודים.",
-"לא קשור."
+"`NOTES.txt` לא חובה ולא משפיע על יצירת פודים. בודקים את ה-events של ה-ReplicaSet, למשל quota או SA חסר."
 ],
 "x": "`kubectl get events -n <ns> --sort-by=.lastTimestamp` מראה את הסיבה מהר.",
 "lv": 0,
@@ -7481,8 +7481,8 @@
 "C"
 ],
 "y": [
-"לא קשור.",
-"לא פותר מרוץ.",
+"`--create-namespace` רק יוצר namespace אם הוא לא קיים. הבעיה היא שההתקנה מתחילה לפני שהמחיקה הסתיימה.",
+"`--force` בהתקנה הבאה לא מחכה שהמחיקה הקודמת תסתיים. צריך `--wait` ב-uninstall.",
 "בלי wait, Helm מסיים כשבקשות המחיקה נשלחו. עם wait הוא מחכה שהמשאבים באמת נעלמו.",
 "אין משמעות כזו."
 ],
@@ -8638,7 +8638,7 @@
 "y": [
 "יש גם `.Release.Namespace`, `.Release.Revision` ו-`.Release.IsUpgrade`.",
 "זה ערך מ-values, אם הוגדר.",
-"אין שדה כזה.",
+"אין אובייקט `.Template.Release`. `.Template` מכיל רק את שם הקובץ וה-base path; שם ה-release נמצא ב-`.Release.Name`.",
 "זה שם ה-chart, לא ה-release."
 ],
 "x": "שם ה-release מאפשר להתקין את אותו chart כמה פעמים באותו namespace בלי התנגשויות.",
@@ -8672,8 +8672,8 @@
 ],
 "y": [
 "מונע הכנסה של קבצים מיותרים (tests, docs, `.git`) ל-.tgz.",
-"לא.",
-"לא.",
+"`.helmignore` לא משפיע על values. הוא קובע אילו קבצים לא ייכנסו ל-chart הארוז, בדומה ל-`.gitignore`.",
+"`.helmignore` לא מסתיר releases. הוא רק מוציא קבצים מה-package בזמן `helm package`.",
 "לא בדיוק. קבצים שמוחרגים לא נכנסים בכלל ל-chart."
 ],
 "x": "קבצים מוחרגים גם לא זמינים ל-`.Files.Get`.",
@@ -8847,9 +8847,9 @@
 ],
 "y": [
 "Helm לא נוגע בנתונים.",
-"לא.",
+"`helm rollback` לא קשור לגרסת ה-client. הוא מחזיר release ב-cluster ל-manifests של revision קודם.",
 "rollback יוצר revision חדש (למשל 6) עם התוכן של 3. ההיסטוריה נשמרת.",
-"לא מוחק."
+"rollback לא מוחק revisions. revisions 4 ומעלה נשארים בהיסטוריה, ו-rollback רק יוצר revision חדש עם התוכן של 3."
 ],
 "x": "rollback לא מחזיר מיגרציות של DB או PVCs. לכן schema changes צריכים להיות תואמים לאחור.",
 "lv": 0,
@@ -9198,7 +9198,7 @@
 "y": [
 "לא נוגע ב-cluster (בלי `--validate`). שימושי ל-review, ל-CI ול-GitOps (Argo CD עושה את זה).",
 "זה `helm upgrade`.",
-"לא.",
+"`helm template` לא מציג רשימת תבניות. הוא מרנדר את ה-chart ל-YAML מקומית, בלי לגשת ל-cluster ובלי להתקין.",
 "זה `helm create`."
 ],
 "x": "`helm template . | kubeconform` הוא שלב CI זול ויעיל.",
@@ -9337,9 +9337,9 @@
 ],
 "y": [
 "מגדירים שם, גרסה ו-repository. `helm dependency update` מוריד אותן ל-`charts/` ויוצר Chart.lock.",
-"לא.",
+"`--set` מעביר values ולא מגדיר תלויות. תלויות של chart מוגדרות ב-`Chart.yaml` ומורדות עם `helm dependency update`.",
 "מאבדים את הניהול של התלות.",
-"זה Python."
+"`requirements.txt` הוא קובץ תלויות של Python. ב-Helm 3 תלויות מוגדרות ב-`dependencies` שב-`Chart.yaml`."
 ],
 "x": "ב-Helm 2 זה היה requirements.yaml. ב-Helm 3 הכול ב-Chart.yaml.",
 "lv": 0,
@@ -9476,7 +9476,7 @@
 "C"
 ],
 "y": [
-"לא.",
+"uninstall מוחק את כל המשאבים של ה-release, לא רק Services. hooks לא נחשבים חלק מה-release ונשארים בלי delete policy.",
 "יכולים, עם delete policy.",
 "Helm לא מנהל hooks כמו משאבים רגילים. בלי hook-delete-policy, הם נשארים.",
 "TTL היה דווקא מוחק אותו."
@@ -9653,8 +9653,8 @@
 "y": [
 "רק שדות שה-chart מגדיר.",
 "שדות שה-chart לא מגדיר לא נדרסים. זה שונה מ-Helm 2.",
-"לא.",
-"לא קשור."
+"upgrade לא מוחק את ה-Deployment, הוא מעדכן אותו. השדות שה-chart לא מגדיר נשמרים ב-three-way merge.",
+"`--reuse-values` עוסק ב-values של Helm, לא בשינויים ידניים ב-cluster. השינוי נשמר כי ה-chart לא מנהל את השדה."
 ],
 "x": "הסכנה: drift שקט. GitOps עם self-heal פותר את זה, או policy שמונע kubectl edit.",
 "lv": 0,
@@ -10806,10 +10806,10 @@
 "C"
 ],
 "y": [
-"לא תחביר נכון.",
+"`helm get` מציג נתונים של revision (values, manifest, notes) ואין לו subcommand `history`. משתמשים ב-`helm history`.",
 "זה של Deployment, לא Helm.",
 "מציג revision, תאריך, status, chart ו-app version.",
-"אין דגל כזה."
+"ל-`helm list` אין דגל `--revisions`. הוא מציג רק את ה-revision האחרון; את כולם מציג `helm history`."
 ],
 "x": "status של כל revision (deployed, superseded, failed) עוזר לבחור לאן לחזור.",
 "lv": 0,
@@ -11226,10 +11226,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"`index.yaml` לא מפרט manifests של Kubernetes. הוא רשימה של charts, הגרסאות שלהם וה-URLs להורדה.",
+"releases מותקנים נשמרים ב-cluster, לא ב-repo. `index.yaml` מתאר מה זמין להורדה.",
 "`helm repo update` מוריד את ה-index. `helm repo index` יוצר אותו.",
-"לא."
+"ה-values של ה-chart נמצאים ב-`values.yaml` שלו. `index.yaml` הוא קטלוג של ה-repo: אילו charts וגרסאות יש בו."
 ],
 "x": "ב-OCI registries אין index.yaml. ה-registry עצמו מספק את המידע.",
 "lv": 0,
@@ -11576,7 +11576,7 @@
 "B"
 ],
 "y": [
-"יכול.",
+"Helm קורא values מקוננים, כמו `.Values.image.repository`. השגיאה אומרת שהמפתח `image` עצמו חסר, ולכן `.repository` על nil נכשל.",
 "גישה לשדה של מפתח חסר יוצרת nil pointer. מגדירים ברירת מחדל ב-values.yaml, או בודקים עם `with`.",
 "השגיאה בשלב התבנית, לא YAML.",
 "זו שגיאת rendering, לפני pull."
@@ -11716,10 +11716,10 @@
 "C"
 ],
 "y": [
-"לא.",
+"ערכי prod לא חייבים להגיע מ-`--set`. מספיק להעביר את `values-prod.yaml` אחרון, כדי שהוא יגבר.",
 "אפשר, וזה מיותר.",
 "סדר הקבצים קובע. קובץ הסביבה צריך להיות אחרון.",
-"קורא כמה."
+"Helm קורא כמה קבצי values ומאחד אותם. הבעיה היא הסדר: הקובץ האחרון גובר, ופה זה הקובץ הכללי."
 ],
 "x": "ה-values.yaml של ה-chart נטען אוטומטית. לא צריך להעביר אותו.",
 "lv": 0,
@@ -12031,10 +12031,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"events של Kubernetes רואים עם `kubectl get events`. `get manifest` מחזיר את ה-YAML שהוחל.",
 "האמת של מה שהוחל, אחרי rendering עם ה-values.",
 "לא. זה מה ש-Helm שלח, לא מה שקיים עכשיו.",
-"לא."
+"ה-templates הלא מרונדרים נמצאים ב-chart. `get manifest` מחזיר את ה-YAML המרונדר שהוחל ב-revision."
 ],
 "x": "השוואה בין manifest למצב החי חושפת drift.",
 "lv": 0,
@@ -12872,9 +12872,9 @@
 ],
 "y": [
 "עדיף להיכשל מוקדם עם 'database.host is required' מאשר לקבל YAML שבור או אפליקציה שנכשלת.",
-"לא.",
+"תלות חובה מוגדרת ב-Chart.yaml. `required` עוצר את הרינדור עם הודעה ברורה כש-value מסוים חסר.",
 "זה `kubeVersion` או בדיקה אחרת.",
-"לא."
+"`required` לא משנה את ה-schema של Kubernetes. הוא בודק ערך ב-values בזמן רינדור ונכשל אם הוא חסר."
 ],
 "x": "ב-values.schema.json אפשר `required` ברמת schema, מתאים לכמה שדות.",
 "lv": 0,
@@ -13397,7 +13397,7 @@
 ],
 "y": [
 "Helm שומר index מקומי. גרסאות חדשות לא נראות עד update.",
-"לא קשור.",
+"`index.yaml` הוא קטלוג של ה-repo ולא manifest של Kubernetes. צריך `helm repo update` כדי לרענן את העותק המקומי שלו.",
 "מוחק את ה-repo.",
 "יוצר chart חדש, לא מוריד."
 ],
@@ -13714,7 +13714,7 @@
 "יוצר chart ריק.",
 "זה מוחק repo, לא מוריד תלות.",
 "התלות מוגדרת, אבל לא הורדה. הפקודה מורידה את ה-chart ל-`charts/`.",
-"לא קשור."
+"`kubectl apply` על התיקייה לא מוריד את התלות ולא מרנדר תבניות. צריך `helm dependency update` שיוריד את ה-subchart."
 ],
 "x": "`build` משתמש ב-Chart.lock (גרסאות מקובעות). `update` מחשב מחדש. ב-CI עדיף build.",
 "lv": 0,
@@ -14551,9 +14551,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"לא.",
+"ל-chart אין מפתח הצפנה, ו-`quote` רק עוטף את הערך בגרשיים.",
+"`quote` לא עושה escape ל-HTML. הוא עוטף את הערך בגרשיים כפולים כך שה-YAML יפרש אותו כמחרוזת.",
+"`quote` לא מוסיף הערה. הוא עוטף את הערך בגרשיים, כדי ש-`true` או `1.10` לא יפורשו כ-boolean או מספר.",
 "חשוב לערכים כמו `\"yes\"`, `\"on\"` או `\"0123\"` ש-YAML היה מפרש אחרת."
 ],
 "x": "ב-YAML 1.1, `yes` הופך ל-true. quote מונע הפתעות בערכי env.",
@@ -14834,7 +14834,7 @@
 "השם הנכון הוא Chart.yaml.",
 "Helm מצפה לתיקייה עם Chart.yaml. `./chart` ולא `./chart/templates`.",
 "אפשר להתקין גם מתיקייה.",
-"לא השגיאה."
+"שם ה-release תקין; אם לא היה, השגיאה הייתה אחרת. Helm מחפש `Chart.yaml` בנתיב שקיבל, ו-`templates/` הוא לא שורש ה-chart."
 ],
 "x": "שאלה פשוטה, אבל כזו שקורית בלחץ של ראיון מעשי.",
 "lv": 0,
@@ -15217,9 +15217,9 @@
 ],
 "y": [
 "ה-API server או Helm בודקים מול schema. שדה עם typo או סוג שגוי נכשל כאן.",
-"זו שגיאה אחרת.",
+"שם תפוס נותן `cannot re-use a name`. השגיאה כאן היא ולידציה של manifest מול ה-schema.",
 "לא נותן שגיאת validation.",
-"לא."
+"גרסה חדשה של Helm לא גורמת לשגיאה הזו. היא אומרת שה-manifest המרונדר לא עומד ב-schema של ה-API."
 ],
 "x": "`helm template | kubeconform` ב-CI תופס את זה לפני deploy.",
 "lv": 0,
@@ -15566,8 +15566,8 @@
 "D"
 ],
 "y": [
-"לא פותר.",
-"מחמיר.",
+"הרצה פעמיים עם אותו `$TAG` ריק תיתן אותה תוצאה. צריך לבדוק את הקלט ב-CI ו-`required` ב-chart.",
+"כיבוי `--wait` יגרום ל-pipeline לדווח הצלחה גם כשה-image שבור. זה מסתיר את הבעיה.",
 "latest הוא anti-pattern.",
 "`required` בתבנית נכשל עם הודעה. גם בדיקה ב-pipeline (`test -n \"$TAG\"`) עוצרת לפני deploy."
 ],
@@ -15986,10 +15986,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"`condition` לא קובע סדר התקנה. Helm מתקין את הכול לפי סדר kinds, ו-`condition` רק מחליט אם ה-subchart נכלל.",
 "אם הערך false, ה-subchart לא מרונדר בכלל. כך משתמשים יכולים לבחור DB חיצוני.",
-"לא.",
-"לא."
+"גרסת ה-subchart נקבעת בשדה `version` של ה-dependency. `condition` רק מפעיל או מכבה אותו לפי value.",
+"`condition` לא מצפין values. הוא מצביע על value בוליאני (כמו `redis.enabled`) שקובע אם ה-subchart מותקן."
 ],
 "x": "דפוס נפוץ: `postgresql.enabled: false` ו-`externalDatabase.host` במקום.",
 "lv": 0,
@@ -16021,10 +16021,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"hooks לא שולחים התראות ל-Slack בעצמם. הם משאבים של Kubernetes שרצים בשלבים כמו pre-install או post-upgrade.",
+"פונקציות בתוך templates הן חלק מ-Go templates (כמו `quote`). hooks הם משאבים שרצים בשלבים של ה-release.",
 "למשל Job של migration ב-`pre-upgrade`, או smoke test ב-`post-install`.",
-"לא."
+"Helm hooks אינם Git hooks. הם משאבים (בדרך כלל Jobs) שרצים בנקודות במחזור החיים של release, כמו pre-upgrade."
 ],
 "x": "hooks לא נחשבים חלק מה-release רגיל, ולא נמחקים ב-uninstall בלי delete policy.",
 "lv": 0,
@@ -16477,9 +16477,9 @@
 ],
 "y": [
 "זה helm-unittest.",
-"לא.",
+"`helm test` לא מריץ load test. הוא מריץ pods שבודקים שה-release עובד, למשל חיבור ל-Service.",
 "פודים עם `helm.sh/hook: test` רצים, וההצלחה נקבעת לפי exit code.",
-"זה lint."
+"בדיקת תחביר YAML היא `helm lint`. `helm test` מריץ test pods מול release מותקן."
 ],
 "x": "אפשר להפעיל אחרי deploy ב-CI כ-smoke test.",
 "lv": 0,
@@ -16723,7 +16723,7 @@
 "y": [
 "docker push לא אורז charts.",
 "זה repo מבוסס index, לא OCI.",
-"לא.",
+"`kubectl` עובד מול ה-cluster, לא מול registry. charts נדחפים ל-OCI עם `helm push` אחרי `helm package`.",
 "registries כמו ECR, GHCR ו-Harbor תומכים ב-OCI charts. לא צריך שרת index נפרד."
 ],
 "x": "התקנה: `helm install app oci://registry/repo/chart --version 1.2.3`.",
@@ -16932,7 +16932,7 @@
 ],
 "y": [
 "helm template לא משתמש ב-cluster מקומי.",
-"לא.",
+"Helm ב-CI קורא את Chart.yaml, ובגלל זה הבדיקה של `kubeVersion` נכשלת. `helm template` בלי cluster מניח גרסת ברירת מחדל ישנה.",
 "ה-chart תקין. הבדיקה מול גרסה.",
 "בלי cluster, helm template משתמש בגרסת ברירת מחדל. `--kube-version` נותן את גרסת היעד האמיתית."
 ],
@@ -17107,9 +17107,9 @@
 ],
 "y": [
 "NOTES מרונדר מה-values, אבל לא משפיע על המשאבים. בודקים את ה-Ingress עצמו.",
-"הם מרונדרים.",
-"לא.",
-"לא."
+"NOTES מרונדר כמו כל template, ובגלל זה ה-URL השגוי מופיע בו. הוא פשוט לא משפיע על המשאבים.",
+"שגיאה ב-NOTES לא חוסמת התקנה, כי NOTES הוא רק טקסט. בודקים את ה-Ingress האמיתי.",
+"Helm לא משתמש ב-NOTES כדי להגדיר Ingress. NOTES רק מודפס למשתמש, וה-Ingress נוצר מה-template שלו."
 ],
 "x": "NOTES טובים משתמשים באותו helper של ה-Ingress, כך שאי אפשר שיהיו לא עקביים.",
 "lv": 0,
@@ -17178,8 +17178,8 @@
 "y": [
 "לא נותן שגיאת immutable.",
 "selector ו-שדות אחרים לא ניתנים לשינוי. מחזירים את השדה, או מוחקים ויוצרים מחדש בצורה מבוקרת.",
-"תומך.",
-"לא קשור."
+"Helm תומך ב-Deployments. השגיאה מגיעה מה-API server, שמסרב לשנות שדה immutable כמו ה-selector.",
+"מספר ה-replicas אפשר לשנות בכל עת. השגיאה אומרת שהשתנה שדה immutable, בדרך כלל ה-selector."
 ],
 "x": "`--force` (בגרסאות חדשות `--force-replace`) מוחק ויוצר מחדש, עם downtime.",
 "lv": 0,
@@ -17772,7 +17772,7 @@
 ],
 "y": [
 "version חובה. appVersion אופציונלי.",
-"הם עצמאיים.",
+"הם לא חייבים להיות שווים. `version` עולה בכל שינוי ב-chart, ו-`appVersion` מתאר את גרסת האפליקציה, גם אם ה-chart לא השתנה.",
 "אפשר לשנות את ה-chart (למשל הוספת resource) בלי לשנות את האפליקציה, ולהפך. version חייב להיות SemVer.",
 "בשביל זה יש `kubeVersion`."
 ],
@@ -18366,7 +18366,7 @@
 "B"
 ],
 "y": [
-"לא.",
+"ה-README הוא קובץ `README.md` בשורש ה-chart. `_helpers.tpl` מכיל named templates, וה-`_` בתחילת השם אומר ל-Helm לא לרנדר אותו.",
 "קבצים שמתחילים ב-`_` לא מרונדרים כ-manifests. הם מחזיקים הגדרות `define`.",
 "בדיקות יושבות ב-`templates/tests/`.",
 "זה values.yaml."
@@ -18576,9 +18576,9 @@
 "B"
 ],
 "y": [
-"אין דגל כזה.",
+"ל-`helm install` אין דגל `--tag`. בוחרים גרסת chart עם `--version`.",
 "בלי --version Helm לוקח את האחרונה. בפרודקשן תמיד מקבעים.",
-"אפשר.",
+"אפשר לבחור גרסה עם `--version`. בלעדיו Helm לוקח את הגרסה היציבה האחרונה ב-repo.",
 "לא התחביר של repos (ב-OCI יש תחביר דומה, אבל גם שם --version נפוץ)."
 ],
 "x": "ב-Argo CD: `targetRevision` של ה-chart.",
@@ -19101,10 +19101,10 @@
 "B"
 ],
 "y": [
-"לא בדיוק.",
+"`with` משנה את `.` רק בתוך הבלוק שלו, לא בכל הקובץ. משתנה מגדירים עם `$name := ...`, וגם הוא מוגבל ל-scope.",
 "`{{ with .Values.nodeSelector }}` מרנדר את הבלוק רק אם יש ערך, ובתוכו `.` הוא ה-nodeSelector.",
-"לא.",
-"לא."
+"`with` לא מוסיף labels. הוא בודק אם ערך קיים, ואם כן מריץ את הבלוק כש-`.` מצביע עליו.",
+"`with` לא מייבא charts; תלויות מגדירים ב-Chart.yaml. `with` מריץ בלוק רק אם הערך קיים ומשנה את `.` אליו."
 ],
 "x": "תשלב עם `toYaml . | nindent`. נפוץ מאוד ב-charts.",
 "lv": 0,
@@ -19696,10 +19696,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"אין finalizer בשם helm, ו-finalizers עוסקים במחיקה. Helm מאמץ משאב לפי ה-label `managed-by` וה-annotations של ה-release.",
 "Helm מאמץ משאב אם יש לו label ו-annotations של `meta.helm.sh/release-name` ו-`release-namespace`.",
-"לא.",
-"לא."
+"Helm לא מאמץ משאבים קיימים לבד. בלי ה-label וה-annotations, ההתקנה נכשלת כי המשאב כבר קיים.",
+"owner reference ל-namespace לא קשור ל-Helm. Helm מזהה משאב שלו לפי label ו-annotations של שם ה-release וה-namespace."
 ],
 "x": "דרך טובה להעביר משאבים ידניים ל-Helm בלי downtime.",
 "lv": 0,
@@ -20711,10 +20711,10 @@
 "C"
 ],
 "y": [
-"לא קשור.",
+"שם ה-release לא השתנה, וה-upgrade הצליח. השינוי לא נכנס כי ה-`.tgz` נבנה לפני העריכה.",
 "אין שינוי להחיל.",
 "upgrade משתמש ב-chart שהעברת. tgz ישן לא כולל את השינוי.",
-"לא."
+"Helm לא שומר templates ב-cache ל-24 שעות. ה-package של אתמול נבנה לפני השינוי, ולכן הוא לא מכיל אותו."
 ],
 "x": "`helm get manifest <release>` מראה מה באמת הוחל. משווים לשינוי שציפית.",
 "lv": 0,
@@ -21063,7 +21063,7 @@
 "y": [
 "זה values.schema.json.",
 "toYaml ממיר ל-YAML.",
-"לא.",
+"`toYaml` ו-`nindent` לא מצפינים. `toYaml` ממיר בלוק ל-YAML, ו-`nindent` מוסיף שורה חדשה ומזיח לרמה הנכונה.",
 "מאפשר להעביר בלוק שלם מ-values (resources, tolerations) בלי לכתוב כל שדה."
 ],
 "x": "`nindent` מוסיף שורה חדשה. `indent` לא. הבחירה הלא נכונה שוברת YAML.",
@@ -21796,7 +21796,7 @@
 "D"
 ],
 "y": [
-"אין שדה כזה.",
+"אין שדה `.Release.replicaCount`. `.Release` מכיל רק מידע על ה-release (שם, namespace); ערכי המשתמש נמצאים ב-`.Values`.",
 "Helm תומך במספרים.",
 "replicas צריך להיות מספר, לא מחרוזת.",
 "ערך חסר מרונדר כריק. אפשר `default 1`, `required`, או values.schema.json כדי לתפוס את זה מוקדם."
@@ -21971,10 +21971,10 @@
 "C"
 ],
 "y": [
-"לא קשור.",
-"לא קשור.",
+"שגיאה ב-values הייתה מופיעה בזמן רינדור. כאן Helm לא מגיע ל-cluster בכלל, ולכן בודקים kubeconfig ורשת.",
+"חתימה של chart נבדקת רק עם `--verify`, ושגיאה בה נראית אחרת. כאן הבעיה היא חיבור ל-cluster.",
 "Helm משתמש באותו kubeconfig של kubectl. context לא נכון או token שפג נותנים את השגיאה.",
-"לא קשור."
+"תלויות של chart לא קשורות לחיבור ל-cluster. השגיאה אומרת ש-Helm לא מצליח להגיע ל-API server."
 ],
 "x": "`kubectl cluster-info` עם אותו context מאשר מהר אם הבעיה ב-Helm או בחיבור.",
 "lv": 0,
@@ -22043,7 +22043,7 @@
 "y": [
 "מציג את ה-values שהמשתמש העביר. עם `--all` גם את ברירות המחדל.",
 "אין resource כזה.",
-"אין דגל כזה.",
+"ל-`helm status` אין דגל `--values`. הוא מציג את מצב ה-release; את ה-values מציג `helm get values`.",
 "show values מציג ברירות מחדל של chart, לא של release."
 ],
 "x": "`helm get manifest` מראה את ה-YAML שהוחל. שימושי לחקירה.",
@@ -22636,10 +22636,10 @@
 "C"
 ],
 "y": [
-"אין דגל כזה.",
-"אין דגל כזה.",
+"ל-`helm upgrade` אין דגל `--preview`. כדי לראות מה ישתנה משתמשים ב-plugin `helm diff`.",
+"ל-`kubectl diff` אין דגל `--helm`, והוא לא מרנדר charts. `helm diff upgrade` משווה את ה-manifest החדש לקיים.",
 "diff משווה את ה-manifests החדשים למצב החי. חובה ב-pipelines של פרודקשן.",
-"אין."
+"ל-`helm status` אין דגל `--next`; הוא מציג רק את המצב הנוכחי. תצוגה מקדימה של שינויים נותן `helm diff upgrade`."
 ],
 "x": "`helm upgrade --dry-run=server` גם עוזר, אבל diff קריא יותר.",
 "lv": 0,
@@ -23616,9 +23616,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"לא.",
+"`--atomic` לא נועל את ה-release. אחרי שה-upgrade מסתיים (בהצלחה או עם rollback) אפשר להריץ upgrade נוסף כרגיל.",
+"`--atomic` פועל על release אחד בלבד, זה שב-`helm upgrade`. הוא לא נוגע ב-releases אחרים ב-namespace.",
+"`--atomic` לא מדלג על בדיקות, ואפילו מוסיף `--wait`. הוא מחכה שהמשאבים יהיו מוכנים, ואם לא, עושה rollback.",
 "אם משאבים לא מגיעים למוכנות בזמן, Helm מחזיר את הגרסה הקודמת. ה-release לא נשאר שבור."
 ],
 "x": "משלבים עם `--timeout` מותאם, אחרת rollout ארוך ייחשב לכשל.",
@@ -23966,10 +23966,10 @@
 "C"
 ],
 "y": [
-"לכל פוד יש SA.",
-"יכולים.",
+"לכל פוד יש ServiceAccount, ואם לא מציינים, הוא מקבל `default`. כאן ה-Deployment מציין SA שלא קיים, והפוד לא נוצר.",
+"אפשר לעטוף ServiceAccount ב-`if`. הבעיה היא שה-Deployment עדיין מפנה לשם שלו גם כשהוא לא נוצר.",
 "צריך helper שבוחר: אם create, שם ה-release. אחרת, שם שהמשתמש סיפק (או `default`).",
-"לא."
+"`create: false` לא מוחק כלום. הוא רק מדלג על יצירת ה-SA, ולכן ה-Deployment מצביע על SA שלא קיים."
 ],
 "x": "`helm create` כולל helper בשם `serviceAccountName` בדיוק בשביל זה.",
 "lv": 1,
@@ -24492,9 +24492,9 @@
 ],
 "y": [
 "Helm משווה מול ה-manifest השמור. אם הוא מכיל API שכבר לא קיים, ה-upgrade נכשל. הפלאגין מעדכן את הנתונים השמורים.",
-"לא מעשי.",
-"לא קשור.",
-"מוגזם."
+"downgrade של control plane לא נתמך בדרך כלל ב-managed clusters. מעדכנים את ה-manifest השמור.",
+"`helm repo update` מרענן את ה-index של ה-repos. הוא לא נוגע ב-manifest השמור ב-release.",
+"מחיקת ה-cluster מוגזמת. הבעיה היא רק ב-manifest השמור של ה-release, ו-`helm-mapkubeapis` מעדכן אותו."
 ],
 "x": "מניעה: לעדכן charts לפני שדרוג cluster, ולבדוק עם pluto.",
 "lv": 1,
@@ -24596,10 +24596,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"Helmfile לא מחליף manifests ב-HCL. הוא קובץ YAML שמתאר כמה releases של Helm וה-values שלהם.",
 "Helmfile מנהל הרבה releases בצורה declarative, עם diff ו-sync. מתאים כשאין GitOps controller.",
-"יכול.",
-"לא."
+"Helm יכול להתקין כמה charts, אבל כל אחד בפקודה נפרדת. Helmfile מגדיר את כולם בקובץ אחד, לכל סביבה.",
+"Helmfile לא שומר releases במסד נתונים. Helm שומר אותם ב-cluster, ו-Helmfile רק מגדיר אותם בצורה הצהרתית."
 ],
 "x": "עם Argo CD, ApplicationSet ממלא תפקיד דומה, ולכן Helmfile פחות נחוץ.",
 "lv": 1,
@@ -24876,10 +24876,10 @@
 "B"
 ],
 "y": [
-"לא פתרון.",
+"בקשה מהמשתמשים לא לכבות ingress לא מגנה על ה-chart. ה-template צריך לבדוק את הערך לפני גישה לשדות בתוכו.",
 "שדות מקוננים חסרים גורמים ל-nil pointer. בודקים את המפתח או משתמשים ב-`with`, ומגדירים ברירות מחדל ב-values.yaml.",
 "אין try/catch ב-Go templates.",
-"לא קשור."
+"`template` לא היה עוזר. הבעיה היא גישה לשדה של אובייקט ריק, ופותרים אותה עם `if` או `with` לפני השימוש."
 ],
 "x": "ב-values.yaml תמיד להגדיר את כל המבנה עם ברירות מחדל ריקות. זה גם תיעוד.",
 "lv": 1,
@@ -25124,7 +25124,7 @@
 "Helm לא נוגע ב-DB.",
 "rollback מחזיר את ה-manifests, לא את המצב החיצוני. סיסמה שהוחלפה ב-DB לא חוזרת.",
 "הוא כן מחזיר את ה-Secret לגרסה הקודמת.",
-"לא."
+"rollback לא מוחק Secrets. הוא מחזיר את ה-Secret לגרסה הקודמת, אבל הסיסמה ב-DB כבר שונתה."
 ],
 "x": "עיקרון: rollback של manifests לא מחזיר state חיצוני. מתכננים בהתאם.",
 "lv": 1,
@@ -25541,10 +25541,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"`tpl` לא יוצר קבצי template חדשים. הוא מרנדר מחרוזת שמגיעה מ-values כאילו הייתה template.",
+"אין ב-Helm תרגום ל-Kustomize. `tpl` מרנדר מחרוזת עם ביטויי template מתוך values.",
 "מאפשר ל-values להכיל תבניות, למשל `{{ .Release.Name }}-config`. שימושי ל-charts גנריים.",
-"לא."
+"`tpl` לא בודק תחביר YAML; זה תפקיד של `helm lint`. `tpl` מרנדר מחרוזת כ-template."
 ],
 "x": "`tpl .Values.extraConfig .` הוא דפוס נפוץ ב-charts של Bitnami.",
 "lv": 1,
@@ -25717,9 +25717,9 @@
 ],
 "y": [
 "chart לא צריך להניח host קבוע. ערך לכל release מונע התנגשות.",
-"לא.",
-"בדיוק הבעיה.",
-"מוגזם."
+"מחיקת Ingress בכל upgrade גורמת ל-downtime ולא פותרת את ההתנגשות. צריך host שונה לכל release.",
+"host קבוע ב-chart הוא בדיוק מה שגורם להתנגשות. כל release צריך host משלו, שמגיע מ-values.",
+"cluster נפרד לכל release מוגזם ויקר. מספיק להפוך את ה-host לערך שכל release מגדיר."
 ],
 "x": "אותו עיקרון לכל משאב 'גלובלי' (hostPort, ClusterRole): שם או ערך שתלוי ב-release.",
 "lv": 1,
@@ -26138,7 +26138,7 @@
 "y": [
 "מחרוזת עדיין לא תפתור את הלוגיקה, ותיצור באגים אחרים.",
 "`default` מחליף כל ערך 'ריק': false, 0, \"\" ו-nil. לבוליאנים משתמשים ב-`hasKey` או ב-`ternary`.",
-"אפשר.",
+"אפשר להגדיר booleans ב-values בלי בעיה. הבעיה היא ש-`default` מתייחס ל-`false` כערך ריק ומחליף אותו ב-`true`.",
 "לא קשור ל-cache."
 ],
 "x": "gotcha קלאסי ב-Helm. הזכרה שלו בראיון מראה ניסיון אמיתי בכתיבת charts.",
@@ -26276,9 +26276,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"יש הבדלים.",
-"ההפך.",
+"`template` לא מתקין כלום. הוא רק מרנדר YAML מקומית.",
+"יש הבדל מהותי: `--dry-run` יכול לגשת ל-cluster (lookup, capabilities, ולידציה), ו-`template` עובד בלי cluster.",
+"ההפך: `helm template` עובד offline, ו-`--dry-run` ניגש ל-cluster.",
 "dry-run יכול לבדוק מול ה-API (ובגרסאות חדשות `--dry-run=server`). template לא צריך cluster."
 ],
 "x": "ב-CI בלי גישה ל-cluster, template. לבדיקה מלאה לפני deploy, dry-run מול cluster.",
@@ -26801,10 +26801,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"הגדרת `replicas` לא גורמת ל-restart. restart קורה רק כשה-pod template משתנה.",
+"Helm לא מפעיל מחדש פודים כשה-pod template לא השתנה. הסיבה היא annotation שמשתנה בכל רינדור, כמו `randAlphaNum` או תאריך.",
 "annotation עם `now` או random בתוך ה-template משנה אותו בכל upgrade, ולכן מפעיל rollout.",
-"לא."
+"`_helpers.tpl` הוא מוסכמה רגילה ולא גורם ל-restart. מחפשים ערך שמשתנה בכל רינדור בתוך ה-pod template."
 ],
 "x": "checksum annotation מבוסס תוכן הוא הדרך הנכונה. timestamp הוא anti-pattern.",
 "lv": 1,
@@ -27467,8 +27467,8 @@
 ],
 "y": [
 "בתוך range, הנקודה היא האיבר הנוכחי. `$` תמיד מצביע על ה-root.",
-"לא קשור.",
-"אפשר, עם `$`.",
+"`apiVersion` של ה-chart לא קשור לשגיאה. בתוך `range` הנקודה מצביעה על האיבר הנוכחי, ולכן `.Release` לא קיים שם.",
+"אפשר להשתמש בשם ה-release בתוך לולאה. צריך רק לגשת אליו דרך `$`, שתמיד מצביע על ה-scope העליון.",
 "זמין בכל תבנית."
 ],
 "x": "אותו דבר ב-`with`. כדאי לזכור את `$` לפני כל ראיון על Helm.",
@@ -27887,9 +27887,9 @@
 ],
 "y": [
 "deploy מהמחשב עוקף את ה-pipeline: אין review, אין תיעוד, וה-values יכולים להיות שונים.",
-"עובד.",
-"לא בטוח יותר.",
-"לא."
+"Helm עובד מכל מחשב עם kubeconfig. הבעיה היא שאין review, אין audit, וה-values המקומיים יכולים להיות שונים.",
+"הרצה מהמחשב לא בטוחה יותר מ-CI. אין review ואין תיעוד, וה-values המקומיים עלולים להיות ישנים.",
+"production clusters לא דוחים Helm. הבעיה היא תהליך: deploy בלי review ובלי audit."
 ],
 "x": "הפתרון: deploy רק מ-CI או GitOps, וגישת כתיבה לפרודקשן רק ב-break-glass.",
 "lv": 1,
@@ -27991,8 +27991,8 @@
 "D"
 ],
 "y": [
-"לא קשור.",
-"מסוכן ושביר.",
+"ה-API server עובד, וההודעה מגיעה מ-Helm. ה-release קיים במצב failed, ואין לו revision שהגיע ל-deployed.",
+"עריכה ידנית של ה-Secret של ה-release עלולה לשבור את ההיסטוריה ואת Helm עצמו. uninstall והתקנה מחדש בטוחים יותר.",
 "אין revision תקין לחזור אליו.",
 "release שלא הצליח אף פעם לא יכול להיות בסיס ל-upgrade. מוחקים ומתקינים מחדש (או upgrade --install בגרסאות שתומכות)."
 ],
@@ -28378,8 +28378,8 @@
 "y": [
 "Helm לא יוצר namespaces כברירת מחדל. הדגל יוצר אותו.",
 "לא יוצר namespace.",
-"אין דגל כזה.",
-"לא קשור."
+"אין ל-Helm דגל `--namespace-auto`. הדגל שיוצר את ה-namespace אם הוא לא קיים הוא `--create-namespace`.",
+"`--atomic` מטפל ב-rollback אחרי כשל ולא יוצר namespaces. צריך `--create-namespace`."
 ],
 "x": "עדיף לנהל namespaces בנפרד (עם labels, quotas ו-PSA) ולא דרך chart של אפליקציה.",
 "lv": 1,
@@ -28411,10 +28411,10 @@
 "C"
 ],
 "y": [
-"לא בהכרח.",
-"יכולים.",
+"מיגרציה לא בהכרח רצה פעמיים ב-rollback. הבעיה היא שהיא לא מתבטלת, והקוד הישן פוגש schema חדש.",
+"hooks יכולים להריץ Jobs, וזה השימוש הנפוץ שלהם. הסיכון הוא ש-rollback לא מחזיר את שינוי ה-schema.",
 "rollback מחזיר קוד ישן מול schema חדש. migrations צריכים להיות backward compatible (expand/contract).",
-"לא."
+"Helm לא חוסם rollback אחרי hooks. הבעיה היא שה-rollback מחזיר רק manifests, וה-schema ב-DB נשאר חדש."
 ],
 "x": "תשובה טובה מחברת Helm ל-DB lifecycle ומראה הבנה רחבה.",
 "lv": 1,
@@ -28971,10 +28971,10 @@
 "B"
 ],
 "y": [
-"מוגזם.",
+"מחיקת ה-namespace מוחקת את כל המשאבים בו וגורמת ל-downtime. checksum annotation מפעיל rollout רק כשצריך.",
 "שינוי ב-ConfigMap משנה את ה-hash, ולכן את ה-pod template, וזה מפעיל rollout.",
-"לא קשור.",
-"אין דגל כזה."
+"`restartPolicy: Always` קובע מה קורה כשקונטיינר יוצא. הוא לא מפעיל rollout כש-ConfigMap משתנה.",
+"ל-`helm upgrade` אין דגל `--restart-pods`. הדרך המקובלת היא annotation עם checksum של ה-ConfigMap ב-pod template."
 ],
 "x": "הדפוס המלא: `checksum/config: {{ include (print $.Template.BasePath \"/configmap.yaml\") . | sha256sum }}`.",
 "lv": 1,
@@ -29288,8 +29288,8 @@
 "y": [
 "שימושי ב-CI: הגרסאות נקבעות בזמן build, בלי לערוך Chart.yaml ידנית.",
 "חתימה היא `--sign`.",
-"לא.",
-"לא."
+"`helm package` לא מוריד את האפליקציה. הוא רק כותב את הערכים ל-Chart.yaml בתוך ה-package; ה-image נמשך בזמן ריצה.",
+"`helm package` לא נוגע ב-cluster. הוא רק יוצר קובץ `.tgz` עם הגרסאות שציינת."
 ],
 "x": "אפשר לחתום charts עם `helm package --sign` (PGP) או עם cosign ב-OCI.",
 "lv": 1,
@@ -30513,8 +30513,8 @@
 "y": [
 "ה-registry לא מעורב ב-rendering.",
 "`--set` מנסה לנחש סוג. 1.10 הופך ל-1.1. `--set-string` או `| quote` בתבנית שומרים מחרוזת.",
-"לא קשור.",
-"אין קיצור כזה."
+"`version` ב-Chart.yaml לא משפיע על ערכים ב-`--set`. הבעיה היא שהערך פורש כמספר.",
+"Helm לא מקצר tags. `--set` מפרש `1.10` כמספר float, ו-float כזה נכתב `1.1`. `--set-string` שומר אותו כמחרוזת."
 ],
 "x": "אותה בעיה עם tags כמו `1e10` או `0123`. כדאי `quote` לכל tag בתבנית.",
 "lv": 1,
@@ -30689,7 +30689,7 @@
 "נשמר בהיסטוריה וב-release.",
 "helm-secrets מפענח קבצים מוצפנים בזמן deploy. ESO מביא סודות מבחוץ, וה-chart רק מפנה אליהם.",
 "base64 לא מצפין.",
-"לא."
+"`Chart.yaml` הוא metadata של ה-chart ונשמר ב-Git כמו values. סודות בו גלויים בדיוק באותה מידה."
 ],
 "x": "תזכיר שגם values שמועברים נשמרים ב-release Secret. מי שקורא Secrets ב-namespace רואה אותם.",
 "lv": 1,
@@ -31211,10 +31211,10 @@
 "B"
 ],
 "y": [
-"מאבדים יכולת.",
+"הסרת ה-monitoring מאבדת יכולת ב-clusters שכן תומכים בה. מספיק תנאי שבודק אם ה-API קיים.",
 "ב-cluster בלי Prometheus Operator אין CRD. תנאי על APIVersions, או value שמפעיל, פותרים.",
 "מוגזם וגורם להתנגשויות.",
-"לא פותר."
+"`--force` לא יוצר CRD שלא קיים. ה-chart צריך לבדוק עם `.Capabilities` אם ה-API קיים לפני שהוא יוצר ServiceMonitor."
 ],
 "x": "דפוס: `metrics.serviceMonitor.enabled` עם בדיקת Capabilities.",
 "lv": 1,
@@ -31386,8 +31386,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
+"`lookup` לא שואל DNS. הוא קורא אובייקטים קיימים מה-cluster בזמן install או upgrade.",
+"`lookup` לא מתחבר ל-Vault. הוא קורא רק אובייקטים של Kubernetes מה-API server.",
 "זה `helm search`.",
 "lookup ניגש ל-cluster בזמן install/upgrade. ב-template, --dry-run ו-Argo CD אין cluster, אז מקבלים ריק."
 ],
@@ -31704,7 +31704,7 @@
 "values נכונים לא מבטיחים שהתבנית משתמשת בהם. אולי ה-template משתמש במפתח אחר.",
 "Helm לא מטפל ב-images.",
 "לא קשור ל-pull.",
-"לא קשור."
+"`--atomic` קובע מה קורה בכשל ולא משנה את ה-image. בודקים מה באמת הוחל עם `helm get manifest`."
 ],
 "x": "ההבדל בין 'מה ביקשתי' (values) ל'מה הוחל' (manifest) הוא מפתח לחקירה.",
 "lv": 1,
@@ -32541,10 +32541,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"מחיקת releases נעשית עם `helm uninstall`. post-renderer משנה את ה-manifests לפני ההתקנה.",
+"הרינדור תמיד נעשה בצד ה-client של Helm. post-renderer מקבל את ה-YAML המרונדר ומשנה אותו לפני שליחה ל-cluster.",
 "chart של צד שלישי לא חושף שדה שצריך. post-renderer מוסיף את השינוי אחרי ה-rendering.",
-"לא."
+"post-renderer לא מאיץ את הרינדור; הוא מוסיף שלב אחריו. הוא מאפשר לתקן את ה-YAML (למשל עם Kustomize) בלי fork ל-chart."
 ],
 "x": "Argo CD תומך בשילוב Helm ו-Kustomize בדרכים אחרות (kustomize עם helmCharts).",
 "lv": 1,
@@ -32788,8 +32788,8 @@
 "y": [
 "אם הסיסמה הועברה כ-value, היא נשמרת ב-`sh.helm.release.v1...`. כדאי שה-chart לא יקבל את הסוד כ-value בכלל.",
 "רק אם הודפסה שם.",
-"לא ב-cluster.",
-"לא סביר."
+"cache של ה-client נמצא במחשב המקומי, לא ב-cluster. מי שיש לו `get secrets` רואה את ה-Secret של ה-release עם ה-values.",
+"labels לא מכילים סיסמאות, ויש מגבלה על התווים בהם. הדליפה היא ב-Secret ש-Helm שומר עם ה-values."
 ],
 "x": "פתרון: ה-chart מפנה ל-Secret קיים (`existingSecret`), שנוצר על ידי ESO.",
 "lv": 1,
@@ -32822,8 +32822,8 @@
 ],
 "y": [
 "Helm מוחק משאבים שהיו ב-release הקודם ולא בחדש. אם הוא שויך ל-release (ידנית או בעבר), הוא נמחק.",
-"לא.",
-"לא.",
+"Helm לא מוחק כל Secret ב-upgrade. הוא מוחק רק משאבים שה-release שלו ושה-chart כבר לא מרנדר.",
+"ל-Secrets אין תפוגה. ה-Secret נמחק כי הוא היה שייך ל-release, ובגרסה החדשה ה-chart כבר לא יצר אותו.",
 "לא בלי owner reference."
 ],
 "x": "`helm diff` לפני upgrade מראה מחיקות. תמיד לבדוק.",
@@ -32997,9 +32997,9 @@
 ],
 "y": [
 "build מוריד לפי lock, ועם cache לא מוריד שוב. update מחשב מחדש בכל פעם.",
-"לא תמיד אפשרי.",
-"לא מאיץ.",
-"לא קשור."
+"הסרת תלויות לא תמיד אפשרית; ה-chart צריך אותן. מספיק `Chart.lock` ו-cache כדי לא להוריד אותן בכל ריצה.",
+"`--timeout` לא מאיץ שום דבר. הוא רק קובע כמה זמן לחכות למשאבים לפני שנכשלים.",
+"`--atomic` מטפל בכשלים ולא בהורדת תלויות. ההאטה נובעת מהורדה מחדש של כל ה-dependencies."
 ],
 "x": "אפשר גם vendoring מלא של `charts/` ב-repo.",
 "lv": 1,
@@ -33068,8 +33068,8 @@
 "y": [
 "ב-`data` הערכים חייבים להיות base64. `stringData` מקבל טקסט רגיל.",
 "Kubernetes לא בודק אורך.",
-"יכולים.",
-"לא הבעיה."
+"Helm יוצר Secrets כמו כל משאב. הבעיה היא שב-`data` הערך חייב להיות base64, ולכן צריך `b64enc` או `stringData`.",
+"גרשיים כפולים לא הופכים את הערך ל-base64. השדה `data` של Secret דורש base64, ו-`stringData` מקבל טקסט רגיל."
 ],
 "x": "ועדיין: סיסמאות לא נכנסות ל-values ב-Git. הולכים ל-ESO או helm-secrets.",
 "lv": 1,
@@ -33241,8 +33241,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"יכולים.",
+"Helm לא קורא values ממשתני סביבה של ה-client. values מגיעים מ-`values.yaml`, `-f` ו-`--set`.",
+"subcharts כן מקבלים values, תחת מפתח בשם של ה-subchart (או ה-alias שלו) ב-values של ה-parent.",
 "אפשר לדרוס מה-parent.",
 "למשל `postgresql.auth.password`. ערכים תחת `global` משותפים לכל ה-subcharts."
 ],
@@ -33381,8 +33381,8 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"`resource-policy: keep` לא קשור ל-RBAC. הוא מגן על המשאב רק ממחיקה על ידי Helm.",
+"ה-annotation לא מוציא את המשאב מהיסטוריית ה-release. הוא רק אומר ל-Helm לא למחוק אותו ב-uninstall או ב-upgrade.",
 "המשאב נשאר יתום. שימושי ל-PVC או Secret שאסור לאבד.",
 "עדכונים עדיין קורים."
 ],
@@ -34467,7 +34467,7 @@
 ],
 "y": [
 "random בכל render יוצר סיסמה חדשה. lookup שומר את הקיים, או שהסיסמה מגיעה מבחוץ (ESO).",
-"לא פתרון.",
+"להריץ upgrade פחות לא פותר: כל upgrade עדיין יחליף את הסיסמה. צריך לקחת את הקיים עם `lookup` או לקבל אותו כ-input.",
 "upgrade ייכשל בשינוי.",
 "עדיין חדש בכל פעם."
 ],
@@ -35446,10 +35446,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"Helm עובד גם בלי `Chart.lock`. ה-lock רק מקבע את הגרסאות המדויקות של התלויות כדי שה-build יהיה זהה.",
 "בלי lock, `dependency update` עלול להביא גרסה חדשה עם שינויים. lock מקבע.",
-"לא.",
-"לא."
+"`Chart.lock` לא מקטין את ה-chart. הוא רק מתעד גרסאות, כדי ש-`dependency build` יוריד בדיוק אותן.",
+"`Chart.lock` לא מצפין. הוא רושם את הגרסאות המדויקות של התלויות שהורדו."
 ],
 "x": "Renovate יודע לעדכן גרסאות של charts ב-PR, עם lock מעודכן.",
 "lv": 1,
@@ -35621,8 +35621,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
+"umbrella chart לא מגן על charts ממחיקה. הוא chart אב שמאגד כמה charts כ-dependencies ומתקין אותם יחד.",
+"umbrella chart לא עוסק בהגדרות של ענן. הוא מאגד כמה charts לפריסה אחת, למשל כל המערכת עם התלויות שלה.",
 "לרוב יש מעט, אבל זו לא ההגדרה.",
 "מתקינים מערכת שלמה (app, DB, cache) כ-release אחד, עם values משותפים."
 ],
@@ -35834,7 +35834,7 @@
 "Helm לא יודע על Git.",
 "רק עם `--force`, וגם אז לא תמיד.",
 "Helm 3 מתחשב במצב החי. שינוי ידני בשדה שה-chart לא נוגע בו נשמר.",
-"אין Tiller."
+"ב-Helm 3 אין Tiller; הוא הוסר. ה-client מדבר ישירות עם ה-API server ועושה three-way merge."
 ],
 "x": "שדה שה-chart כן מגדיר יחזור לערך של ה-chart ב-upgrade, גם אם שונה ידנית.",
 "lv": 1,
@@ -35937,8 +35937,8 @@
 ],
 "y": [
 "יכולים, עם הסרת שדות מתאימים.",
-"לא ההסבר.",
-"לא.",
+"גרסת ה-chart לא קשורה. השגיאה נובעת מה-three-way merge, שמשאיר את `nodePort` מהמשאב החי.",
+"Helm תומך בכל סוגי Services. הבעיה היא שה-`nodePort` מה-live state נשמר ב-merge, ו-ClusterIP לא מקבל אותו.",
 "השדה nodePort נשאר במצב החי. צריך להסיר אותו, או למחוק וליצור מחדש את ה-Service."
 ],
 "x": "שינוי type של Service הוא שינוי שכדאי לבדוק עם diff לפני פרודקשן.",
@@ -36041,8 +36041,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא הבעיה.",
+"global values עובדים בכל subchart, לא רק ב-library charts. הם רק צריכים להיות מוגדרים תחת המפתח `global`.",
+"`--set-string` לא קשור לבעיה. ה-subchart קורא מ-`global`, ולכן הערך צריך להיות תחת `global:` ב-parent ולא ברמה העליונה.",
 "הם יכולים לקרוא `global`.",
 "רק מה שתחת `global` משותף. ערך ברמה העליונה של ה-parent לא נגיש ל-subchart."
 ],
@@ -36251,9 +36251,9 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
-"לא.",
+"הסדר לא נקבע לפי שם הקובץ. ל-Helm יש רשימה קבועה של kinds: Namespace, ואחריו ServiceAccount, ConfigMap וכן הלאה.",
+"הסדר לא אקראי. Helm מחיל לפי רשימה מובנית של kinds; hooks נדרשים רק כשצריך לחכות למשהו.",
+"גודל ה-manifest לא משפיע. הסדר נקבע לפי סוג המשאב, כך ש-Namespaces ו-CRDs מגיעים לפני Deployments.",
 "Helm ממיין לפי סוג, כך ש-ServiceAccount ו-ConfigMap קודמים ל-Deployment. hooks מאפשרים שליטה נוספת."
 ],
 "x": "אבל Helm לא מחכה שמשאב יהיה מוכן לפני הבא (בלי hooks). לזה צריך waves או hooks.",
@@ -37371,10 +37371,10 @@
 "C"
 ],
 "y": [
-"לא.",
-"לא.",
+"`--force` לא עוקף את הנעילה של release ב-pending-upgrade. הוא רק משנה את אופן העדכון של המשאבים.",
+"rollback אחרי כשל הוא `--atomic`. `--force` מוחק ויוצר מחדש משאבים, עם סיכון ל-downtime.",
 "פותר שדות immutable, אבל גורם ל-downtime ומשאבים חוזרים מאפס.",
-"לא."
+"`--force` לא מדלג על ולידציה. הוא מוחק ויוצר מחדש משאבים ש-patch לא מצליח לעדכן."
 ],
 "x": "להשתמש רק כשמבינים את ההשלכה, ולא כברירת מחדל ב-CI.",
 "lv": 1,
@@ -37931,9 +37931,9 @@
 "D"
 ],
 "y": [
-"פוגע בזמינות.",
+"פחות replicas פוגע בזמינות ולא מתאים לפרודקשן. אם 8 דקות הן הזמן האמיתי, מגדילים את `--timeout`.",
 "לא קשור ל-timeout.",
-"מסוכן.",
+"הסרת readiness probes תגרום לתעבורה להגיע לפודים שעוד לא מוכנים. הבעיה היא ש-`--timeout` קצר מזמן ה-rollout האמיתי.",
 "ברירת המחדל היא 5 דקות. rollout ארוך יותר נחשב לכשל, ועם atomic גם יחזור."
 ],
 "x": "ובמקביל לחקור למה rollout לוקח 8 דקות. image גדול? חימום איטי?",
@@ -38177,9 +38177,9 @@
 ],
 "y": [
 "השדה מוגדר ב-chart, ולכן upgrade מחזיר אותו. אם יש HPA, לא מגדירים replicas ב-template.",
-"לא.",
-"לא בהכרח.",
-"לא."
+"Helm לא מחכה ל-restart כדי להתעלם משינויים. ב-upgrade הוא מחיל את ה-replicas שה-chart מגדיר, ודורס את השינוי הידני.",
+"ה-Deployment לא נוצר מחדש, הוא עודכן. ה-merge מחיל את הערך שה-chart מגדיר, ולכן replicas חוזר ל-3.",
+"Kubernetes לא מאפס replicas אחרי זמן. מה שהחזיר ל-3 הוא ה-upgrade, כי ה-chart מגדיר את השדה."
 ],
 "x": "`{{- if not .Values.autoscaling.enabled }} replicas: ... {{- end }}` הוא הדפוס ב-`helm create`.",
 "lv": 1,
@@ -38491,9 +38491,9 @@
 "D"
 ],
 "y": [
-"לא ההגדרה.",
-"לא.",
-"לא.",
+"מיקום ה-chart לא קובע אם הוא library. ההגדרה היא `type: library` ב-Chart.yaml, ו-chart כזה לא יוצר משאבים.",
+"library chart לא מתקין ספריות בקונטיינרים. הוא chart שמכיל רק named templates לשימוש חוזר ולא מרנדר משאבים.",
+"library chart יכול להכיל values. מה שמגדיר אותו הוא שהוא לא מרנדר משאבים בעצמו, רק מספק templates.",
 "`type: library`. צוותים משתפים תבניות (labels, deployment בסיסי) בלי לשכפל קוד."
 ],
 "x": "מתאים לארגונים עם עשרות שירותים שצריכים מבנה אחיד.",
@@ -38526,8 +38526,8 @@
 "D"
 ],
 "y": [
-"לא.",
-"לא.",
+"`.Files.Get` לא ניגש לאינטרנט. הוא קורא קבצים שנמצאים בתוך ה-chart עצמו.",
+"`.Files.Get` לא כותב לקונטיינר. הוא קורא קובץ מה-chart, ובדרך כלל התוכן נכנס ל-ConfigMap שמחובר לפוד.",
 "רק קבצים בתוך ה-chart.",
 "קבצי קונפיג (nginx.conf) נשמרים כמו שהם ב-chart ונכנסים ל-ConfigMap. אין צורך לשכפל לתוך YAML."
 ],
@@ -38666,10 +38666,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"רינדור נשאר מהיר גם עם הרבה templates. המחיר הוא מורכבות ותחזוקה, לא ביצועים.",
 "chart שחושף הכול הופך ל-YAML בתוך YAML. עדיף לחשוף את מה שבאמת משתנה, ו-post-renderer למקרים חריגים.",
-"יש.",
-"לא."
+"יש חסרונות: values ענקי שקשה לתעד ולתחזק, ו-chart שקשה להבין. גמישות מלאה עולה במורכבות.",
+"Helm לא אוסר להפוך כל שדה ל-template. השאלה היא אם זה כדאי, בגלל התחזוקה של values כל כך גדול."
 ],
 "x": "שאלה על design של charts. מראיינים בכירים אוהבים לשמוע איזון.",
 "lv": 1,
@@ -39051,9 +39051,9 @@
 "D"
 ],
 "y": [
-"לא מעשי.",
+"ConfigMaps הם חלק בסיסי מכל אפליקציה. הפתרון הוא שם ייחודי לכל release, לא להימנע מהם.",
 "הסדר לא מונע דריסה.",
-"מוגזם.",
+"cluster לכל chart הוא מוגזם ויקר. מספיק להוסיף לשם המשאב את שם ה-release כדי שלא יהיו התנגשויות.",
 "שם שכולל את `.Release.Name` ייחודי לכל release. זו המטרה של `include \"app.fullname\"`."
 ],
 "x": "תזכיר את מגבלת 63 התווים בשמות, וה-`trunc 63` ב-helpers.",
@@ -39331,9 +39331,9 @@
 "B"
 ],
 "y": [
-"אותה בעיה.",
+"`post-upgrade` hook ייתקע באותה בעיה: ה-Job הישן עדיין קיים. צריך `hook-delete-policy` שמוחק אותו לפני יצירה מחדש.",
 "בלי מדיניות מחיקה, ה-Job הישן נשאר וחוסם את הבא. before-hook-creation מוחק אותו לפני יצירה חדשה.",
-"לא.",
+"restart ל-cluster לא מוחק את ה-Job הקיים. צריך `hook-delete-policy: before-hook-creation`.",
 "לא קשור לשם תפוס."
 ],
 "x": "אותו מנגנון כמו ב-Argo CD hooks. הדפוסים מקבילים.",
@@ -39471,7 +39471,7 @@
 "C"
 ],
 "y": [
-"לא ההסבר.",
+"ה-CRs לא היו בהיסטוריה של ה-release. הם נמחקו כי מחיקת CRD מוחקת אוטומטית את כל ה-CRs מהסוג שלו.",
 "רק של ה-release.",
 "CRD ב-templates הוא חלק מה-release, ונמחק איתו. Kubernetes מוחק את כל ה-CRs שלו. לכן CRDs מנוהלים בנפרד.",
 "לא, הם נמחקים כי ה-CRD נמחק."
@@ -39786,10 +39786,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"`--reuse-values` לא מוחק values. הוא שומר את ה-values מה-release הקודם ומתעלם מברירות המחדל של ה-chart החדש.",
 "reuse-values לוקח את ה-values מה-release הקודם ולא ממזג ברירות מחדל חדשות של ה-chart. `--reset-then-reuse-values` פותר.",
-"יכול.",
-"ה-chart תקין."
+"Helm משדרג בין גרסאות chart בלי בעיה. השגיאה נובעת מ-`--reuse-values`, שמשאיר את המפתח החדש בלי ערך.",
+"ה-chart החדש תקין. הבעיה היא ש-`--reuse-values` לוקח רק את ה-values הישנים, ולא את ברירות המחדל החדשות של ה-chart."
 ],
 "x": "ב-CI עדיף להעביר תמיד את קבצי ה-values המלאים, ולא להסתמך על reuse.",
 "lv": 1,
@@ -40102,8 +40102,8 @@
 ],
 "y": [
 "הם רצים אחרי שהמשאבים נוצרו.",
-"לא בהכרח.",
-"יכולים.",
+"הפיכת ה-Service ל-hook לא פותרת את ההמתנה ל-readiness. ה-Job צריך לנסות שוב עד שה-Service מוכן.",
+"Jobs יכולים להיות hooks, וזה הנפוץ. הבעיה היא שה-Job מחכה ל-Service ואין לו retry משלו.",
 "Helm יוצר את המשאבים, אבל לא מבטיח שהם מוכנים. ה-Job צריך לנסות שוב עד שה-Service עונה, עם timeout."
 ],
 "x": "init container או retry עם backoff בתוך ה-Job הם הפתרון הנפוץ.",
@@ -40486,9 +40486,9 @@
 "D"
 ],
 "y": [
-"לא.",
+"`tags` ב-dependencies לא קשורים ל-Git tags. הם שמות קבוצה שמאפשרים להפעיל או לכבות כמה subcharts יחד.",
 "שם מבלבל, אבל לא.",
-"לא.",
+"הם לא זהים: `condition` מפעיל subchart אחד לפי value, ו-`tags` מפעילים קבוצה של subcharts יחד.",
 "`tags.backend: false` מכבה כל subchart עם tag `backend`. condition מכוון לתלות אחת."
 ],
 "x": "condition גובר על tags אם שניהם מוגדרים.",
@@ -41046,8 +41046,8 @@
 "C"
 ],
 "y": [
-"תומך.",
-"לא הבעיה.",
+"Helm משדרג Deployments כרגיל. השגיאה מגיעה מה-API: selector הוא immutable, ו-label עם גרסה משתנה בכל upgrade.",
+"ה-labels כבר באותיות קטנות, וזה לא מה שהשגיאה אומרת. `field is immutable` מתייחס ל-selector שהשתנה.",
 "selector של Deployment לא ניתן לשינוי. labels שמשתנים (גרסה) שייכים ל-template, לא ל-selector.",
 "אפשר, אבל לא ב-selector."
 ],
@@ -41223,8 +41223,8 @@
 "y": [
 "Helm נועל את ה-release, אבל שני pipelines מקבילים עדיין מתנגשים. CI צריך להבטיח deploy אחד בכל פעם.",
 "יוצר שני releases לאותה אפליקציה.",
-"לא פותר מרוץ.",
-"לא."
+"`--force` לא מונע הרצה מקבילה; שני pipelines עדיין ירוצו יחד. צריך לסדר את ה-deploys אחד אחרי השני.",
+"ביטול ההיסטוריה לא מונע את ה-race ומבטל את האפשרות ל-rollback. צריך concurrency ב-CI."
 ],
 "x": "concurrency group לכל release או environment ב-GitHub Actions או resource_group ב-GitLab.",
 "lv": 1,
@@ -42131,10 +42131,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"ה-schema לא מאיץ רינדור, ואפילו מוסיף שלב בדיקה. היתרון שלו הוא שגיאה ברורה על values שגויים.",
 "Helm בודק את ה-values מול JSON Schema ב-install, upgrade, lint ו-template. טעויות נתפסות עם הודעה ברורה.",
 "יש כלים שמייצרים תיעוד, אבל הערך העיקרי הוא ולידציה.",
-"לא."
+"`values.schema.json` לא מצפין values. הוא מגדיר JSON Schema שבודק את הערכים לפני הרינדור."
 ],
 "x": "מונע את הבאג של `replicas: \"3\"` או שדה חובה שחסר.",
 "lv": 1,
@@ -42484,7 +42484,7 @@
 "מסתיר את הבעיה.",
 "`--debug` מראה קצת יותר, אבל הסיבה בפודים.",
 "atomic מוחק את הראיות. מריצים בסביבה לא-פרודקשן בלי atomic, או בודקים events של ה-ReplicaSet החדש.",
-"לא עוזר."
+"מחיקת ההיסטוריה לא מראה את הסיבה לכשל ומונעת rollback. בודקים events ולוגים של הפודים החדשים."
 ],
 "x": "ב-CI כדאי step שמדפיס `kubectl get events` ולוגים לפני rollback.",
 "lv": 1,
@@ -42691,10 +42691,10 @@
 "B"
 ],
 "y": [
-"הוא הצליח.",
+"ה-rollback הצליח: ה-manifests חזרו לגרסה הקודמת. הבעיה היא נתונים שנכתבו ל-Redis בינתיים.",
 "כל state שנכתב בזמן הגרסה השבורה נשאר. צריך תוכנית ניקוי (cache flush, תיקון נתונים).",
-"לא.",
-"לא בהכרח."
+"מחיקת Redis בכל deploy מאבדת את כל ה-cache ופוגעת בביצועים. הלקח הוא ש-rollback לא מחזיר נתונים.",
+"ה-alerts לא בהכרח שגויים. הם מודדים את ה-manifests שחזרו, בזמן שהנתונים ב-cache עדיין מהגרסה השבורה."
 ],
 "x": "ב-postmortem: 'מה עוד צריך לשחזר מלבד הקוד?'",
 "lv": 1,
@@ -43041,10 +43041,10 @@
 "C"
 ],
 "y": [
-"יכול.",
+"Helm תומך בבדיקות: `helm test` מריץ pods שמסומנים כ-test hook ובודק שהם מסתיימים בהצלחה.",
 "לא המנגנון של helm test.",
 "`helm test <release>` מריץ את הפודים. הצלחה לפי exit code. בודקים למשל חיבור ל-Service.",
-"לא."
+"אין ל-values קטע `tests`. בדיקות הן pods ב-`templates/tests/` עם annotation של hook, ומריצים אותן עם `helm test`."
 ],
 "x": "לבדיקות של rendering בלי cluster יש helm-unittest.",
 "lv": 1,
@@ -43146,9 +43146,9 @@
 "B"
 ],
 "y": [
-"מאבדים בדיקה.",
+"הפסקת lint ב-CI מאבדת את כל הבדיקות בגלל אזהרה אחת. עדיף להוסיף icon או להתעלם מהאזהרה הספציפית.",
 "--strict הופך warnings לשגיאות. מוסיפים icon, או מחליטים במודע אילו warnings חשובים.",
-"לא קשור.",
+"שם ה-chart לא משפיע על הבדיקה של icon. מוסיפים `icon` ל-Chart.yaml או מוותרים על `--strict` לאזהרה הזו.",
 "שובר את ה-chart."
 ],
 "x": "lint warnings קטנים מצטברים. עדיף להחזיק chart נקי.",
@@ -43251,10 +43251,10 @@
 "B"
 ],
 "y": [
-"לא.",
+"`hook-weight` לא קובע retries. retries של Job מוגדרים ב-`backoffLimit`; ה-weight קובע סדר הרצה.",
 "משקל נמוך רץ קודם. מאפשר למשל ליצור Secret לפני Job שמשתמש בו.",
-"לא.",
-"לא."
+"`hook-weight` לא מגביל CPU; לזה יש `resources`. הוא קובע את הסדר של hooks באותו שלב.",
+"אין עדיפות בין releases. `hook-weight` קובע רק את הסדר של hooks בתוך אותו שלב של אותו release."
 ],
 "x": "ערכים הם מחרוזות של מספרים (`\"-5\"`), ומותרים שליליים.",
 "lv": 1,
@@ -43847,9 +43847,9 @@
 ],
 "y": [
 "Argo CD מתקן drift ומראה מצב. ה-CI לא צריך גישה ל-cluster. המחיר: אין Helm release ו-hooks מתורגמים.",
-"יכול.",
-"לא.",
-"לא השיקול."
+"Helm משדרג releases כרגיל. המעבר נועד להשיג reconciliation רציף, ושה-CI לא יחזיק credentials ל-cluster.",
+"Argo CD לא שומר releases ב-Secrets כמו Helm. הוא מרנדר את ה-chart עם `helm template` ומנהל את המשאבים בעצמו.",
+"מהירות ההרצה של hooks היא לא הסיבה. היתרון של Argo CD הוא reconciliation רציף וזיהוי drift."
 ],
 "x": "השפעה מעשית: `helm list` לא יראה את האפליקציה, ו-`lookup` לא יעבוד.",
 "lv": 1,
@@ -43952,9 +43952,9 @@
 ],
 "y": [
 "repositories עדיין נתמכים.",
-"Tiller לא חזר.",
+"Tiller הוסר ב-Helm 3 ולא חזר ב-Helm 4. השינויים הם server-side apply ושינויי שמות של דגלים.",
 "Helm 4 הוסיף SSA, שינה שמות של חלק מהדגלים (atomic, force) ושיפר את מערכת ה-plugins. charts של v2 עדיין עובדים.",
-"לא."
+"Helm 4 ממשיך לעבוד עם charts ו-templates. Kustomize הוא כלי נפרד, ואפשר לשלב אותו כ-post-renderer."
 ],
 "x": "בשדרוג, בודקים סקריפטים של CI שמשתמשים בדגלים ישנים.",
 "lv": 1,
@@ -44549,7 +44549,7 @@
 "fork מתפצל לאורך זמן.",
 "שובר את כל המשתמשים הקיימים.",
 "תאימות לאחור: ערך חדש עם ברירת מחדל שמשחזרת את ההתנהגות הישנה. גרסת minor חדשה ל-chart.",
-"שכפול מיותר."
+"chart חדש מכפיל קוד ותחזוקה. רשימת hosts עם ברירת מחדל ל-host הישן שומרת על תאימות באותו chart."
 ],
 "x": "שינוי שובר מחייב major version ו-notes ברורים.",
 "lv": 1,
@@ -44582,8 +44582,8 @@
 ],
 "y": [
 "למשל: אם יש `monitoring.coreos.com/v1`, ליצור ServiceMonitor. כך chart אחד עובד ב-clusters שונים.",
-"לא.",
-"לא.",
+"`.Capabilities` לא בודק הרשאות RBAC. הוא מראה אילו API versions וגרסת Kubernetes ה-cluster תומך בהם.",
+"`.Capabilities.APIVersions.Has` רק בודק אם API קיים. הוא לא מתקין CRDs, ובזמן רינדור אין לו יכולת לשנות את ה-cluster.",
 "לא בדיוק. יש `.Capabilities.HelmVersion`."
 ],
 "x": "ב-`helm template` צריך `--api-versions`, כי אין cluster לבדוק מולו.",
@@ -44863,8 +44863,8 @@
 "y": [
 "ברירת המחדל ב-upgrade היא 10, אבל ניתן לשנות. מספר גדול מדי מעמיס על ה-API ועל etcd.",
 "בלי storage אין rollback.",
-"לא.",
-"לא קיים."
+"מחיקת ה-namespace מוחקת את האפליקציה כולה. `--history-max` מגביל את מספר ה-revisions שנשמרים.",
+"`helm rollback 0` לא מוחק היסטוריה; 0 אומר לחזור ל-revision הקודם. הגבלת ההיסטוריה נעשית עם `--history-max`."
 ],
 "x": "גם release עם chart ענק יכול להגיע למגבלת 1MB של Secret. דחיסה עוזרת, אבל לא תמיד מספיקה.",
 "lv": 1,
@@ -45526,10 +45526,10 @@
 "B"
 ],
 "y": [
-"יכול.",
+"`values.yaml` יכול להכיל מחרוזות. הסיבה היא שה-chart צריך להיות כללי, וערכים של כל סביבה שייכים לקובץ נפרד.",
 "chart אחד משמש את כל הסביבות. values.yaml נותן ברירות מחדל בטוחות, וכל סביבה מקבלת קובץ משלה (וסודות מבחוץ).",
-"לא.",
-"לא."
+"אין מגבלת גודל של 1 KB על charts. ההפרדה נועדה לשמור על chart כללי ולהוציא סודות וערכים של סביבות.",
+"Helm קורא את `values.yaml` בכל סביבה. בגלל זה לא שמים בו ערכים של prod: הם יחולו גם על dev ו-staging."
 ],
 "x": "דפוס: `values-dev.yaml`, `values-prod.yaml`, וסודות דרך ESO או helm-secrets.",
 "lv": 1,
