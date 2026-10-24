@@ -86,7 +86,11 @@ docs.gitlab.com/ee/ci · jenkins.io/doc · man7.org. Every question carries a `r
    points a strong answer covers, a likely follow-up, the mistake that loses the point, and a documentation link.
    `python3 build_interview.py` validates counts, splits and Hebrew, writes `isrc/interview.json`;
    `python3 inject_interview.py` puts it into `index.html` as `#ivdata`. Progress is `P.iv[id] = [mark, times, when]`.
-5. **Learn:** 24 files in `learn_src/`, with lessons, check questions and an exam for each subject.
+5. *(done)* **Learn:** 24 files in `learn_src/`, with lessons, check questions and an exam for each subject.
+   Each subject has 3 parts (Hebrew lesson with tables, flows and callouts, then 3 English check questions with
+   Hebrew explanations), a summary, and a 10-question exam with a Hebrew note on every option. Authored with
+   the shorthand in `learn_src/_h.py`; `python3 build_learn.py` validates and injects. `QA_LEARN` passes all
+   24 subjects in a real browser.
 6. **Study:** reading chapters for each topic.
 7. **Hebrew explanations, QA** (`QA_BANK`, `QA_UI`, and the rest) run in a real browser, then update `STATE.md`.
 8. **Games:** adapt the duel and casino to the new bank (the SQL is ready), turned on once there is a new Supabase project.

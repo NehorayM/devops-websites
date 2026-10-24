@@ -117,7 +117,9 @@ window.QA_LEARN = async function (opts) {
 
     ok(T.route === 'learnRecapScreen', name + ': the full summary comes after the last part');
     const recap = $('lrnRecapBody');
-    ok(recap.innerHTML.length > 3000, name + ': the summary is long-form, not a stub');
+    // build_learn.py requires >= 1,400 characters of recap text; rendered, that is ~2,700+ of HTML.
+    // (The old English recaps were longer per idea; Hebrew says the same in fewer characters.)
+    ok(recap.innerHTML.length > 2500, name + ': the summary is long-form, not a stub');
     ok(recap.querySelectorAll('table').length >= 2, name + ': the summary has comparison tables');
     ok(!/undefined|\[object/.test(recap.innerHTML), name + ': the summary renders no undefined');
 
