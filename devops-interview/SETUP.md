@@ -56,7 +56,8 @@ const SUPA={
 
 ## 3b. Games, leaderboard and exam history
 
-Run these in the SQL editor **in this order**, each as its own query. Every file is safe to re-run.
+**Shortcut:** paste the whole of `supabase_all.sql` (all nine files below, in order) into one query and Run it.
+Or run them one by one **in this order**, each as its own query. Every file is safe to re-run.
 
 | # | File | What it adds |
 |---|---|---|
@@ -71,7 +72,7 @@ Run these in the SQL editor **in this order**, each as its own query. Every file
 | 9 | `supabase_tournament.sql` | tournament against seven bots |
 
 **After any change to the question bank**, regenerate and re-run file 6 (`python3 gen_duel_v2.py && python3 build_duel_key.py`),
-or duels will mark answers against the old key.
+or duels will mark answers against the old key. Then `tools/sql_all.sh` rebuilds `supabase_all.sql`.
 
 To test the SQL before running it on the real project: `sql_tests/run.sh` (needs Docker) or
 `sql_tests/run_local.sh` (needs a local Postgres, e.g. `apt install postgresql`). Every line should say PASS.
