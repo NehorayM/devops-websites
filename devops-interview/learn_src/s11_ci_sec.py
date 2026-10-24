@@ -110,6 +110,65 @@ SUBJECT = {
          "Open a ticket for next sprint",
          x="key בפומבי מנוצל לרוב תוך דקות. קודם מבטלים אותו, אחר כך בודקים ב-CloudTrail מה נעשה איתו, ורק אז מנקים."),
       ]),
+
+  MOD("devsecops-in-practice", "בפועל: Trivy, cosign, SBOM ו-OIDC",
+      "להגדיר gate של סריקה שלא חוסם בלי סיבה, לחתום ולאמת image בלי מפתחות, להפיק SBOM, ולכתוב trust policy של OIDC שלא פתוחה לכל repo.",
+      [P("ראיון DevSecOps בודק אם אתה יודע להפוך כלים ל-gate שאנשים לא עוקפים. gate שנכשל על כל CVE נמוך בלי תיקון זמין גורם לצוותים לכבות אותו."),
+       CODE("""# נכשל רק על CRITICAL/HIGH שיש להם תיקון
+trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed ghcr.io/acme/api:1.4.0
+
+# סריקת IaC ו-Dockerfile ב-repo
+trivy config .
+
+# .trivyignore: חריגה מתועדת עם תאריך תפוגה
+CVE-2024-12345 exp:2026-12-31""", cap="gate ממוקד: חומרה, תיקון זמין, וחריגות שפגות"),
+       TABLE(["כלי", "שאלה שהוא עונה", "שלב"],
+             ["gitleaks / secret scanning", "האם נכנס סוד ל-Git?", "pre-commit ו-PR"],
+             ["Semgrep / CodeQL (SAST)", "האם בקוד יש דפוס פגיע?", "PR"],
+             ["Trivy / Grype (SCA ו-image)", "האם תלויות או ה-OS ב-image פגיעים?", "אחרי build"],
+             ["Trivy config / Checkov", "האם ה-IaC או ה-manifests מסוכנים?", "PR"],
+             ["syft", "מה בדיוק יש ב-image (SBOM)?", "אחרי build"],
+             ["cosign", "מי בנה את ה-image והאם שונה?", "אחרי push, ואימות ב-admission"]),
+       H("Keyless signing"),
+       CODE("""# ב-CI עם OIDC token: בלי מפתח פרטי לשמור
+cosign sign ghcr.io/acme/api@sha256:4c1e...
+
+# אימות: מי חתם (זהות ה-workflow) ומי הנפיק את הזהות
+cosign verify ghcr.io/acme/api@sha256:4c1e... \\
+  --certificate-identity-regexp 'https://github.com/acme/api/.github/workflows/release.yml@.*' \\
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com""", cap="חותמים על digest, לא על tag"),
+       KEY("ב-keyless, cosign מקבל תעודה קצרת חיים מ-Fulcio לפי זהות ה-OIDC של ה-workflow, והחתימה נרשמת ב-Rekor. האימות בודק את הזהות וה-issuer, לא מפתח ציבורי."),
+       H("OIDC trust ל-AWS"),
+       CODE("""\"Condition\": {
+  \"StringEquals\": {\"token.actions.githubusercontent.com:aud\": \"sts.amazonaws.com\"},
+  \"StringLike\":   {\"token.actions.githubusercontent.com:sub\": \"repo:acme/api:ref:refs/heads/main\"}
+}""", cap="sub מגביל ל-repo ול-branch"),
+       TRAP("trust policy בלי תנאי על `sub`, או עם `repo:*`, מאפשרת לכל repo ב-GitHub שמבקש token עם אותו audience לקבל את ה-role. תמיד מגבילים לארגון, ל-repo ולרוב גם ל-branch או ל-environment."),
+       ASK("Your Trivy gate fails every build. How do you make it useful?",
+           "How does keyless signing with cosign work?",
+           "What's an SBOM and when do you actually use it?",
+           "How do you scope a GitHub OIDC role in AWS?"),
+      ],
+      [C("Which Trivy flags fail the build only on serious, fixable vulnerabilities?",
+         "`--exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed`",
+         "`--exit-code 0 --severity LOW`",
+         "`--skip-db-update --format json`",
+         "`--severity UNKNOWN --quiet`",
+         x="exit-code 1 גורם לכישלון, severity מגביל לחומרה גבוהה, ו-ignore-unfixed מדלג על CVEs שאין להם תיקון."),
+       C("In keyless cosign signing, what does `cosign verify` check?",
+         "The signer's OIDC identity and issuer, from a short-lived certificate",
+         "A long-lived public key stored in the repo",
+         "The image tag name only",
+         "That the image was scanned by Trivy",
+         x="ב-keyless אין מפתח קבוע. האימות בודק את זהות ה-workflow (certificate-identity) ואת ה-OIDC issuer."),
+       C("Why must a GitHub OIDC trust policy include a `sub` condition?",
+         "Without it, any repo that can get a token for that audience could assume the role",
+         "Without it, tokens expire too fast",
+         "It enables MFA for the pipeline",
+         "It is required for cosign",
+         x="sub מזהה repo ו-branch או environment. בלי תנאי עליו, ה-role פתוח לכל workflow שמבקש token עם אותו aud."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -193,11 +252,11 @@ SUBJECT = {
      ("A Kubernetes scheduler", "SLSA לא קשור לשיבוץ."),
      ("A secret manager", "SLSA לא שומר סודות."),
      x="SLSA מגדיר רמות: provenance, builder מבודד ומוקשח, ו-attestations שמאפשרים לאמת מאיפה artifact הגיע."),
-   F("supply-chain", "A leaked key has been revoked. What do you check next?",
-     ("CloudTrail, for what was done with the key while it was exposed", "נכון. צריך לדעת מה נפגע."),
-     ("The Docker build cache", "ה-cache לא יודע מה נעשה עם ה-key."),
-     ("The Kubernetes scheduler logs", "scheduler לא קשור ל-AWS API."),
-     ("Nothing; revoking is enough", "צריך לבדוק אם כבר נוצל."),
-     x="אחרי הביטול בודקים ב-CloudTrail אילו קריאות נעשו עם ה-key, כדי לזהות משאבים שנוצרו או נתונים שנגנבו."),
+   F("devsecops-in-practice", "A team signs `ghcr.io/acme/api:latest` with cosign and the cluster policy verifies by tag. What is the weakness?",
+     ("A tag can be moved to a different image after signing; sign and verify the digest", "נכון. tag ניתן להזזה, ו-digest מזהה את התוכן עצמו."),
+     ("cosign cannot sign tags at all", "cosign מקבל tag, אבל פותר אותו ל-digest בזמן החתימה; הבעיה היא באימות לפי tag שיכול לזוז."),
+     ("Signatures expire after 24 hours", "התעודה קצרת חיים, אבל הרישום ב-Rekor מוכיח שהחתימה נעשתה בזמן שהייתה תקפה."),
+     ("Tags are encrypted and can't be verified", "tags לא מוצפנים; זה פשוט שם שמצביע ל-digest."),
+     x="חתימה שייכת ל-digest. אם ה-policy מאמת לפי tag, מישהו יכול להזיז את ה-tag ל-image אחר. עובדים עם digests מקצה לקצה, ו-admission policy דורש אותם."),
  ],
 }

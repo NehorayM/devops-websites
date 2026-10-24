@@ -125,6 +125,73 @@ strategy:
          "Code coverage",
          x="change failure rate הוא אחוז ה-deploys שגרמו לתקלה. יחד עם זמן ההתאוששות הוא מודד יציבות."),
       ]),
+
+  MOD("deploy-in-practice", "בפועל: Argo Rollouts, feature flags ו-DORA",
+      "לכתוב canary עם analysis אוטומטי, להפריד deploy מ-release עם feature flags, ולמדוד את ה-delivery עם ארבעת מדדי DORA.",
+      [P("ב-Mid-Senior שואלים 'איך תעשה canary אמיתי?'. התשובה היא לא רק 'שולחים 10% מהתעבורה', אלא מי מחליט אם להמשיך, לפי איזה מדד, ומה קורה כשהמדד רע."),
+       CODE("""apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+spec:
+  strategy:
+    canary:
+      steps:
+        - setWeight: 10
+        - pause: {duration: 5m}
+        - analysis: {templates: [{templateName: success-rate}]}
+        - setWeight: 50
+        - pause: {duration: 10m}
+---
+kind: AnalysisTemplate
+metadata: {name: success-rate}
+spec:
+  metrics:
+    - name: success-rate
+      interval: 1m
+      failureLimit: 2
+      successCondition: result[0] >= 0.99
+      provider:
+        prometheus:
+          query: sum(rate(http_requests_total{app="api",code!~"5.."}[2m])) / sum(rate(http_requests_total{app="api"}[2m]))""", cap="אם ה-analysis נכשל, ה-Rollout עושה abort וחוזר לגרסה היציבה"),
+       TABLE(["שאלה", "Deploy", "Release"],
+             ["מה זה", "הקוד החדש רץ בפרודקשן", "משתמשים רואים את הפיצ'ר"],
+             ["מי שולט", "pipeline", "feature flag (LaunchDarkly, Unleash, flagd)"],
+             ["rollback", "deploy של גרסה קודמת", "כיבוי ה-flag, בשניות"]),
+       KEY("feature flags מפרידים deploy מ-release: אפשר לפרוס קוד כבוי, להדליק ל-1% מהמשתמשים, ולכבות בלי deploy. המחיר הוא חוב טכני: flags ישנים צריך למחוק."),
+       H("DORA"),
+       TABLE(["מדד", "מה מודד", "צד"],
+             ["Deployment frequency", "כמה פעמים פורסים לפרודקשן", "מהירות"],
+             ["Lead time for changes", "מ-commit עד פרודקשן", "מהירות"],
+             ["Change failure rate", "אחוז ה-deploys שגרמו לתקלה", "יציבות"],
+             ["Time to restore service", "כמה זמן לוקח להתאושש מתקלה", "יציבות"]),
+       TREE(["המדדים רעים מיד אחרי deploy", "rollback או abort של ה-canary, ואז חקירה"],
+            ["הבעיה בפיצ'ר חדש מאחורי flag", "לכבות את ה-flag"],
+            ["migration כבר שינה את ה-DB", "roll forward עם תיקון, כי rollback של הקוד לא מחזיר את הסכמה"]),
+       TRAP("canary בלי analysis אוטומטי הוא רק rolling איטי: אם אף אחד לא מסתכל על המדדים בזמן ה-pause, הגרסה הרעה מתקדמת ל-100% לבד."),
+       ASK("How would you implement an automated canary on Kubernetes?",
+           "What's the difference between deploying and releasing?",
+           "Which DORA metrics would you track and why?",
+           "When do you roll forward instead of rolling back?"),
+      ],
+      [C("In Argo Rollouts, what happens when a canary analysis fails?",
+         "The Rollout aborts and traffic goes back to the stable version",
+         "The canary is promoted to 100%",
+         "The pod is restarted",
+         "Argo CD deletes the Application",
+         x="כש-AnalysisRun נכשל (מעבר ל-failureLimit), ה-Rollout עושה abort ומחזיר את כל התעבורה לגרסה היציבה."),
+       C("How do feature flags change a release?",
+         "They separate deploying code from turning the feature on for users",
+         "They make deploys faster to build",
+         "They replace canary deployments entirely",
+         "They remove the need for tests",
+         x="הקוד נפרס כבוי ומודלק בהדרגה. אם יש בעיה מכבים את ה-flag בלי deploy."),
+       C("Which two DORA metrics measure stability?",
+         "Change failure rate and time to restore service",
+         "Deployment frequency and lead time",
+         "Test coverage and build time",
+         "Uptime and CPU usage",
+         x="deployment frequency ו-lead time מודדים מהירות. change failure rate ו-time to restore מודדים יציבות."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -207,11 +274,11 @@ strategy:
      ("Find who wrote the bug", "חיפוש אשמים לא מתקן כלום."),
      ("Wait for the next scheduled release", "זה משאיר את התקלה פתוחה."),
      x="rollback או flag מחזירים שירות. תקשורת שומרת על אמון. חקירה ו-postmortem מונעים את הפעם הבאה."),
-   F("db-rollback", "Which DORA metric measures the time from commit to running in production?",
-     ("Lead time for changes", "נכון. כמה זמן לוקח לשינוי להגיע."),
-     ("Change failure rate", "זה אחוז הכישלונות."),
-     ("Deployment frequency", "זה כמה פעמים פורסים."),
-     ("Mean time between failures", "זה לא אחד מארבעת המדדים."),
-     x="lead time קצר אומר pipeline מהיר ו-batches קטנים. הוא נמדד מ-commit ועד שהשינוי רץ בפרודקשן."),
+   F("deploy-in-practice", "A canary at 10% looks bad, but nobody watched the dashboard during the pause and it reached 100%. What was missing?",
+     ("An automated analysis step that aborts the rollout on bad metrics", "נכון. analysis אוטומטי מחליט לפי מדדים ולא תלוי במי שמסתכל."),
+     ("A longer pause between steps", "pause ארוך יותר רק מעכב את אותה התקדמות אם אף אחד לא בודק."),
+     ("A higher initial weight", "משקל גבוה יותר חושף יותר משתמשים לגרסה הרעה, בלי לעצור אותה."),
+     ("A blue-green strategy instead", "blue-green מחליף את כל התעבורה בבת אחת; בלי בדיקה אוטומטית הבעיה דומה."),
+     x="canary עובד כשיש analysis (למשל AnalysisTemplate מול Prometheus) שבודק success rate או latency ועושה abort אוטומטי. בלי זה הוא רק rolling איטי."),
  ],
 }

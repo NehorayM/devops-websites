@@ -112,6 +112,64 @@ SUBJECT = {
          "Increase the CI timeout",
          x="אותו image משחזר את הסביבה. משם בודקים הבדלים: env vars, timezone, CPUs ומקביליות."),
       ]),
+
+  MOD("test-in-practice", "בפועל: Testcontainers, sharding, דוחות ו-coverage",
+      "להריץ integration tests מול תלויות אמיתיות, לפצל suite ארוך בין runners, לפרסם דוחות JUnit, ולהציב gate של coverage על הקוד שהשתנה.",
+      [P("שאלה נפוצה: 'ה-suite לוקח 40 דקות ונופל אקראית. מה עושים?'. תשובה טובה מפרקת את זה לשלוש בעיות: תלויות לא יציבות, הרצה סדרתית, וחוסר נראות לתוצאות."),
+       CODE("""// Testcontainers (Java): Postgres אמיתי לכל ריצת בדיקות
+@Container
+static PostgreSQLContainer<?> db = new PostgreSQLContainer<>("postgres:16");
+
+@DynamicPropertySource
+static void props(DynamicPropertyRegistry r) {
+  r.add("spring.datasource.url", db::getJdbcUrl);
+}""", cap="תלות אמיתית, נקייה ומבודדת בכל ריצה, בלי שרת בדיקות משותף"),
+       TABLE(["גישה", "יתרון", "חיסרון"],
+             ["Mocks", "מהיר מאוד", "לא תופס הבדלי התנהגות של ה-DB האמיתי"],
+             ["DB משותף ל-staging", "קרוב לפרודקשן", "בדיקות מתנגשות, מצב שנשאר מריצה קודמת"],
+             ["Testcontainers", "אמיתי ומבודד לכל ריצה", "צריך Docker ב-runner, כמה שניות התחלה"]),
+       H("Sharding ודוחות"),
+       CODE("""jobs:
+  test:
+    strategy:
+      matrix: {shard: [1, 2, 3, 4]}
+    steps:
+      - run: npx jest --shard=${{ matrix.shard }}/4 --reporters=default --reporters=jest-junit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: junit-${{ matrix.shard }}, path: junit.xml}""", cap="4 runners במקביל; הדוח עולה גם כשהבדיקות נכשלות"),
+       KEY("`if: always()` בשלב העלאת הדוח חשוב: בלי זה, כשבדיקה נכשלת ה-step לא רץ, ובדיוק כשצריך את הדוח הוא חסר."),
+       TABLE(["מדד coverage", "מה הוא אומר", "gate סביר"],
+             ["Coverage כולל", "כמה מהקוד כולו מכוסה", "לא לרדת מהקיים (ratchet)"],
+             ["Diff coverage", "כמה מהשורות שהשתנו ב-PR מכוסות", "למשל 80% על קוד חדש"],
+             ["Mutation score", "האם הבדיקות באמת תופסות שינוי בקוד", "מעקב, לא gate קשיח"]),
+       TRAP("אחוז coverage גבוה לא אומר שהבדיקות טובות: בדיקה בלי assert מכסה שורות ולא בודקת כלום. diff coverage ו-mutation testing קרובים יותר למה שרוצים למדוד."),
+       P("בדיקה שבירה (flaky) מטופלת כך: מזהים אותה מהיסטוריית ריצות, מעבירים ל-quarantine עם ticket ובעלים, ומתקנים את הסיבה (זמן, סדר, מצב משותף, רשת). retry אוטומטי בלי מעקב רק מסתיר את הבעיה."),
+       ASK("Your test suite takes 40 minutes. How do you speed it up?",
+           "Mocks or real dependencies for integration tests?",
+           "What coverage gate would you set on PRs?",
+           "How do you handle flaky tests without ignoring them?"),
+      ],
+      [C("What does Testcontainers give integration tests?",
+         "A real, isolated dependency (like Postgres) started for each test run",
+         "Faster mocks generated from the schema",
+         "A shared staging database",
+         "Automatic retries for failed tests",
+         x="Testcontainers מרים container אמיתי לכל ריצה, כך שהבדיקה מבודדת ומתנהגת כמו התלות האמיתית."),
+       C("Why add `if: always()` to the step that uploads the JUnit report?",
+         "So the report is uploaded even when the tests fail",
+         "So the tests run in parallel",
+         "So the cache is always restored",
+         "So the job never fails",
+         x="בלי if: always(), ה-step מדלג אחרי כישלון, ודווקא אז חסר הדוח."),
+       C("What does diff coverage measure?",
+         "How many of the lines changed in the PR are covered by tests",
+         "The total coverage of the repository",
+         "How many tests were added",
+         "The difference in runtime between two runs",
+         x="diff coverage מסתכל רק על השורות שה-PR שינה, ולכן gate עליו הוגן גם ב-repo ישן עם coverage נמוך."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -193,11 +251,11 @@ SUBJECT = {
      ("It always makes tests fail", "דווקא גורם להם לעבור."),
      ("It deletes test results", "התוצאות נשמרות."),
      x="race condition אמיתי נראה בדיוק כמו flakiness. retry גורף מעלים את שניהם. retry מותר רק עם דיווח ומעקב."),
-   F("speed-flaky", "A test passes locally but fails in CI. Which difference should you check?",
-     ("Environment differences like timezone, env vars and CPU count", "נכון. אלה ההבדלים הנפוצים."),
-     ("The colour of the terminal", "צבעי הטרמינל לא משפיעים על בדיקות."),
-     ("The developer's IDE", "IDE לא רץ ב-CI."),
-     ("The Git commit message", "ההודעה לא משפיעה על בדיקות."),
-     x="CI רץ בדרך כלל ב-UTC, עם פחות CPUs, משתנים אחרים ומערכת קבצים רגישה לאותיות. משחזרים עם אותו image."),
+   F("test-in-practice", "Integration tests share one staging database and fail randomly when two pipelines run at once. What is the best fix?",
+     ("Give each run its own database, for example with Testcontainers", "נכון. בידוד מלא מונע התנגשות במצב משותף."),
+     ("Add automatic retries to every test", "retries מסתירים את ההתנגשות ולא מונעים אותה; הבדיקות עדיין משפיעות זו על זו."),
+     ("Run the pipelines only at night", "זה מקטין את הסיכוי להתנגשות אבל משאיר את התלות במצב משותף ומאט את הפידבק."),
+     ("Replace the integration tests with unit tests", "unit tests לא בודקים את האינטגרציה עם ה-DB, ולכן הכיסוי שנעלם הוא בדיוק מה שהיה צריך."),
+     x="בדיקות שחולקות מצב חיצוני נשברות כשהן רצות במקביל. DB נפרד לכל ריצה (Testcontainers או schema לכל job) נותן בידוד ותוצאות חוזרות."),
  ],
 }

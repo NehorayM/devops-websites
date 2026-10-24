@@ -87,6 +87,42 @@ docker buildx build --platform linux/amd64,linux/arm64 \\
         "A canary looked fine, then full rollout failed. Why?",
         "Design a CI/CD pipeline for a microservice on Kubernetes."),
   ]},
+  {"nm": "Pipeline cheat sheet", "blocks": [
+    P("שאלת עיצוב קלאסית: 'תאר pipeline מ-commit עד פרודקשן'. זו התבנית לתשובה, שלב אחר שלב, עם מה שכל שלב מוכיח."),
+    TABLE(["שלב", "מה רץ", "מה הוא מוכיח", "זמן יעד"],
+          ["PR", "lint, unit tests, SAST, secret scan, diff coverage", "הקוד נכון ובטוח ברמת השורה", "פחות מ-10 דקות"],
+          ["Build", "docker build עם cache, SBOM, push לפי digest", "artifact אחד וצפוי", "דקות"],
+          ["Scan ו-sign", "Trivy על ה-image, cosign sign", "אין CVE קריטי, ידוע מי בנה", "דקות"],
+          ["Staging", "עדכון tag ב-GitOps repo, integration ו-smoke", "עובד בסביבה אמיתית", "דקות"],
+          ["Production", "canary עם analysis, או approval ידני", "עובד מול משתמשים, עם rollback אוטומטי", "לפי השלבים"]),
+    FLOW("commit", "CI: test + scan", "build once", "sign + push digest", "PR ל-GitOps repo", "Argo CD sync", "canary + analysis", cap="build once, promote the same digest"),
+    KEY("עיקרון 'build once': אותו digest עובר מ-staging לפרודקשן. בונים מחדש לכל סביבה רק אם רוצים לבדוק משהו שלא יגיע לפרודקשן."),
+    TRAP("pipeline שמחזיק credentials לקלאסטר הפרודקשן (`kubectl apply` מה-CI) הוא נקודת תקיפה אחת לכל הסביבות. ב-GitOps ה-CI כותב ל-Git, והקלאסטר מושך."),
+    ASK("Walk me through your ideal pipeline from commit to production.",
+        "Why build once and promote, instead of building per environment?",
+        "Where in the pipeline does each security check belong?"),
+  ]},
+  {"nm": "Dockerfile review drill", "blocks": [
+    P("תרגיל ראיון נפוץ: מקבלים Dockerfile ומתבקשים למצוא בעיות. עוברים עליו בסדר קבוע: base, cache, סודות, משתמש, הרצה."),
+    CODE("""FROM node:latest
+COPY . /app
+WORKDIR /app
+ARG NPM_TOKEN
+RUN npm install
+EXPOSE 3000
+CMD npm start""", cap="Dockerfile עם שש בעיות"),
+    TABLE(["שורה", "בעיה", "תיקון"],
+          ["`FROM node:latest`", "לא צפוי, image גדול", "גרסה קבועה, `-slim`, ו-multi-stage"],
+          ["`COPY . /app` לפני install", "כל שינוי בקוד שובר את cache התלויות", "קודם `package*.json`, `npm ci`, ואז שאר הקוד"],
+          ["`ARG NPM_TOKEN`", "הסוד נשמר ב-history", "`RUN --mount=type=secret`"],
+          ["`npm install`", "לא נאמן ל-lockfile", "`npm ci`"],
+          ["אין `USER`", "רץ כ-root", "`USER node` או UID מספרי"],
+          ["`CMD npm start`", "shell form, npm כ-PID 1, SIGTERM לא מגיע", "`CMD [\"node\", \"server.js\"]`"]),
+    KEY("סדר השכבות קובע את ה-cache: מה שמשתנה לעתים רחוקות (תלויות) למעלה, מה שמשתנה בכל commit (קוד) למטה."),
+    ASK("What's wrong with this Dockerfile?",
+        "How do you order layers for the best cache hit rate?",
+        "Why `npm ci` instead of `npm install` in CI?"),
+  ]},
  ],
  "quiz": [
    QZ("Why copy `package.json` before the source code in a Dockerfile?",
@@ -101,5 +137,11 @@ docker buildx build --platform linux/amd64,linux/arm64 \\
    QZ("Which strategy gives instant rollback by switching traffic back?",
       "Blue-green", "Rolling update", "Recreate", "Feature branch",
       x="ב-blue-green הגרסה הקודמת עדיין רצה במלואה, ו-rollback הוא רק החזרת התנועה אליה."),
+  QZ("What does 'build once, promote' mean?",
+      "The same image digest moves from staging to production without rebuilding", "Each environment builds its own image", "Only one build per day is allowed", "The image is built in production",
+      x="בונים פעם אחת ומקדמים את אותו digest, כך שמה שנבדק ב-staging הוא בדיוק מה שרץ בפרודקשן."),
+   QZ("Why copy `package.json` and install dependencies before copying the rest of the code?",
+      "So code changes don't invalidate the cached dependency layer", "So the image is signed", "So npm runs as non-root", "So the build context is smaller",
+      x="שכבת התלויות נבנית מחדש רק כש-package.json משתנה. שינוי בקוד שובר רק את השכבות שאחריה."),
  ],
 }

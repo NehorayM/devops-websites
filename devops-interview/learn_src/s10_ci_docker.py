@@ -126,6 +126,63 @@ CMD ["dist/server.js"]
          "Images are smaller",
          x="build מחדש יכול להכניס תלות שהשתנתה. קידום אותו digest מבטיח שהבדיקות ב-staging רלוונטיות לפרודקשן."),
       ]),
+
+  MOD("docker-in-practice", "בפועל: image קטן, מהיר ובטוח",
+      "לקרוא היסטוריית שכבות, לבחור base image, להשתמש ב-cache mounts וב-secret mounts, ולהריץ את התהליך נכון כ-PID 1 ובלי root.",
+      [P("בראיון מעשי נותנים Dockerfile ושואלים 'מה היית משפר?'. התשובה הטובה מתחילה במדידה: מה גודל ה-image, אילו שכבות כבדות, ומה נבנה מחדש בכל commit."),
+       CODE("""$ docker image ls api
+REPOSITORY  TAG     IMAGE ID      SIZE
+api         1.4.0   9c2f1e0b7a11  1.12GB
+
+$ docker history api:1.4.0
+CREATED BY                                      SIZE
+RUN /bin/sh -c pip install -r requirements.txt  412MB
+COPY . /app                                     380MB
+RUN /bin/sh -c apt-get update && apt-get ins…   210MB
+FROM python:3.12                                ...""", cap="COPY של 380MB: כנראה חסר .dockerignore (.git, node_modules, נתוני בדיקה)"),
+       TABLE(["Base image", "גודל משוער", "מתי"],
+             ["`python:3.12`", "כמה מאות MB ומעלה", "שלב build, כשצריך compilers"],
+             ["`python:3.12-slim`", "קטן בהרבה", "ברירת מחדל טובה לשלב runtime"],
+             ["`alpine`", "כמה MB", "רק אם התוכנה עובדת עם musl ולא glibc"],
+             ["distroless / `scratch`", "מינימלי, בלי shell", "binary סטטי (Go), משטח תקיפה קטן"]),
+       H("BuildKit mounts"),
+       CODE("""# syntax=docker/dockerfile:1
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc npm ci
+COPY . .
+USER 10001
+ENTRYPOINT ["python", "-m", "api"]""", cap="cache mount חוסך הורדות; secret mount לא נשאר באף שכבה"),
+       KEY("`RUN --mount=type=secret` מכניס את הסוד רק לזמן ה-RUN, והוא לא נשמר ב-image ולא ב-`docker history`. `ARG` או `ENV` עם token נשמרים ב-metadata של ה-image ונראים לכל מי שמושך אותו."),
+       P("ה-exec form (`ENTRYPOINT [\"python\", ...]`) מריץ את התהליך ישירות כ-PID 1, והוא מקבל SIGTERM מ-`docker stop` ומ-Kubernetes. ה-shell form (`ENTRYPOINT python ...`) מריץ `/bin/sh -c`, וה-shell לא מעביר את האות, כך שהקונטיינר נהרג אחרי grace period."),
+       TRAP("`USER` בלי מספר (`USER app`) לא מספיק ל-`runAsNonRoot` ב-Kubernetes אם ה-kubelet לא יכול לוודא שהשם הוא לא root. UID מספרי (`USER 10001`) עובר את הבדיקה."),
+       ASK("This image is 1.1 GB. How do you make it smaller?",
+           "How do you pass a private registry token to a build without leaking it?",
+           "Why doesn't my container stop gracefully on `docker stop`?",
+           "Alpine or distroless: what are the trade-offs?"),
+      ],
+      [C("How do you use a token during a build without it ending up in the image?",
+         "`RUN --mount=type=secret` with BuildKit",
+         "Pass it with `ARG` and unset it later",
+         "Set it with `ENV` in an early stage",
+         "COPY the file and delete it in the next RUN",
+         x="secret mount קיים רק בזמן ה-RUN. ARG ו-ENV נשמרים ב-metadata, ו-COPY ואז מחיקה משאירים את הקובץ בשכבה הקודמת."),
+       C("Why doesn't a container started with a shell-form ENTRYPOINT stop gracefully?",
+         "`/bin/sh -c` is PID 1 and doesn't forward SIGTERM to the app",
+         "Shell form disables the healthcheck",
+         "Shell form runs as root",
+         "Docker ignores SIGTERM for shell form",
+         x="ב-shell form ה-shell הוא PID 1 והאפליקציה לא מקבלת את האות. exec form מריץ אותה ישירות."),
+       C("`docker history` shows a 380 MB `COPY . /app` layer. What is the likely fix?",
+         "Add a `.dockerignore` for .git, node_modules and test data",
+         "Switch to the shell form",
+         "Use `ADD` instead of `COPY`",
+         "Add more RUN layers",
+         x=".dockerignore מוציא קבצים מה-build context, ולכן גם מהשכבה של COPY. זה גם מאיץ את ה-build."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -209,11 +266,11 @@ CMD ["dist/server.js"]
      ("Building multi-arch images", "אין קשר לארכיטקטורות."),
      ("Deleting old images", "מחיקה היא נושא נפרד (lifecycle policy)."),
      x="בלי immutable tags, דחיפה חוזרת ל-`1.4.2` משנה בשקט מה רץ. עם ההגדרה, ה-registry דוחה את הדחיפה."),
-   F("dockerfile", "Which base image choice usually gives the smallest attack surface for a compiled Go service?",
-     ("A distroless or scratch image", "נכון. בלי shell ובלי package manager."),
-     ("A full Ubuntu image", "Ubuntu מלא מגיע עם הרבה חבילות מיותרות."),
-     ("The Go SDK image used for building", "ה-SDK כבד ומיועד ל-build stage."),
-     ("An image with debugging tools preinstalled", "כלים נוספים = יותר חולשות פוטנציאליות."),
-     x="קובץ Go סטטי לא צריך כמעט כלום. distroless או scratch מקטינים גודל ומספר CVEs; דיבוג עושים עם kubectl debug."),
+   F("docker-in-practice", "A Dockerfile has `ARG NPM_TOKEN` and uses it in `RUN npm ci`. What is the risk, and the fix?",
+     ("The token is visible in the image history; use a BuildKit secret mount instead", "נכון. ערכי ARG שנעשה בהם שימוש ב-RUN נשמרים ב-history, ו-secret mount לא משאיר עקבות."),
+     ("None, ARG values are never stored", "ARG שנעשה בו שימוש ב-RUN נראה ב-`docker history`, ולכן זה לא בטוח."),
+     ("The build fails without network; add `--network=host`", "רשת לא קשורה לדליפת סוד; הבעיה היא שהערך נשמר ב-image."),
+     ("ARG is slower than ENV; switch to ENV", "ENV גרוע יותר: הוא נשמר ב-config של ה-image וזמין לכל container."),
+     x="סודות לא עוברים ב-ARG או ENV. `RUN --mount=type=secret,id=npm` עם `docker build --secret id=npm,...` מכניס אותם רק לזמן הפקודה, בלי שכבה ובלי history."),
  ],
 }
