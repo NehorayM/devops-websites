@@ -3729,7 +3729,7 @@ function authoredChecks(){
   // without reading. Stage 9 rebalances the distractors file by file; the count only goes down.
   const longest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
     return L[a]>Math.max(...L.filter((_,j)=>j!==a)); }).length;
-  ok(longest<=642,'the right option is the longest in at most 642 questions ('+longest+')');
+  ok(longest<=550,'the right option is the longest in at most 550 questions ('+longest+')');
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');
