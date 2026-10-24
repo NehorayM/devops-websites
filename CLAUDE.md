@@ -164,7 +164,7 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (stage 9, after Helm) |
+| Suite | File | Last green (stage 9, after Terraform) |
 |---|---|---|
 | `QA_BANK()` | qa_bank.js | 22,663 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
@@ -177,8 +177,8 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
-- `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b) and caps
-  questions whose right option is the longest at `<=550` (was 1,096). Lower both caps as files are rewritten.
+- `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=482` (was 1,558 before stage 7b) and caps
+  questions whose right option is the longest at `<=459` (was 1,096). Lower both caps as files are rewritten.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -232,7 +232,7 @@ Notes:
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
-| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes, Argo CD, CI, AWS and Helm done (955 q; right-is-longest ~80% → ~25%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count (≤ 550) |
+| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes, Argo CD, CI, AWS, Helm and Terraform done (1,088 q; right-is-longest ~80% → ~23%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchets (longest ≤ 459, stubs ≤ 482) |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -250,16 +250,21 @@ Notes:
    every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% **and the shortest
    in ≤ 40%** of questions. (Fixing the first tell created the second: after the first pass the right answer was the
    shortest in up to 56% of a file. Aim for both near 25%: the right answer should sit mid-pack by length.)
-   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **550**) — lower it after each topic.
+   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **459**) — lower it after each topic.
    **Done (HARD = True):** Kubernetes (`k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug`, 265 q) and
    Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q), CI (`ci_docker`, `ci_sec`, `ci_test`, `ci_deploy`, 186 q),
-   AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q), Helm (`helm_charts`, `helm_ops`, 133 q). Across these 955: right-is-longest ~25%,
-   shortest ~28%. **Left, in this order:** Terraform (`tf_core`, `tf_state`),
+   AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q), Helm (`helm_charts`, `helm_ops`, 133 q), Terraform (`tf_core`, `tf_state`, 133 q).
+   Across these 1,088: right-is-longest ~23%, shortest ~28%. **Left, in this order:**
    `linux`, `cicd_tools`, `net`. Then stage 10 (below).
    **Workflow per file** (from `devops-interview/`; tools in `tools/`):
    - `python3 tools/brief.py <file>.py` — stems and options, compact; `python3 tools/qtool.py dump <file>.py` — full JSON.
-   - Write the new content as JSON `[{"i":N,"r":[text,why],"w":[[text,why]×3],"tip":"..."}]` (split into 2 files of ~22).
+   - Write the new content as JSON `[{"i":N,"r":[text,why],"w":[[text,why]×3],"tip":"..."}]` (split into parts of ~22).
      **Write the right answer short and the distractors full** — the habit is the other way round.
+   - **Before merging, check each draft part:** `python3 tools/partcheck.py part_a.json [part_b.json ...]` flags right options
+     that are longest or too long, short distractors, explanations < 72 and tips < 82, and prints longest/shortest totals.
+     Fix a part with `python3 tools/patch.py part.json fixes.json`, where fixes is
+     `{"<i>": {"r": "new right text", "w1".."w3": "new wrong text", "y0": "right why", "y1".."y3": "wrong whys", "tip": "..."}}`.
+     Fixing drafts this way is much cheaper than fixing the merged file. Split big files into 3 parts of ~22.
    - `tools/merge_apply.sh <file>.py part_a.json part_b.json` — checks every index is covered, rewrites the `Q(...)` calls
      in place (comments survive), adds `HARD = True`, runs the validator.
    - Fix what it reports: `tools/short.py <file>.py` lists explanations < 70; `tools/longest.py <file>.py` lists questions where
@@ -277,9 +282,8 @@ Notes:
    `hashicorp/web-unified-docs/main/content/terraform/...`, `awsdocs/amazon-eks-user-guide/mainline/latest/ug/...`,
    `docker/docs/main/content/manuals/...`, `github/docs/main/content/actions/...`, `jenkinsci/jenkins.io/master/content/doc/...`.
    Use them to check any fact you aren't sure of; when unsure and unverifiable, leave the claim out rather than guess.
-   **Known content bug to fix during the Terraform pass:** `qsrc/tf_core.py`, the `user_data` question. Its right answer says
-   changing `user_data` forces a new instance by default. Per the AWS provider docs it stops and starts the instance, and
-   replaces it only with `user_data_replace_on_change = true`.
+   (Fixed in the Terraform pass: the tf_core `user_data` question now says a change stops and starts the instance by default,
+   and replaces it only with `user_data_replace_on_change = true`.)
 2. **Stage 10: deeper Learn and Study content** (Nehoray: "more expansion for all topics... not enough material"). After stage 9:
    go subject by subject through `learn_src/s00..s23` and `study_src/c1..c9`, add depth from the official docs (more parts or
    longer parts, more tables, real commands and outputs, edge cases interviewers ask about), keep the builders' rules, run QA_LEARN.
