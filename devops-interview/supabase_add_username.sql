@@ -1,5 +1,5 @@
 -- ============================================================================
---  Neon Grid — add usernames to an existing project
+--  Ship It — add usernames to an existing project
 --  Run this once in: Supabase dashboard → SQL Editor → New query → Run
 --  Safe to run more than once. It does not touch your existing rows or policies.
 -- ============================================================================

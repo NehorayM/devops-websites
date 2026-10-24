@@ -1,5 +1,5 @@
 -- ============================================================================
---  Skyforge — Casino tournament: you and seven bots, three knockout rounds
+--  Ship It — Casino tournament: you and seven bots, three knockout rounds
 --  Run after supabase_casino.sql, supabase_duel.sql and supabase_duel_v2.sql. Safe to re-run.
 --
 --  Eight seats: you and seven bots with people's names. Quarter-final, semi-final, final. Each

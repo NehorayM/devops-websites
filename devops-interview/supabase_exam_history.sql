@@ -1,4 +1,4 @@
--- Neon Grid — exam history, one row per exam
+-- Ship It — exam history, one row per exam
 -- Run this once in the Supabase SQL editor (Dashboard → SQL Editor → New query). Safe to run
 -- again: every statement is guarded.
 --
@@ -18,7 +18,7 @@ create table if not exists public.exam_history (
   primary key (user_id, hid)
 );
 
-comment on table public.exam_history is 'Per-user Neon Grid exam history. One row per submitted exam.';
+comment on table public.exam_history is 'Per-user Ship It exam history. One row per submitted exam.';
 
 do $$
 begin

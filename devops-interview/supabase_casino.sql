@@ -1,5 +1,5 @@
 -- ============================================================================
---  Neon Grid — Casino (server-authoritative)
+--  Ship It — Casino (server-authoritative)
 --  Run once in: Supabase dashboard → SQL Editor → New query → Run
 --  Safe to re-run.
 --

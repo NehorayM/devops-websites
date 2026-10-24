@@ -54,6 +54,30 @@ const SUPA={
 > into a public page would hand every user's data to anyone who views source. It belongs in a
 > server, never in a browser.
 
+## 3b. Games, leaderboard and exam history
+
+Run these in the SQL editor **in this order**, each as its own query. Every file is safe to re-run.
+
+| # | File | What it adds |
+|---|---|---|
+| 1 | `supabase_setup.sql` | `profiles` + row-level security (step 2 above) |
+| 2 | `supabase_add_username.sql` | usernames (a no-op if `supabase_setup.sql` already created the column) |
+| 3 | `supabase_casino.sql` | wallets and server-side casino games |
+| 4 | `supabase_casino_v2.sql` | shared roulette, coins → chips, cleanup of old rows |
+| 5 | `supabase_duel.sql` | question duel |
+| 6 | `supabase_duel_v2.sql` | duel on a chosen exam; holds the answer key of the current bank (1,300 questions, 20 exams) |
+| 7 | `supabase_exam_history.sql` | one row per submitted exam |
+| 8 | `supabase_leaderboard.sql` | weekly leaderboard |
+| 9 | `supabase_tournament.sql` | tournament against seven bots |
+
+**After any change to the question bank**, regenerate and re-run file 6 (`python3 gen_duel_v2.py && python3 build_duel_key.py`),
+or duels will mark answers against the old key.
+
+To test the SQL before running it on the real project: `sql_tests/run.sh` (needs Docker) or
+`sql_tests/run_local.sh` (needs a local Postgres, e.g. `apt install postgresql`). Every line should say PASS.
+
+When `SUPA` is filled in, the page drops its `nocloud` class and shows the casino and the leaderboard.
+
 ## 4. Email confirmation (optional but recommended)
 
 By default Supabase emails a confirmation link before a new account can sign in. To change it:

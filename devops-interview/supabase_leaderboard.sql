@@ -1,5 +1,5 @@
 -- ============================================================================
---  Skyforge — weekly leaderboard: correct answers this week, every player
+--  Ship It — weekly leaderboard: correct answers this week, every player
 --  Run after supabase_setup.sql. Safe to re-run.
 --
 --  Profiles are private (row-level security: you read your own row only), and that stays so.

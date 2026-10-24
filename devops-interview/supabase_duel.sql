@@ -1,5 +1,5 @@
 -- ============================================================================
---  Neon Grid — Question Duel + roulette fix
+--  Ship It — Question Duel + roulette fix
 --  Run after supabase_casino_v2.sql. Safe to re-run.
 --
 --  Two players, the same questions, chips on the line. Whoever answers wrong while the

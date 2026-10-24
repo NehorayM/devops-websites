@@ -1,4 +1,4 @@
--- Neon Grid — Supabase setup
+-- Ship It — Supabase setup
 -- Run this once in your project's SQL editor (Supabase dashboard → SQL Editor → New query).
 --
 -- Passwords are never stored here. Supabase Auth owns them in auth.users, hashed with
@@ -17,7 +17,7 @@ create table if not exists public.profiles (
   created_at  timestamptz not null default now()
 );
 
-comment on table public.profiles is 'Per-user Neon Grid progress. One row per auth user.';
+comment on table public.profiles is 'Per-user Ship It progress. One row per auth user.';
 
 -- ---------------------------------------------------------------- display name
 -- Added after the first release, so this whole file is safe to run again on an existing

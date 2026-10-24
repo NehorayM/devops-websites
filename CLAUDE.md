@@ -93,7 +93,7 @@ devops-interview/
   qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
   tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
                           add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz)
-  supabase_*.sql sql_tests/          backend for stage 8
+  supabase_*.sql sql_tests/          backend for stage 8 (sql_tests/run.sh needs Docker; run_local.sh needs local Postgres)
 ```
 
 ## 5. Authoring formats
@@ -293,6 +293,10 @@ Notes:
    every Study chapter has 1–2 extra pages (`tools/add_topic.py <study_src/cN.py> <snippet>`: topic dicts, `#---QUIZ---`, `QZ(...)`).
    A further pass can add more parts per subject the same way (builders allow up to 8 modules).
 3. **Stage 8 (NEXT): games and multiplayer.**
+   *Prep done:* SQL comments say Ship It; `sql_tests/duel_v2_suite.sql` updated from the AWS bank (1,201 q, 19 exams) to
+   the DevOps bank (1,300 q, 20 full exams); all SQL suites pass (152 PASS) via the new Docker-free `sql_tests/run_local.sh`;
+   SETUP.md lists the SQL run order. Client duel/bot/tournament pools use `paperQs` (bank order in 65s), same as the server.
+   **Waiting on Nehoray:** the project URL and publishable key (steps a–c).
    a. Nehoray creates a new Supabase project (`SETUP.md` has the steps).
    b. Run the SQL in this order: `supabase_setup.sql`, `supabase_add_username.sql`, `supabase_casino.sql`, `supabase_casino_v2.sql`,
       `supabase_duel.sql`, `supabase_duel_v2.sql`, `supabase_exam_history.sql`, `supabase_leaderboard.sql`, `supabase_tournament.sql`

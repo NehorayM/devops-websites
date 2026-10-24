@@ -1,5 +1,5 @@
 -- ============================================================================
---  Neon Grid — Casino v2
+--  Ship It — Casino v2
 --   · shared roulette: one wheel for everyone, a new round every 25 seconds
 --   · study coins → chips (capped, see the note below)
 --   · retention: old rounds, bets, hands and logs delete themselves

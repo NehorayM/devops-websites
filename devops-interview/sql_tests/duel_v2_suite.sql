@@ -11,11 +11,11 @@ begin
   delete from public.duels;
 
   -- ============ the key is the bank ============
-  perform test_assert((select count(*) from jsonb_object_keys((select ans from public.answer_key where id = 1))) = 1201,
+  perform test_assert((select count(*) from jsonb_object_keys((select ans from public.answer_key where id = 1))) = 1300,
                       'v2 key holds every question in the bank');
-  perform test_assert(public.duel_answers(862) = array['B','D'], 'question 862 has its corrected answer (B + D)');
-  perform test_assert(public.duel_answers(1046) = array['C'], 'question 1046 has its corrected answer (C)');
-  perform test_assert(public.duel_exam_count() = 19, 'the bank cuts into 19 exams');
+  perform test_assert(public.duel_answers(862) = array['C'], 'question 862 matches the DevOps bank (C)');
+  perform test_assert(public.duel_answers(1046) = array['A'], 'question 1046 matches the DevOps bank (A)');
+  perform test_assert(public.duel_exam_count() = 20, 'the bank cuts into 20 exams');
   perform test_assert((select count(*) from pg_proc where proname = 'duel_find') = 1,
                       'one duel_find, so PostgREST is never left choosing between two');
 
@@ -91,12 +91,12 @@ begin
   perform test_assert((r->'duel'->>'exam')::int = 0, 'exam 99 is treated as any exam');
   perform public.duel_leave((r->'duel'->>'id')::uuid);
 
-  -- ============ the last exam is the short one ============
-  perform as_user(A); r := public.duel_find(25, 19);
-  perform as_user(B); r := public.duel_find(25, 19);
+  -- ============ the last exam: 20 x 65 = 1300, so exam 20 is a full one ============
+  perform as_user(A); r := public.duel_find(25, 20);
+  perform as_user(B); r := public.duel_find(25, 20);
   select * into d from public.duels order by created_at desc limit 1;
-  perform test_assert((select bool_and(x between 1170 and 1200) from unnest(d.q_ids) x),
-                      'exam 19 draws from its 31 questions only');
+  perform test_assert((select bool_and(x between 1235 and 1299) from unnest(d.q_ids) x),
+                      'exam 20 draws from questions 1235-1299 only');
 
   -- ============ an old page, sending the stake alone ============
   delete from public.duels;
