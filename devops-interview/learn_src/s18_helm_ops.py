@@ -125,6 +125,58 @@ helm get values api -n shop --revision 41
          "`helm repo update`",
          x="helm diff upgrade משווה את מה שירונדר מול ה-release הנוכחי ומראה את השינויים."),
       ]),
+
+  MOD("helm-in-practice", "בפועל: היסטוריה, release תקוע ו-OCI",
+      "לקרוא היסטוריית release, לשחרר release שנתקע ב-pending, לראות מה ישתנה לפני upgrade, ולפרסם charts ל-OCI registry.",
+      [P("בראיון על Helm שואלים כמעט תמיד על release שנתקע. כדי לענות צריך לדעת איפה Helm שומר את המצב ומה הוא מצפה לראות."),
+       CODE("""$ helm history api -n shop
+REVISION  STATUS           CHART       DESCRIPTION
+3         superseded       api-1.4.0   Upgrade complete
+4         deployed         api-1.5.0   Upgrade complete
+5         pending-upgrade  api-1.6.0   Preparing upgrade
+
+$ helm upgrade api ./api -n shop
+Error: UPGRADE FAILED: another operation (install/upgrade/rollback) is in progress""", cap="upgrade קודם נקטע (CI בוטל, timeout), ו-revision 5 נשאר pending"),
+       TABLE(["מצב", "פירוש", "מה עושים"],
+             ["deployed", "ה-revision הפעיל", "כלום"],
+             ["pending-upgrade / pending-install", "פעולה נקטעה באמצע", "`helm rollback api 4`, או מחיקת ה-Secret של revision 5"],
+             ["failed", "upgrade נכשל (למשל `--wait` עבר timeout)", "לתקן ולהריץ upgrade, או rollback"],
+             ["superseded", "revision ישן", "זמין ל-rollback"]),
+       KEY("Helm 3 שומר כל revision כ-Secret מסוג `helm.sh/release.v1` ב-namespace של ה-release (`sh.helm.release.v1.api.v5`). `--history-max` (ברירת מחדל 10 ב-upgrade) מגביל כמה revisions נשמרים."),
+       CODE("""kubectl -n shop get secrets -l owner=helm,name=api
+helm get values api -n shop --revision 4     # עם אילו values רץ revision 4
+helm get manifest api -n shop                 # מה Helm חושב שהוא פרס
+helm diff upgrade api ./api -f values-prod.yaml   # plugin: מה ישתנה""", cap="פקודות שעונות על 'מה רץ עכשיו ולמה'"),
+       H("OCI registries"),
+       CODE("""helm package ./api
+helm push api-1.6.0.tgz oci://ghcr.io/acme/charts
+helm install api oci://ghcr.io/acme/charts/api --version 1.6.0""", cap="charts באותו registry כמו ה-images"),
+       TRAP("`helm upgrade --wait` ב-CI עם timeout קצר וביטול של ה-job באמצע הוא המתכון הקלאסי ל-pending-upgrade. `--atomic` מבצע rollback אוטומטי אם ה-upgrade נכשל, וטיפול נכון ב-cancel של ה-CI מונע את המצב."),
+       ASK("Helm says another operation is in progress. How do you fix it?",
+           "Where does Helm 3 store release state?",
+           "How do you see what a `helm upgrade` will change before running it?",
+           "How do you distribute private charts?"),
+      ],
+      [C("Where does Helm 3 store release history by default?",
+         "As Secrets in the release's namespace",
+         "In Tiller's ConfigMaps in kube-system",
+         "In a local file on the CI runner",
+         "In the chart repository",
+         x="Helm 3 בלי Tiller שומר כל revision כ-Secret מסוג helm.sh/release.v1 ב-namespace של ה-release."),
+       C("A release is stuck in `pending-upgrade`. What is a standard way out?",
+         "Roll back to the last deployed revision",
+         "Run `helm repo update`",
+         "Restart the kubelet",
+         "Delete the namespace",
+         x="rollback ל-revision האחרון שהיה deployed מחזיר את ה-release למצב תקין, ואז אפשר לנסות upgrade שוב."),
+       C("What does `helm upgrade --atomic` do when the upgrade fails?",
+         "It rolls the release back automatically",
+         "It retries the upgrade three times",
+         "It deletes the release",
+         "It skips hooks",
+         x="atomic מפעיל wait, ואם ה-upgrade נכשל או עובר timeout הוא מבצע rollback ל-revision הקודם."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -208,11 +260,11 @@ helm get values api -n shop --revision 41
      ("When you need release history and rollback", "זה יתרון של Helm."),
      ("When you need parameterised templates", "templating הוא מה ש-Helm עושה."),
      x="Kustomize מצוין ל-base ו-overlays על YAML רגיל. Helm מתאים לאריזה, פרמטרים והפצה לצרכנים רבים."),
-   F("envs-secrets", "Why is running `helm upgrade` from a laptop against production a bad practice?",
-     ("No review, no recorded diff and no audit of who changed what", "נכון. הכול קורה מחוץ לתהליך."),
-     ("Laptops can't run Helm", "Helm רץ על כל מחשב."),
-     ("Helm only works from CI", "אין מגבלה כזאת."),
-     ("Production clusters reject Helm", "קלאסטרים לא דוחים Helm."),
-     x="שינוי דרך PR, CI או GitOps נותן review, diff ותיעוד. upgrade ידני משאיר את הצוות בלי לדעת מה רץ ולמה."),
+   F("helm-in-practice", "A CI job running `helm upgrade --wait` was cancelled mid-way. Now every upgrade fails with 'another operation is in progress'. Why?",
+     ("The release's latest revision was left in a pending state", "נכון. Helm רואה revision ב-pending ומסרב להתחיל פעולה חדשה."),
+     ("The chart repository is locked", "Helm לא נועל את ה-repository; המצב נשמר ב-Secret של ה-release בקלאסטר."),
+     ("Tiller is still running the old upgrade", "ב-Helm 3 אין Tiller; ה-CLI עצמו ביצע את הפעולה ונקטע."),
+     ("Kubernetes blocks two Deployments with the same name", "Kubernetes לא קשור; ההודעה מגיעה מ-Helm לפי מצב ה-release."),
+     x="ה-revision האחרון נשאר pending-upgrade. `helm rollback` ל-revision האחרון שהיה deployed משחרר את זה, ואז מריצים upgrade מחדש."),
  ],
 }

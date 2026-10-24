@@ -116,6 +116,59 @@ SUBJECT = {
          "All at once to the newest version",
          x="ה-control plane יכול להיות חדש מה-nodes בטווח נתמך, אבל לא להפך. add-ons צריכים להתאים לגרסה החדשה."),
       ]),
+
+  MOD("eks-in-practice", "בפועל: access entries, Pod Identity ודיבאג של הרשאות",
+      "לתת גישה לקלאסטר עם access entries, לחבר role ל-pod עם Pod Identity או IRSA, ולדבג AccessDenied מתוך pod.",
+      [P("שאלה נפוצה בראיון EKS: 'pod מקבל AccessDenied מ-S3. איך מדבגים?'. התשובה הטובה מתחילה בשאלה איזו זהות ה-pod באמת משתמש בה, ורק אחר כך בודקת policies."),
+       CODE("""# מתוך ה-pod: מי אני בעיני AWS?
+$ kubectl exec -it deploy/api -- aws sts get-caller-identity
+{
+  "Arn": "arn:aws:sts::111122223333:assumed-role/eks-node-role/i-0abc..."
+}
+# זה ה-role של ה-node, לא של ה-pod: ה-ServiceAccount לא מחובר ל-role""", cap="השורה הראשונה בכל דיבאג של הרשאות"),
+       TABLE(["בדיקה", "IRSA", "Pod Identity"],
+             ["חיבור", "annotation `eks.amazonaws.com/role-arn` על ה-ServiceAccount", "`aws eks create-pod-identity-association`"],
+             ["trust policy", "OIDC provider של הקלאסטר, תנאי `sub` על namespace ו-SA", "principal `pods.eks.amazonaws.com`"],
+             ["תשתית בקלאסטר", "OIDC provider ב-IAM לכל קלאסטר", "EKS Pod Identity Agent add-on"],
+             ["role לכמה קלאסטרים", "עדכון trust לכל OIDC provider", "אותו trust, association לכל קלאסטר"]),
+       CODE("""\"Condition\": {\"StringEquals\": {
+  \"oidc.eks.eu-west-1.amazonaws.com/id/EXAMPLE:sub\": \"system:serviceaccount:shop:api\",
+  \"oidc.eks.eu-west-1.amazonaws.com/id/EXAMPLE:aud\": \"sts.amazonaws.com\"
+}}""", cap="trust של IRSA: רק ה-SA הזה ב-namespace הזה"),
+       H("Access entries"),
+       P("access entries הם הדרך המודרנית לתת ל-IAM principals גישה ל-Kubernetes API של הקלאסטר, דרך ה-EKS API ולא דרך ה-ConfigMap `aws-auth`. יוצרים entry ל-role, ומשייכים access policy כמו `AmazonEKSClusterAdminPolicy` או `AmazonEKSViewPolicy`, לכל הקלאסטר או ל-namespaces מסוימים."),
+       CODE("""aws eks create-access-entry --cluster-name prod --principal-arn arn:aws:iam::111122223333:role/devs
+aws eks associate-access-policy --cluster-name prod \\
+  --principal-arn arn:aws:iam::111122223333:role/devs \\
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy \\
+  --access-scope type=namespace,namespaces=shop""", cap="צפייה בלבד, רק ב-namespace shop"),
+       KEY("אחרי ששינית annotation של IRSA על ServiceAccount, צריך להפעיל מחדש את ה-pods: ה-webhook מזריק את משתני הסביבה וה-token רק כש-pod נוצר."),
+       TRAP("עריכה שגויה של `aws-auth` יכולה לנעול את כולם מחוץ לקלאסטר, כי זה ConfigMap רגיל בלי validation. access entries מנוהלים דרך ה-EKS API ומונעים את זה."),
+       ASK("A pod gets AccessDenied from S3. Walk me through debugging it.",
+           "IRSA vs EKS Pod Identity: what changed and why?",
+           "How do you give a team read-only access to one namespace in EKS?",
+           "Why might a pod end up using the node's IAM role?"),
+      ],
+      [C("A pod's `aws sts get-caller-identity` shows the node role. What does that tell you?",
+         "The pod isn't getting its own role, so the ServiceAccount isn't linked correctly",
+         "The S3 bucket policy denies the pod",
+         "The node role has too many permissions",
+         "STS is unreachable from the pod",
+         x="ה-SDK נופל ל-role של ה-node כשאין credentials של pod. בודקים את ה-annotation או ה-association, ומפעילים מחדש את ה-pod."),
+       C("What principal does a role trust policy name for EKS Pod Identity?",
+         "`pods.eks.amazonaws.com`",
+         "The cluster's OIDC provider",
+         "`ec2.amazonaws.com`",
+         "`eks.amazonaws.com`",
+         x="Pod Identity משתמש ב-service principal `pods.eks.amazonaws.com`. IRSA הוא זה שסומך על ה-OIDC provider של הקלאסטר."),
+       C("What replaces editing the `aws-auth` ConfigMap for cluster access?",
+         "EKS access entries with access policies",
+         "IRSA annotations",
+         "Kubernetes NetworkPolicies",
+         "Security groups for pods",
+         x="access entries מנוהלים דרך ה-EKS API, אפשר להגביל אותם ל-namespaces, ואי אפשר לשבור אותם עם YAML שגוי."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -198,11 +251,11 @@ SUBJECT = {
      ("Running a single replica", "replica אחד הופך כל interruption להשבתה."),
      ("Using larger Spot instances only", "גודל לא מונע interruptions."),
      x="עם ההתראה, ה-node מסומן ו-pods מפונים בצורה מסודרת. יחד עם graceful shutdown, PDBs ופיזור instance types, ה-Spot לא מורגש."),
-   F("eks-ops", "Which tools help find removed Kubernetes APIs before an EKS upgrade?",
-     ("EKS upgrade insights, pluto or kubent", "נכון. הם סורקים שימוש ב-APIs ישנים."),
-     ("CloudWatch Logs Insights only", "זה לא מתוכנן למטרה הזאת."),
-     ("The VPC flow logs", "flow logs מראים תעבורה."),
-     ("Route 53 health checks", "זה לא קשור ל-APIs של Kubernetes."),
-     x="APIs שהוסרו שוברים manifests ו-charts אחרי השדרוג. סריקה מראש מראה מה לעדכן, כולל charts של צד שלישי."),
+   F("eks-in-practice", "You added the IRSA annotation to a ServiceAccount, but running pods still use the node role. Why?",
+     ("The credentials are injected only when a pod is created, so the pods need a restart", "נכון. ה-webhook פועל ביצירת pod, ו-pods קיימים לא מקבלים את המשתנים."),
+     ("IRSA works only for DaemonSets", "IRSA עובד לכל pod שמשתמש ב-ServiceAccount עם ה-annotation."),
+     ("The node role overrides IRSA permanently", "כשה-credentials של IRSA קיימים, ה-SDK משתמש בהם לפני ה-role של ה-node."),
+     ("The annotation must be on the Deployment, not the ServiceAccount", "ה-annotation של IRSA שייך ל-ServiceAccount, לא ל-Deployment."),
+     x="ה-mutating webhook מזריק `AWS_ROLE_ARN` ו-token מ-projected volume רק ביצירת ה-pod. אחרי שינוי עושים `kubectl rollout restart`."),
  ],
 }
