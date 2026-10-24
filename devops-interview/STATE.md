@@ -26,6 +26,20 @@ terms and code isolated LTR inside it.
 | **Accounts / Supabase** | Off (`nocloud`). Progress is in `localStorage`. Code and SQL are still here for stage 8 |
 | **Games, casino, duel, tournament** | Hidden until stage 8 (a new Supabase project). The duel answer key in `supabase_duel*.sql` is regenerated from this bank |
 
+## Stage history
+
+| Stage | What was done | Key commits |
+|---|---|---|
+| 0 | Rebrand to Ship It, Supabase off, games hidden, 90 s a question, old AWS files deleted | early commits |
+| 1 | New question pipeline (`qsrc/`, `qlib.py`, `build_bank.py`) with a validator for counts, levels and answer positions | — |
+| 2–3 | 1,300 questions in batches by weight (K8s 265, Argo CD 212, CI 186, AWS 159, Helm 133, Terraform 133, Linux 80, CI tools 79, networking 53); 20 papers | `ceafb6c` … `2343fb6` |
+| 4 | Interview mode: 300 open questions + screen + self-marking | `2e6933d` … `e230c3f` |
+| 5 | Learn: 24 Hebrew subjects (3 parts, checks, recap, 10-question exam) | `e516975` … `0763ddc` |
+| 6 | Study: 9 reference chapters, 30 pages; Study engine moved to source files | `8598942` |
+| 7 | AWS remnants removed, Hebrew voice + Read on explanations, `authoredChecks`, all QA green, this file rewritten | `93a5ef3` |
+| 7b *(open)* | Expand the 1,558 terse wrong-option lines | — |
+| 8 *(open)* | New Supabase project; games, casino, duel, tournament back on | — |
+
 ## Content pipelines
 
 All content is authored in Python files and built into `index.html` by scripts that validate
