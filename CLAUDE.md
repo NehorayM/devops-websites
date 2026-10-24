@@ -91,7 +91,7 @@ devops-interview/
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
-  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, stubs.py
+  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py
   supabase_*.sql sql_tests/          backend for stage 8
 ```
 
@@ -164,9 +164,9 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (stage 9, after Terraform) |
+| Suite | File | Last green (end of stage 9) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,663 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,664 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 5,710 / 0 (24 subjects) |
@@ -177,8 +177,8 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
-- `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=482` (was 1,558 before stage 7b) and caps
-  questions whose right option is the longest at `<=459` (was 1,096). Lower both caps as files are rewritten.
+- `authoredChecks` enforces the explanation rules, requires zero terse wrong-option lines (was 1,558 before stage 7b) and caps
+  questions whose right option is the longest at `<=303` (was 1,096), and shortest at `<=376`. Keep them there or lower.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -232,11 +232,12 @@ Notes:
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
-| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes, Argo CD, CI, AWS, Helm and Terraform done (1,088 q; right-is-longest ~80% → ~23%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchets (longest ≤ 459, stubs ≤ 482) |
+| 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
-1. **Stage 9: hard distractors and full explanations (IN PROGRESS; replaces what was left of 7b).**
+1. **Stage 9: hard distractors and full explanations — DONE (all 24 files, 1,300 q).** Kept here as the rulebook for
+   any future question edit: every `qsrc` file is `HARD = True`, so `build_bank.py` enforces these rules on every change.
    **The bug (found by Nehoray):** the right answer was the longest option in 84% of questions (1,096/1,300), on average 1.56× the
    wrong ones, so it could be picked without knowing the material. Some distractors were throwaways ("Build only on Mondays").
    And many explanations were too thin. Nehoray asked for answers that are hard to tell apart, and for much more depth,
@@ -250,13 +251,14 @@ Notes:
    every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% **and the shortest
    in ≤ 40%** of questions. (Fixing the first tell created the second: after the first pass the right answer was the
    shortest in up to 56% of a file. Aim for both near 25%: the right answer should sit mid-pack by length.)
-   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **459**) — lower it after each topic.
+   `qa_bank.js` `authoredChecks` holds the bank-wide line: right option longest in ≤ **303** questions, shortest in ≤ **376**,
+   and **zero** terse wrong-option lines. Keep them there (or lower) when you edit questions.
    **Done (HARD = True):** Kubernetes (`k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug`, 265 q) and
    Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q), CI (`ci_docker`, `ci_sec`, `ci_test`, `ci_deploy`, 186 q),
-   AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q), Helm (`helm_charts`, `helm_ops`, 133 q), Terraform (`tf_core`, `tf_state`, 133 q).
-   Across these 1,088: right-is-longest ~23%, shortest ~28%. **Left, in this order:**
-   `linux`, `cicd_tools`, `net`. Then stage 10 (below).
-   **Workflow per file** (from `devops-interview/`; tools in `tools/`):
+   AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q), Helm (`helm_charts`, `helm_ops`, 133 q), Terraform (`tf_core`, `tf_state`, 133 q),
+   Linux (80 q), CI tools (`cicd_tools`, 79 q), Networking (`net`, 53 q). Final: right-is-longest 303/1,300 (23%, was 84%),
+   shortest 376 (29%), no terse lines left. Per-file numbers: `python3 tools/qtool.py stats <file>.py`.
+   **Workflow for rewriting a file** (from `devops-interview/`; tools in `tools/`):
    - `python3 tools/brief.py <file>.py` — stems and options, compact; `python3 tools/qtool.py dump <file>.py` — full JSON.
    - Write the new content as JSON `[{"i":N,"r":[text,why],"w":[[text,why]×3],"tip":"..."}]` (split into parts of ~22).
      **Write the right answer short and the distractors full** — the habit is the other way round.
@@ -284,7 +286,7 @@ Notes:
    Use them to check any fact you aren't sure of; when unsure and unverifiable, leave the claim out rather than guess.
    (Fixed in the Terraform pass: the tf_core `user_data` question now says a change stops and starts the instance by default,
    and replaces it only with `user_data_replace_on_change = true`.)
-2. **Stage 10: deeper Learn and Study content** (Nehoray: "more expansion for all topics... not enough material"). After stage 9:
+2. **Stage 10 (NEXT): deeper Learn and Study content** (Nehoray: "more expansion for all topics... not enough material"):
    go subject by subject through `learn_src/s00..s23` and `study_src/c1..c9`, add depth from the official docs (more parts or
    longer parts, more tables, real commands and outputs, edge cases interviewers ask about), keep the builders' rules, run QA_LEARN.
 3. **Stage 8: games and multiplayer.**

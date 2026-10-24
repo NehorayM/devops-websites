@@ -3722,14 +3722,17 @@ function authoredChecks(){
   });
   eq(noY,0,'every question has a line for each of its options '+bad.join(' '));
   eq(short,0,'the line under every right answer explains it');
-  // A wrong option is often answered with a word ("לא.", "לא קשור."). It is honest but teaches
-  // little; the count can only go down.
-  ok(stub<=482,'terse lines under wrong options do not grow ('+stub+')');
+  // Stage 7b and 9 replaced every one-word wrong-option line ("לא.", "לא קשור."); keep it at zero.
+  eq(stub,0,'no terse lines under wrong options ('+stub+')');
   // The right answer used to be the longest option in 84% of questions, so it could be found
-  // without reading. Stage 9 rebalances the distractors file by file; the count only goes down.
+  // without reading. Stage 9 rebalanced every file (now ~23% longest, ~29% shortest).
   const longest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
     return L[a]>Math.max(...L.filter((_,j)=>j!==a)); }).length;
-  ok(longest<=459,'the right option is the longest in at most 459 questions ('+longest+')');
+  ok(longest<=303,'the right option is the longest in at most 303 questions ('+longest+')');
+  // Shortening right answers too far creates the opposite tell, so cap that side too.
+  const shortest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
+    return L[a]<Math.min(...L.filter((_,j)=>j!==a)); }).length;
+  ok(shortest<=376,'the right option is the shortest in at most 376 questions ('+shortest+')');
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');
