@@ -1112,7 +1112,7 @@
 ],
 "y": [
 "אין memory dump.",
-"לא נוצר VM.",
+"לא נוצר שום VM. נוצר פוד רגיל שמתוזמן על ה-node הקיים, עם ה-filesystem של ה-host מחובר ב-`/host`.",
 "זה shell כמעט מלא על ה-node בלי SSH. `chroot /host` נותן גישה לכלים של ה-host.",
 "מקבלים shell, לא רק קובץ."
 ],
@@ -5559,7 +5559,7 @@
 "אף אחד מהם לא מתעדכן בזמן ריצה.",
 "keyRef מאפשר שליטה בשמות ובחירה של מפתחות. envFrom מהיר, אבל מכניס הכול ועלול להתנגש בשמות קיימים.",
 "יש `secretKeyRef` נפרד ל-Secrets.",
-"ההתנהגות שונה."
+"הם לא זהים: `configMapKeyRef` ממפה מפתח אחד לשם שבוחרים, ו-`envFrom` מייבא את כל המפתחות כמו שהם, עם סיכון להתנגשות שמות."
 ],
 "x": "מפתחות שאינם שמות משתנים חוקיים (למשל עם נקודה) מדולגים ב-envFrom. זה edge case שכדאי להכיר.",
 "lv": 0,
@@ -7203,7 +7203,7 @@
 "y": [
 "זה לא תפקיד השדה. הוא משפיע על תעבורה חיצונית.",
 "אין hop נוסף ואין SNAT, אז ה-IP של הלקוח נשמר. המחיר: nodes בלי פוד לא מקבלים תעבורה, והחלוקה יכולה להיות לא אחידה.",
-"אין קשר ל-DNS.",
+"`externalTrafficPolicy` לא קשור ל-DNS בכלל. הוא קובע אם ה-node מעביר תעבורה רק לפודים מקומיים (ושומר את ה-IP של הלקוח) או לכל ה-cluster.",
 "kube-proxy לא מודד latency."
 ],
 "x": "תזכיר שה-cloud load balancer משתמש ב-`healthCheckNodePort` כדי לדעת על אילו nodes יש פודים. זה מראה הבנה מקצה לקצה.",
@@ -7448,7 +7448,7 @@
 "y": [
 "אלה מוצרים. העמודים הם סוגי ה-signals.",
 "אלה כלים ותהליכים, לא סוגי telemetry.",
-"אלה משאבים.",
+"אלה משאבים שמודדים, כלומר סוגים של מטריקות. שלושת עמודי ה-observability הם סוגי הנתונים: metrics, logs ו-traces.",
 "מטריקות מראות מה קורה ומתי, לוגים מראים פרטים, ו-traces מראים איפה הזמן הלך בין שירותים."
 ],
 "x": "תזכיר OpenTelemetry כתקן אחד לאיסוף שלושת הסוגים, ו-exemplars שמחברים מטריקה ל-trace.",
@@ -8813,7 +8813,7 @@
 "y": [
 "ה-scheduler רואה רק requests. ה-kubelet וה-kernel אוכפים limits.",
 "limits נאכפים בפועל דרך cgroups.",
-"ההפך.",
+"ההפך: ה-scheduler מסתכל רק על requests כדי למקם פודים. limits נאכפים רק בזמן ריצה על ידי ה-kubelet וה-kernel.",
 "זה רק תנאי ל-Guaranteed. זו לא חובה."
 ],
 "x": "משפט טוב לראיון: 'request זה מה שאני מבטיח שאצטרך, limit זה מה שאסור לי לעבור'.",
@@ -11998,7 +11998,7 @@
 "y": [
 "אלה ClusterRoles של RBAC, לא Pod Security.",
 "אלה לא השמות הרשמיים.",
-"אין רמות כאלה.",
+"אין רמות כאלה ב-Pod Security Standards. שלוש הרמות הן Privileged, Baseline ו-Restricted, ומפעילים אותן עם labels על ה-namespace.",
 "Privileged ללא הגבלות. Baseline חוסם הסלמות ידועות (hostNetwork, privileged). Restricted דורש hardening מלא (non-root, drop capabilities)."
 ],
 "x": "תסביר שהאכיפה נעשית ברמת namespace עם labels, ושיש שלושה מצבים: enforce, audit, warn.",
@@ -13152,7 +13152,7 @@
 ],
 "y": [
 "QoS לא משפיע על Services.",
-"אין קשר כזה.",
+"היעדר requests לא שולח פודים ל-control plane. אלה nodes עם taint, ופוד רגיל לא יתוזמן אליהם בלי toleration.",
 "בלי requests ה-scheduler לא יודע כמה מקום הם צריכים, והם הראשונים להיות מפונים כשנגמר זיכרון.",
 "QoS לא קשור להרשאות."
 ],
@@ -13434,7 +13434,7 @@
 "יש הבדל מהותי ביניהם.",
 "drain לא מוחק את ה-node. `kubectl uncordon` מחזיר אותו לשימוש.",
 "cordon משאיר את הפודים הקיימים. drain מפנה אותם (בכבוד ל-PDB), לקראת תחזוקה.",
-"ההפך."
+"ההפך: cordon לא נוגע בפודים הקיימים ורק חוסם תזמון חדש. drain הוא זה שמפנה את הפודים (אחרי cordon)."
 ],
 "x": "תזכיר את `--ignore-daemonsets` ו-`--delete-emptydir-data`, שבלעדיהם drain נכשל לרוב.",
 "lv": 0,
@@ -14168,7 +14168,7 @@
 "y": [
 "שמות פנימיים נענים מה-kubernetes plugin. שמות חיצוניים עוברים forward ל-upstream. אם ה-upstream שגוי או חסום, רק הם נכשלים.",
 "שמות פנימיים עובדים, אז הניתוב ל-CoreDNS תקין.",
-"לא קשור ל-DNS.",
+"liveness probe בודק אם הקונטיינר חי ולא משפיע על רזולוציית DNS. כששמות פנימיים עובדים וחיצוניים לא, הבעיה ב-forward של CoreDNS.",
 "Service CIDR שגוי היה שובר גם את השמות הפנימיים."
 ],
 "x": "תבדוק `kubectl -n kube-system get cm coredns -o yaml`, ובלוגים של CoreDNS חפש timeouts מול ה-upstream.",
@@ -15288,7 +15288,7 @@
 "y": [
 "`kubectl config use-context` מחליף ביניהם. ככה עובדים עם כמה clusters מאותו קובץ.",
 "הרשאות מגיעות מ-RBAC ב-cluster.",
-"זה לא גיבוי.",
+"context אינו גיבוי של ה-cluster. זו רק רשומה ב-kubeconfig שמחברת cluster, משתמש ו-namespace ברירת מחדל תחת שם אחד.",
 "context כולל namespace, אבל הוא יותר מזה."
 ],
 "x": "טיפ מעשי: כלי כמו kubectx, ו-prompt שמציג את ה-context, מונעים 'מחקתי בטעות בפרודקשן'.",
@@ -15496,7 +15496,7 @@
 "C"
 ],
 "y": [
-"אין verb כזה.",
+"ב-RBAC אין verb בשם `security`. ה-verbs הם פעולות על משאבים (get, create, delete...). את PSP החליף Pod Security Admission המובנה.",
 "NetworkPolicy עוסק ברשת, לא בהרשאות של פודים.",
 "PSA מובנה ומפעילים אותו עם `pod-security.kubernetes.io/enforce: restricted` על ה-namespace. לחוקים מותאמים משתמשים ב-Kyverno או Gatekeeper.",
 "PSA הוא המחליף."
@@ -17844,7 +17844,7 @@
 "ה-image תקין. ההגדרות לא מתאימות.",
 "ה-node תומך. ה-pod spec הוא שאוסר.",
 "ה-kubelet מסרב להפעיל, כי ה-image ירוץ כ-UID 0. מגדירים `USER` ב-Dockerfile או `runAsUser` עם UID מספרי.",
-"אין verb כזה."
+"ב-RBAC אין verb בשם `root`. השגיאה מגיעה מה-kubelet: ה-pod דורש `runAsNonRoot`, וה-image לא מגדיר USER שאינו root."
 ],
 "x": "תזכיר ש-USER בשם (לא מספרי) לא מספיק ל-kubelet כדי לוודא non-root. עדיף UID מספרי.",
 "lv": 0,
@@ -18788,7 +18788,7 @@
 "y": [
 "הם לא מטפלים ב-authentication.",
 "סריקה היא עבודה של Trivy או Falco, לא של policy engines.",
-"זה לא תפקידם.",
+"הצפנת Secrets ב-etcd היא תפקיד של `EncryptionConfiguration` ב-API server. Kyverno ו-Gatekeeper בודקים ודוחים משאבים לפי policy בזמן admission.",
 "שניהם policy engines שרצים כ-admission webhooks. Kyverno כותב policies ב-YAML. Gatekeeper משתמש ב-Rego."
 ],
 "x": "תן דוגמה ל-policy שכתבת: חובת requests ו-limits, חסימת `:latest`, או אימות חתימות של images.",
@@ -19032,9 +19032,9 @@
 ],
 "y": [
 "זה מציג את ה-kubeconfig, לא הרשאות.",
-"אין דגל כזה.",
+"ל-`kubectl describe` אין דגל `--permissions`. הוא מתאר את האובייקט ולא את ההרשאות שלך עליו; לזה יש `kubectl auth can-i`.",
 "הפקודה שואלת את ה-API server ישירות ומחזירה yes או no.",
-"אין דגל כזה."
+"ל-`kubectl get rolebindings` אין דגל `--check`. גם אם היה, קריאת bindings ידנית לא מחשבת את התוצאה כמו `auth can-i`, ששואל את ה-authorizer עצמו."
 ],
 "x": "`kubectl auth can-i --list -n prod` מציג את כל מה שמותר לך. שימושי לבדיקה מהירה.",
 "lv": 0,
@@ -24072,7 +24072,7 @@
 ],
 "y": [
 "audit לא מגבה נתונים.",
-"זה לא תפקידם.",
+"audit logs לא משמשים ל-autoscaling. latency של ה-API נמדד במטריקות של ה-API server; ה-audit log מתעד מי עשה מה ומתי.",
 "audit log מתעד כל בקשה ל-API לפי ה-policy. בלעדיו אי אפשר לדעת מי מחק משאב או קרא secret.",
 "אלה container logs, לא audit."
 ],
@@ -24842,7 +24842,7 @@
 ],
 "y": [
 "volumeClaimTemplates הוא בדיוק המנגנון שלהם.",
-"אין מגבלה כזו.",
+"אין דרישה שהגודל יהיה חזקה של 2. הדחייה נובעת מכך ש-`volumeClaimTemplates` הוא שדה immutable ב-StatefulSet.",
 "גם ב-0 replicas השדה לא ניתן לשינוי.",
 "ה-API חוסם שינוי בתבנית. מגדילים כל PVC קיים ידנית, ואם רוצים שגם replicas חדשים יקבלו את הגודל, מוחקים את ה-StatefulSet עם `--cascade=orphan` ויוצרים מחדש."
 ],
@@ -25857,7 +25857,7 @@
 ],
 "y": [
 "לא קשור ל-topology.",
-"לא תפקידו.",
+"ה-Node authorizer לא מגביל את מספר ה-nodes. הוא מגביל מה כל kubelet יכול לקרוא ולשנות, כך ש-node שנפרץ לא מגיע לכל ה-Secrets.",
 "SSH לא קשור ל-API.",
 "בלי זה, kubelet שנפרץ יכול לקרוא את כל ה-Secrets ב-cluster. עם זה, הנזק מוגבל ל-node אחד."
 ],
@@ -27609,7 +27609,7 @@
 "Immutable לא קשור להצפנה.",
 "TLS מגן על התעבורה, לא על הנתונים ב-etcd.",
 "ה-API server מצפין לפני שהוא כותב ל-etcd. Secrets ישנים מוצפנים רק כשכותבים אותם מחדש.",
-"אין type כזה."
+"אין type כזה ל-Secret. ה-type מתאר את מבנה הנתונים (Opaque, tls וכו'), וההצפנה מוגדרת ברמת ה-API server ולא על כל Secret."
 ],
 "x": "תזכיר שב-EKS מפעילים envelope encryption עם KMS key. ותוסיף שצריך גם להגן על גיבויים של etcd.",
 "lv": 1,
@@ -28799,7 +28799,7 @@
 "זה נכון, אבל לא הסיבה האבטחתית.",
 "מי שיכול ליצור פוד ב-namespace מקבל בפועל את כל ה-Secrets וה-SAs שם, ואולי גם את ה-node אם אין Pod Security.",
 "זו בדיוק הטעות שמובילה ל-privilege escalation.",
-"אין קשר כזה."
+"יצירת פוד לא נותנת הרשאת `delete` על nodes. הסיכון הוא שהפוד יכול לחבר כל Secret ולרוץ עם כל ServiceAccount ב-namespace."
 ],
 "x": "תסביר למה Pod Security Admission ו-policy engines הם שכבה הכרחית מעל RBAC.",
 "lv": 1,
@@ -28834,7 +28834,7 @@
 "אין הכפלה. הקבצים פשוט נספרים.",
 "tmpfs יושב ב-RAM, וכל קובץ שנכתב אליו נספר בזיכרון. קבצים זמניים גדולים מגיעים ל-limit מהר.",
 "Kubernetes לא משתמש ב-swap כברירת מחדל.",
-"אין שמירה כזו."
+"ה-kubelet לא שומר את כל הזיכרון של ה-node ל-tmpfs. הקבצים שנכתבים ל-emptyDir בזיכרון נספרים ב-limit של הקונטיינר, וזה מה שגורם ל-OOM."
 ],
 "x": "תציע `sizeLimit` על ה-emptyDir, או disk-backed emptyDir אם המהירות לא קריטית.",
 "lv": 1,
@@ -28939,7 +28939,7 @@
 "שתי רשומות הן חוקיות לגמרי.",
 "יש הבדל מהותי בסמנטיקה.",
 "זה המקור לטעויות הנפוצות ביותר ב-NetworkPolicy. הבדל של מקף אחד ב-YAML הופך AND ל-OR ופותח הרבה יותר ממה שהתכוונת.",
-"הפוך."
+"הפוך: entry אחד עם שני ה-selectors הוא AND, ושני entries נפרדים ברשימה הם OR. הבלבול הזה פותח גישה רחבה בלי לשים לב."
 ],
 "x": "תראה את ההבדל ב-YAML: `- namespaceSelector: ... podSelector: ...` מול `- namespaceSelector: ...` ו-`- podSelector: ...`. מראיינים מעריכים את הדיוק.",
 "lv": 1,
@@ -34818,7 +34818,7 @@
 "y": [
 "ה-image לא משתנה.",
 "גם אם תוקף בורח מהקונטיינר כ-root, על ה-host הוא משתמש בלי הרשאות. זו שכבת הגנה חזקה.",
-"לא קשור לרשת.",
+"`hostUsers: false` לא נוגע ברשת של הפוד. הוא ממפה את ה-UIDs בקונטיינר לטווח לא מורשה על ה-host, כך ש-root בפנים אינו root בחוץ.",
 "זה Linux user namespace, לא Kubernetes namespace."
 ],
 "x": "נושא חדש יחסית. אם מכירים אותו, זה מראה שאתה עוקב אחרי ההתפתחות של Kubernetes.",
@@ -35307,7 +35307,7 @@
 ],
 "y": [
 "כל ערך ייחודי הוא סדרה חדשה. request ID או user ID מייצרים מיליוני סדרות, ואז זיכרון ו-queries קורסים.",
-"אין מגבלה כזו.",
+"ל-Prometheus אין מגבלה על מספר ה-labels. הבעיה היא לא כמה labels יש, אלא כמה ערכים שונים יש לכל label.",
 "מקפים מותרים בערכים.",
 "labels לא מוצפנים."
 ],
@@ -36286,7 +36286,7 @@
 "B"
 ],
 "y": [
-"אין הצפנה כאן.",
+"`readOnlyRootFilesystem` לא מצפין כלום. הוא רק חוסם כתיבה ל-filesystem של הקונטיינר, ולכן אפליקציה שכותבת ל-/tmp נכשלת בלי emptyDir.",
 "זה מקשה על תוקף להשאיר קבצים או לשנות binaries. אפליקציות שכותבות ל-/tmp נכשלות עד שמוסיפים emptyDir.",
 "volumes מוגדרים בנפרד. רק ה-root נעול.",
 "זה עובד ב-Linux."
@@ -36568,7 +36568,7 @@
 "y": [
 "בתוך הקונטיינר שניהם נגישים כטקסט גלוי לתהליך.",
 "קבצים מתעדכנים כשה-Secret משתנה (בלי subPath) ופחות נוטים לדלוף. משתני סביבה נשארים קבועים ועוברים לכל תהליך בן.",
-"אין מגבלה כזו.",
+"אין מגבלה של 255 bytes על משתני סביבה. הסיבה להעדיף קבצים היא שמשתני סביבה דולפים בקלות (לוגים, תהליכי בן) ולא מתעדכנים.",
 "אפשר, עם `secretKeyRef`."
 ],
 "x": "תזכיר שהקבצים יושבים ב-tmpfs על ה-node, ולא על הדיסק.",
@@ -38984,7 +38984,7 @@
 "הסודות לא חייבים לעבור דרך Kubernetes Secret. אפשר אופציונלית לסנכרן גם ל-Secret.",
 "ה-kubelet עושה את זה.",
 "זה תפקיד של EncryptionConfiguration.",
-"אין etcd נפרד."
+"ה-driver לא מריץ etcd נפרד. הוא שולף סודות ממאגר חיצוני (Vault, AWS Secrets Manager) ומחבר אותם לפוד כקבצים דרך CSI volume."
 ],
 "x": "תשווה ל-External Secrets Operator: ESO יוצר Kubernetes Secrets. ה-CSI driver מרכיב קבצים ישירות.",
 "lv": 1,
@@ -41119,7 +41119,7 @@
 "אין שמירה כזו לרשת.",
 "חלק מהזיכרון שמור למערכת ההפעלה, ל-kubelet ול-runtime, וחלק ל-buffer של eviction. רק השאר זמין לפודים.",
 "allocatable הוא קבוע. הוא לא השימוש הנוכחי.",
-"זה לא ההסבר."
+"swap לא נספר ב-capacity של הזיכרון, וברוב ה-clusters הוא כבוי. ההפרש נובע מ-kube-reserved, system-reserved וסף ה-eviction."
 ],
 "x": "בפרודקשן, הגדרה נכונה של system-reserved מונעת מצב שבו פודים 'חונקים' את ה-kubelet וה-node נופל ל-NotReady.",
 "lv": 1,
@@ -42589,7 +42589,7 @@
 "Headless דווקא מבטל את ה-proxying של kube-proxy.",
 "Affinity נקבע לפי ה-source IP שמגיע ל-kube-proxy. דרך LB של L7 זה ה-IP של ה-LB, ולכמה nodes של ה-LB יש כמה IPs.",
 "ברירת המחדל של ה-timeout היא 10800 שניות (3 שעות).",
-"אין מגבלה כזו."
+"`sessionAffinity: ClientIP` עובד גם עם IPv4 וגם עם IPv6. הבעיה היא שה-source IP שמגיע ל-kube-proxy הוא של ה-LB."
 ],
 "x": "הפתרון הנכון הוא sticky session ב-L7 (cookie) בתוך ה-LB או ה-ingress, או אפליקציה stateless.",
 "lv": 1,
@@ -45108,7 +45108,7 @@
 "y": [
 "לדוגמה: SLI הוא אחוז הבקשות שהצליחו מתחת ל-300ms, ה-SLO הוא 99.9% בחודש, וה-SLA הוא 99.5% עם החזר כספי ללקוח.",
 "SLI הוא מדד, לא קנס.",
-"ההפך.",
+"ההפך: ה-SLO הוא היעד הפנימי של הצוות, וה-SLA הוא ההתחייבות החוזית ללקוח, בדרך כלל נמוכה יותר כדי להשאיר מרווח.",
 "הם שונים במהות."
 ],
 "x": "תוסיף error budget: מה שנשאר מתחת ל-SLO. כשהתקציב נגמר, מאטים releases ומתקנים יציבות.",
