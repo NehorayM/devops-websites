@@ -2751,6 +2751,1774 @@
    "f": "How do you test that a release can be rolled back?",
    "w": "להניח שאפשר תמיד לחזור לגרסה הקודמת בלי לחשוב על הנתונים.",
    "r": "https://martinfowler.com/bliki/ParallelChange.html"
+  },
+  {
+   "id": "22bda91f",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "k",
+   "q": "How do pods on EKS get AWS permissions? Compare IRSA and EKS Pod Identity.",
+   "p": [
+    "לא לתת לאפליקציות את ה-role של ה-node: כל ה-pods על ה-node יקבלו אותו.",
+    "IRSA: OIDC provider לקלאסטר, annotation `eks.amazonaws.com/role-arn` על ה-ServiceAccount, ו-trust policy לפי `sub`.",
+    "ה-SDK מחליף את ה-token של ה-ServiceAccount ב-credentials זמניים (AssumeRoleWithWebIdentity).",
+    "Pod Identity: agent כ-add-on ו-association דרך ה-API. trust policy פשוט, בלי לערוך OIDC לכל קלאסטר.",
+    "role נפרד לכל ServiceAccount, עם least privilege."
+   ],
+   "f": "Why is Pod Identity easier to reuse across many clusters?",
+   "w": "לתת הרשאות ל-node role כדי שכל ה-pods יעבדו.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html"
+  },
+  {
+   "id": "6f494d77",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "t",
+   "q": "A pod using IRSA gets `AccessDenied` calling S3. How do you debug it?",
+   "p": [
+    "ה-annotation על ה-ServiceAccount נכון, וה-pod משתמש בו (ה-pod הופעל מחדש אחרי ההוספה).",
+    "env vars `AWS_ROLE_ARN` ו-`AWS_WEB_IDENTITY_TOKEN_FILE` קיימים ב-pod.",
+    "trust policy: ה-OIDC provider הנכון, ו-`sub` שתואם בדיוק ל-`system:serviceaccount:<ns>:<sa>`.",
+    "policy של ה-role: action על ה-ARN הנכון (bucket מול `bucket/*`), ו-KMS אם יש הצפנה.",
+    "CloudTrail מראה איזו זהות קראה בפועל. SDK ישן עלול ליפול חזרה ל-node role."
+   ],
+   "f": "How do you prove which identity the pod actually used?",
+   "w": "להוסיף `s3:*` על `*` כדי שיעבוד.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html"
+  },
+  {
+   "id": "21f91448",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between managed node groups, self-managed nodes, Fargate and Karpenter on EKS?",
+   "p": [
+    "managed node groups: AWS מנהל את ה-ASG ואת השדרוגים, כולל drain.",
+    "self-managed: שליטה מלאה, ואחריות מלאה.",
+    "Fargate: pod בלי nodes לנהל, אבל בלי DaemonSets ועם מגבלות.",
+    "Karpenter: מקים instances לפי צרכי ה-pods, עם Spot ו-consolidation.",
+    "EKS Auto Mode: AWS מנהל גם את ה-compute וחלק מה-add-ons."
+   ],
+   "f": "When would Fargate be the wrong choice?",
+   "w": "לחשוב ש-Fargate תומך ב-DaemonSets.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/eks-compute.html"
+  },
+  {
+   "id": "2dd160ba",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "t",
+   "q": "New pods on EKS are stuck in `ContainerCreating` with `failed to assign an IP address`. What's going on?",
+   "p": [
+    "VPC CNI נותן לכל pod כתובת מה-VPC.",
+    "ה-subnet נגמרו לו הכתובות, או שה-node הגיע למגבלת ENIs ו-IPs של סוג ה-instance.",
+    "לבדוק לוגים של `aws-node` וכמה כתובות פנויות יש ב-subnet.",
+    "פתרונות: prefix delegation, subnets גדולים יותר, או CIDR משני (custom networking).",
+    "לכוונן `WARM_IP_TARGET` כדי לא לשריין יותר מדי כתובות."
+   ],
+   "f": "How does prefix delegation increase pods per node?",
+   "w": "להגדיל את ה-instance בלי לבדוק כמה כתובות פנויות יש ב-subnet.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html"
+  },
+  {
+   "id": "0db5a5c8",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "k",
+   "q": "How would you make an EKS workload highly available across availability zones?",
+   "p": [
+    "nodes בשלושה AZs (node group לכל AZ כשיש EBS).",
+    "topology spread constraints לפי zone, ולפחות שלושה replicas.",
+    "PDBs כדי ששדרוגים לא יורידו הכול.",
+    "EBS קשור ל-AZ: replication ברמת האפליקציה, או EFS.",
+    "לשים לב לעלות של תעבורה בין AZs."
+   ],
+   "f": "What happens to an EBS-backed pod when its AZ goes down?",
+   "w": "לשים את כל ה-replicas באותו AZ כי זה זול יותר.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/disaster-recovery-resiliency.html"
+  },
+  {
+   "id": "a8a0794a",
+   "t": 3,
+   "s": 14,
+   "lv": 0,
+   "k": "t",
+   "q": "`kubectl` returns `You must be logged in to the server (Unauthorized)` against EKS. What do you check?",
+   "p": [
+    "`aws sts get-caller-identity`: איזו זהות אתה בפועל (profile, role).",
+    "kubeconfig שנוצר עם `aws eks update-kubeconfig` לאזור, לקלאסטר ול-role הנכונים.",
+    "לזהות הזאת יש access entry או מיפוי ב-`aws-auth`.",
+    "token שפג, או שעון לא מסונכרן.",
+    "גרסת AWS CLI ישנה ב-exec plugin."
+   ],
+   "f": "How do you give a new team member read-only access to the cluster?",
+   "w": "לשתף את ה-credentials של מי שיצר את הקלאסטר.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/troubleshooting.html"
+  },
+  {
+   "id": "684265be",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "k",
+   "q": "How do IAM principals get access to the Kubernetes API in EKS?",
+   "p": [
+    "authentication דרך IAM: `aws eks get-token` מייצר token חתום.",
+    "מיפוי: access entries דרך ה-EKS API (מומלץ), או ה-ConfigMap הישן `aws-auth`.",
+    "הרשאות: access policies מוכנות (למשל cluster admin), או Kubernetes groups עם RBAC.",
+    "ה-identity שיצר את הקלאסטר יכול לקבל admin אוטומטית.",
+    "טעות ב-`aws-auth` יכולה לנעול את כולם בחוץ; access entries מנוהלים מחוץ לקלאסטר."
+   ],
+   "f": "Why are access entries safer than editing aws-auth?",
+   "w": "לחשוב ש-IAM policy לבדה נותנת הרשאות בתוך Kubernetes.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html"
+  },
+  {
+   "id": "7a7d4961",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "t",
+   "q": "Someone edited the `aws-auth` ConfigMap, and now nobody can access the cluster. How do you recover?",
+   "p": [
+    "ה-identity שיצר את הקלאסטר עשוי עדיין לקבל גישה: להשתמש בו.",
+    "אם ה-authentication mode כולל API: ליצור access entry ל-role של admin דרך ה-AWS API, בלי kubectl.",
+    "אחרי שיש גישה: לתקן את ה-YAML של `aws-auth`.",
+    "מניעה: מעבר ל-access entries, וניהול דרך IaC עם review."
+   ],
+   "f": "How would you switch an existing cluster to access entries?",
+   "w": "למחוק את הקלאסטר ולבנות מחדש.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html"
+  },
+  {
+   "id": "8f265f0b",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you upgrade an EKS cluster safely?",
+   "p": [
+    "גרסת minor אחת בכל פעם.",
+    "לבדוק APIs שהוסרו: EKS upgrade insights, pluto או kubent.",
+    "סדר: control plane, אחר כך add-ons (VPC CNI, CoreDNS, kube-proxy), ואז nodes.",
+    "nodes: rolling update של managed node group, או node group חדש ו-drain לישן. PDBs שומרים על זמינות.",
+    "קודם בקלאסטר staging. לקפיצות גדולות: blue/green של קלאסטר שלם."
+   ],
+   "f": "What can break when the control plane is newer than the nodes?",
+   "w": "לשדרג את ה-control plane בלי לבדוק תאימות של add-ons.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html"
+  },
+  {
+   "id": "c6653671",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "t",
+   "q": "The AWS Load Balancer Controller isn't creating an ALB for your Ingress. How do you troubleshoot it?",
+   "p": [
+    "לוגים של ה-controller ו-Events של ה-Ingress.",
+    "`ingressClassName: alb` וה-annotations הנכונים.",
+    "תגיות subnets: `kubernetes.io/role/elb` לציבורי, `kubernetes.io/role/internal-elb` לפרטי.",
+    "הרשאות IAM של ה-controller (דרך IRSA או Pod Identity).",
+    "target type `ip` דורש שה-ALB יגיע ל-pods; security groups בהתאם."
+   ],
+   "f": "How does the controller pick which subnets to put the ALB in?",
+   "w": "ליצור ALB ידנית בקונסול במקום לתקן את הקונפיגורציה.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html"
+  },
+  {
+   "id": "44c223aa",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you control and reduce EKS costs?",
+   "p": [
+    "requests נכונים: המלצות VPA או כלי כמו Kubecost.",
+    "Spot לעומסים stateless, עם טיפול ב-interruptions ומגוון סוגי instances.",
+    "Graviton (arm64) למחיר-ביצועים טוב יותר.",
+    "consolidation ו-scale down; לכבות סביבות לא בשימוש.",
+    "תעבורה: NAT Gateway ובין AZs. VPC endpoints חוסכים. Savings Plans לבסיס הקבוע."
+   ],
+   "f": "How do you find which team is responsible for which part of the bill?",
+   "w": "לדבר רק על instances ולשכוח תעבורת רשת.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/cost-monitoring.html"
+  },
+  {
+   "id": "ec8720f8",
+   "t": 3,
+   "s": 14,
+   "lv": 1,
+   "k": "t",
+   "q": "Spot nodes get reclaimed, and pods drop requests during the interruption. How do you handle Spot properly?",
+   "p": [
+    "יש התראה של 2 דקות לפני ההחזרה.",
+    "Karpenter (עם SQS) או Node Termination Handler: cordon ו-drain מיד עם ההתראה.",
+    "graceful shutdown באפליקציה: preStop ו-SIGTERM.",
+    "פיזור בין סוגי instances ו-AZs, ו-PDBs עם מספיק replicas.",
+    "עומסים stateful וקריטיים על on-demand."
+   ],
+   "f": "Why diversify instance types for Spot?",
+   "w": "להריץ DB יחיד על Spot.",
+   "r": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html"
+  },
+  {
+   "id": "95abde0c",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "k",
+   "q": "Explain public and private subnets, route tables, the Internet Gateway and the NAT Gateway.",
+   "p": [
+    "subnet ציבורי: route של `0.0.0.0/0` ל-Internet Gateway; משאבים עם IP ציבורי נגישים מבחוץ.",
+    "subnet פרטי: `0.0.0.0/0` ל-NAT Gateway, שנמצא ב-subnet ציבורי. יציאה בלבד.",
+    "route table משויך לכל subnet וקובע אותו.",
+    "NAT Gateway לכל AZ לזמינות; עולה לפי שעה ולפי GB.",
+    "VPC endpoints חוסכים NAT לשירותי AWS."
+   ],
+   "f": "Why put one NAT Gateway per AZ?",
+   "w": "לומר ש-subnet הוא \"ציבורי\" בגלל השם שלו, ולא בגלל ה-route table.",
+   "r": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html"
+  },
+  {
+   "id": "e1e0959a",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "k",
+   "q": "Security groups vs network ACLs: what's the difference?",
+   "p": [
+    "Security group: ברמת ENI, stateful, רק חוקי allow, ויכול להפנות ל-SG אחר.",
+    "NACL: ברמת subnet, stateless, allow ו-deny, לפי סדר מספרי.",
+    "בגלל stateless, NACL צריך לאפשר גם את תעבורת החזרה (ephemeral ports).",
+    "בדרך כלל השליטה העיקרית ב-SGs, ו-NACL לחסימות גסות."
+   ],
+   "f": "Your NACL allows inbound 443, but HTTPS still fails. What did you forget?",
+   "w": "לשכוח ש-NACL הוא stateless.",
+   "r": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-network-acls.html"
+  },
+  {
+   "id": "25a56c9f",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "t",
+   "q": "An EC2 instance in a private subnet can't reach the internet to download packages. How do you troubleshoot it?",
+   "p": [
+    "route table של ה-subnet: `0.0.0.0/0` ל-NAT Gateway.",
+    "ה-NAT Gateway ב-subnet ציבורי, עם Elastic IP ו-route ל-IGW.",
+    "security group: outbound פתוח.",
+    "NACL בשני הכיוונים, כולל ephemeral ports.",
+    "DNS: `enableDnsSupport`. כלי עזר: Reachability Analyzer."
+   ],
+   "f": "What does Reachability Analyzer tell you that ping doesn't?",
+   "w": "לתת ל-instance IP ציבורי כדי לעקוף את הבעיה.",
+   "r": "https://docs.aws.amazon.com/vpc/latest/reachability/what-is-reachability-analyzer.html"
+  },
+  {
+   "id": "9360280c",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "k",
+   "q": "ALB vs NLB: when do you use each?",
+   "p": [
+    "ALB ב-L7: HTTP, HTTPS ו-gRPC, ניתוב לפי host ו-path, WAF ו-OIDC.",
+    "NLB ב-L4: TCP, UDP ו-TLS, throughput גבוה מאוד ו-latency נמוכה.",
+    "NLB נותן IP סטטי (Elastic IP), שומר על source IP, ומשמש ל-PrivateLink.",
+    "ALB לאפליקציות web; NLB לפרוטוקולים שאינם HTTP או כשצריך IP קבוע."
+   ],
+   "f": "A partner needs to allowlist a fixed IP for your API. What do you put in front?",
+   "w": "לבחור NLB ואז לנסות לנתב לפי path.",
+   "r": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html"
+  },
+  {
+   "id": "9b67f2a5",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "t",
+   "q": "Targets behind an ALB show unhealthy, but the app works when you curl it on the instance. What do you check?",
+   "p": [
+    "הגדרות ה-health check: path, port, protocol ו-success codes (redirect 301 או 401 הם לא 200).",
+    "ה-SG של ה-targets מתיר תעבורה מה-SG של ה-ALB על פורט ה-health check.",
+    "האפליקציה מאזינה על `0.0.0.0` ולא על `localhost`.",
+    "timeout ו-thresholds מול endpoint איטי.",
+    "`describe-target-health` מחזיר reason code."
+   ],
+   "f": "Your health check endpoint redirects to HTTPS. What happens?",
+   "w": "לבדוק רק מתוך ה-instance, שם הכול עובד, ולא מה-ALB.",
+   "r": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html"
+  },
+  {
+   "id": "bcc8afef",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "k",
+   "q": "How does Route 53 routing work? What are the routing policies, and what is an alias record?",
+   "p": [
+    "policies: simple, weighted (canary או A/B), latency, failover עם health checks, geolocation, multivalue.",
+    "alias: ייחודי ל-AWS, מצביע על משאבי AWS (ALB, CloudFront, S3).",
+    "alias עובד גם על ה-zone apex, שם CNAME אסור.",
+    "alias עוקב אחרי שינויי IP של היעד, ושאילתות עליו לא מחויבות."
+   ],
+   "f": "How would you shift 10% of traffic to a new stack with Route 53?",
+   "w": "לנסות לשים CNAME על ה-zone apex.",
+   "r": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html"
+  },
+  {
+   "id": "a5b6e984",
+   "t": 3,
+   "s": 15,
+   "lv": 0,
+   "k": "t",
+   "q": "You can't SSH into an EC2 instance. How do you troubleshoot, and is there a better way to get in?",
+   "p": [
+    "SG: inbound לפורט 22 מה-IP שלך; NACL.",
+    "IP ציבורי ו-route ל-IGW, או גישה דרך bastion או VPN אם הוא פרטי.",
+    "key pair ושם משתמש נכונים (`ec2-user`, `ubuntu`).",
+    "status checks, או sshd שלא עלה ודיסק מלא.",
+    "עדיף SSM Session Manager: בלי פורט פתוח, מבוקר ב-IAM, ומתועד."
+   ],
+   "f": "What does Session Manager need on the instance to work?",
+   "w": "לפתוח פורט 22 ל-`0.0.0.0/0`.",
+   "r": "https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html"
+  },
+  {
+   "id": "cb314f86",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "t",
+   "q": "Your NAT Gateway bill is huge. How do you find what's using it, and reduce it?",
+   "p": [
+    "VPC Flow Logs ומדדי ה-NAT כדי למצוא מי שולח הכי הרבה.",
+    "חשודים נפוצים: משיכת images מ-ECR ותעבורת S3 דרך ה-NAT.",
+    "Gateway endpoints ל-S3 ו-DynamoDB (בחינם); interface endpoints ל-ECR, STS ו-CloudWatch.",
+    "NAT בכל AZ, כדי לא לשלם גם על תעבורה בין AZs.",
+    "cache ל-images (pull-through cache)."
+   ],
+   "f": "What's the difference between a gateway endpoint and an interface endpoint?",
+   "w": "להוריד את ה-NAT לאחד משותף לכל ה-AZs כדי לחסוך, ולשלם על cross-AZ.",
+   "r": "https://docs.aws.amazon.com/vpc/latest/privatelink/gateway-endpoints.html"
+  },
+  {
+   "id": "8f7717c4",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you connect multiple VPCs and on-prem networks? Compare peering, Transit Gateway and PrivateLink.",
+   "p": [
+    "peering: אחד-לאחד, לא טרנזיטיבי, ובלי CIDRs חופפים.",
+    "Transit Gateway: hub עם routing טרנזיטיבי בין הרבה VPCs, VPN ו-Direct Connect, ו-route tables לסגמנטציה.",
+    "PrivateLink: חושף שירות אחד (מאחורי NLB) לצרכנים, בכיוון אחד, עובד גם עם CIDRs חופפים.",
+    "לתכנן CIDRs לא חופפים מההתחלה."
+   ],
+   "f": "Two VPCs have the same CIDR. How can one still consume a service in the other?",
+   "w": "לחשוב ש-peering הוא טרנזיטיבי.",
+   "r": "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+  },
+  {
+   "id": "1c48ca3c",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "k",
+   "q": "How does an Auto Scaling Group decide when to scale, and how do you avoid scaling problems?",
+   "p": [
+    "policies: target tracking (CPU, בקשות ל-target), step, scheduled, predictive.",
+    "סוג health check: EC2 או ELB.",
+    "instance warmup ו-grace period, כדי שמכונה חדשה לא תיחשב לפני שעלתה.",
+    "launch template עם versions, ו-instance refresh לעדכון מתגלגל.",
+    "lifecycle hooks ל-bootstrap ול-drain; mixed instances ו-Spot."
+   ],
+   "f": "Which metric would you track for a web tier, and why not CPU?",
+   "w": "לשכוח grace period, כך שמכונות חדשות מסומנות unhealthy ומוחלפות.",
+   "r": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-target-tracking.html"
+  },
+  {
+   "id": "0c59074d",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "t",
+   "q": "An Auto Scaling Group keeps launching and terminating instances in a loop. What's happening?",
+   "p": [
+    "המכונות נכשלות ב-ELB health check לפני שהאפליקציה עלתה: grace period קצר מדי.",
+    "user data או bootstrap שנכשל: console output ולוגים של cloud-init.",
+    "AMI או launch template שבורים.",
+    "Activity history: למשל InsufficientInstanceCapacity.",
+    "scaling policies שרבות זו בזו (ספי עלייה וירידה קרובים מדי)."
+   ],
+   "f": "How do you debug an instance that's terminated before you can log in?",
+   "w": "להגדיל את ה-max size בלי לבדוק למה המכונות נופלות.",
+   "r": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/CHAP_Troubleshooting.html"
+  },
+  {
+   "id": "6c61db8f",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "t",
+   "q": "After moving a service to a new ALB, some users still reach the old one hours later. Why?",
+   "p": [
+    "TTL של DNS: resolvers ולקוחות מחזיקים את התשובה הישנה.",
+    "CNAME עם TTL ארוך. ב-alias, ה-TTL הוא של היעד (60 שניות).",
+    "אפליקציות שמחזיקות DNS cache ומתעלמות מ-TTL (למשל JVM).",
+    "IPs או hosts קשיחים אצל לקוחות.",
+    "תכנון: להוריד TTL מראש, להשאיר את הישן רץ, ולעקוב אחרי הבקשות אליו."
+   ],
+   "f": "How far in advance would you lower the TTL before a migration?",
+   "w": "לכבות את ה-ALB הישן מיד אחרי שינוי ה-DNS.",
+   "r": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html"
+  },
+  {
+   "id": "67c3c9da",
+   "t": 3,
+   "s": 15,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you design a VPC for a production EKS cluster?",
+   "p": [
+    "CIDR גדול (/16), עם מקום לכתובות של pods (VPC CNI), או CIDR משני.",
+    "שלושה AZs: subnets ציבוריים ל-load balancers, פרטיים ל-nodes, ומבודדים ל-DBs.",
+    "NAT Gateway לכל AZ.",
+    "VPC endpoints ל-ECR, S3, STS ו-CloudWatch Logs.",
+    "תגיות subnets ל-Load Balancer Controller, ו-CIDRs שלא חופפים ל-VPCs אחרים ול-on-prem."
+   ],
+   "f": "How many IPs do you need if you plan for 2,000 pods?",
+   "w": "לבחור CIDR קטן ולגלות שנגמרו הכתובות כשה-pods גדלו.",
+   "r": "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html"
+  },
+  {
+   "id": "3455a120",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you secure an S3 bucket?",
+   "p": [
+    "Block Public Access מופעל, גם ברמת החשבון.",
+    "bucket policy עם least privilege, ו-deny לבקשות בלי TLS (`aws:SecureTransport`).",
+    "הצפנה: SSE-S3 כברירת מחדל, או SSE-KMS לשליטה בגישה למפתח.",
+    "versioning, ו-Object Lock לנתונים קריטיים.",
+    "ACLs מבוטלים (Object Ownership: bucket owner enforced), ו-logging או CloudTrail data events."
+   ],
+   "f": "How would you share one prefix with another AWS account?",
+   "w": "לפתוח את ה-bucket לציבור כדי לשתף קבצים.",
+   "r": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html"
+  },
+  {
+   "id": "015108d3",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "t",
+   "q": "An application gets `AccessDenied` reading from S3, but the IAM policy looks correct. What else could block it?",
+   "p": [
+    "ARN שגוי: `s3:GetObject` צריך `bucket/*`, ו-`s3:ListBucket` צריך את ה-bucket.",
+    "explicit deny ב-bucket policy (למשל תנאי על VPC endpoint או TLS).",
+    "SSE-KMS: חסר `kms:Decrypt` או שה-key policy לא מתיר.",
+    "SCP ברמת הארגון, permissions boundary, או VPC endpoint policy.",
+    "CloudTrail ו-IAM policy simulator מראים איפה זה נחסם."
+   ],
+   "f": "Why does `ListBucket` need a different resource ARN than `GetObject`?",
+   "w": "להסתכל רק על ה-identity policy.",
+   "r": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/troubleshoot-403-errors.html"
+  },
+  {
+   "id": "e67ab8d2",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "k",
+   "q": "Secrets Manager vs SSM Parameter Store: when do you use which?",
+   "p": [
+    "Secrets Manager: רוטציה מובנית (כולל ל-RDS), שיתוף בין חשבונות, ותשלום לכל secret.",
+    "Parameter Store: קונפיגורציה וסודות (SecureString עם KMS), standard tier בחינם, היררכיה.",
+    "ל-Parameter Store אין רוטציה מובנית.",
+    "בשניהם הגישה דרך IAM ו-KMS.",
+    "ב-EKS: External Secrets Operator או CSI driver, עם cache כדי לא להציף את ה-API."
+   ],
+   "f": "How do you rotate an RDS password that five services use?",
+   "w": "לשמור סודות כ-String רגיל (לא SecureString) ב-Parameter Store.",
+   "r": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html"
+  },
+  {
+   "id": "ec2d09e4",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "t",
+   "q": "An alarm fires: a service on EC2 is slow. Which CloudWatch metrics and logs do you check?",
+   "p": [
+    "CPUUtilization, ו-CPU credits במכונות T (throttling כשהקרדיטים נגמרים).",
+    "זיכרון ודיסק לא נאספים כברירת מחדל: צריך CloudWatch agent.",
+    "EBS: queue length, burst balance (gp2), ומגבלות IOPS.",
+    "ALB: TargetResponseTime, שגיאות 5xx, מספר בקשות.",
+    "status checks, ולוגים דרך ה-agent עם Logs Insights."
+   ],
+   "f": "Why can a t3 instance suddenly get slow with no change in traffic?",
+   "w": "לחפש מדד זיכרון ב-CloudWatch בלי להתקין agent.",
+   "r": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/viewing_metrics_with_cloudwatch.html"
+  },
+  {
+   "id": "371eda0e",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you collect and search application logs on AWS?",
+   "p": [
+    "CloudWatch Logs: log groups ו-streams.",
+    "agents: CloudWatch agent, או Fluent Bit ב-EKS שולח ל-CloudWatch או ל-OpenSearch.",
+    "retention: ברירת המחדל היא לנצח, וזה עולה כסף.",
+    "Logs Insights לחיפוש; metric filters להתראות.",
+    "לוגים ב-JSON מובנה."
+   ],
+   "f": "How would you alert on a specific error message in the logs?",
+   "w": "להשאיר retention אינסופי על כל ה-log groups.",
+   "r": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html"
+  },
+  {
+   "id": "3e53d049",
+   "t": 3,
+   "s": 16,
+   "lv": 0,
+   "k": "t",
+   "q": "An ECR image pull from EKS fails with `no basic auth credentials` or 403. What do you check?",
+   "p": [
+    "ל-node role יש הרשאת קריאה מ-ECR. ה-pull נעשה עם הזהות של ה-node, לא של ה-pod.",
+    "חשבון אחר: repository policy שמתיר את החשבון שלך.",
+    "ה-URI נכון: חשבון, region ושם ה-repository.",
+    "subnet פרטי: NAT או VPC endpoints (`ecr.api`, `ecr.dkr`, ו-S3 gateway).",
+    "repository מוצפן ב-KMS דורש הרשאת decrypt."
+   ],
+   "f": "Why does ECR need an S3 endpoint too?",
+   "w": "לחפש את הבעיה ב-ServiceAccount של ה-pod.",
+   "r": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/common-errors-docker.html"
+  },
+  {
+   "id": "a15a7e55",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain IAM policy evaluation: explicit deny, SCPs, permissions boundaries and resource policies.",
+   "p": [
+    "ברירת המחדל היא deny.",
+    "explicit deny בכל מקום גובר על כל allow.",
+    "צריך allow ב-identity policy או ב-resource policy (באותו חשבון).",
+    "SCPs ו-permissions boundaries קובעים תקרה; הם לא נותנים הרשאות.",
+    "cross-account: צריך allow בשני הצדדים."
+   ],
+   "f": "A role has AdministratorAccess but still can't create a bucket. Where do you look?",
+   "w": "לחשוב ש-SCP נותן הרשאות.",
+   "r": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html"
+  },
+  {
+   "id": "309eccfd",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "k",
+   "q": "How does KMS envelope encryption work, and what's the role of the key policy?",
+   "p": [
+    "ה-KMS key לא יוצא אף פעם מ-KMS.",
+    "`GenerateDataKey` מחזיר data key: מצפינים איתו מקומית, ושומרים את הגרסה המוצפנת שלו ליד הנתונים.",
+    "לפענוח: KMS מפענח את ה-data key.",
+    "key policy הוא שער הגישה הראשי: בלי שהוא מתיר, IAM policy לא מספיק.",
+    "כל שימוש במפתח מתועד ב-CloudTrail; rotation אוטומטי של חומר המפתח."
+   ],
+   "f": "Why encrypt locally with a data key instead of sending everything to KMS?",
+   "w": "לחשוב ש-IAM policy לבד מספיק בלי key policy שמתיר.",
+   "r": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html"
+  },
+  {
+   "id": "49069e4b",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you set up useful alerting in CloudWatch without alert fatigue?",
+   "p": [
+    "להתריע על סימפטומים: שיעור שגיאות, latency (p99), לא על כל קפיצת CPU.",
+    "composite alarms לשילוב תנאים.",
+    "anomaly detection לעומסים משתנים.",
+    "M מתוך N datapoints, וטיפול ב-missing data.",
+    "SNS לכלי ה-on-call, עם runbook בכל התראה."
+   ],
+   "f": "What's an example of an alarm you would delete?",
+   "w": "להתריע על כל מדד אפשרי.",
+   "r": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  },
+  {
+   "id": "3831f871",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "t",
+   "q": "Your AWS bill jumped 40% this month. How do you find out why?",
+   "p": [
+    "Cost Explorer לפי service, usage type, region ותגיות, ברזולוציה יומית.",
+    "חשודים נפוצים: NAT Gateway, תעבורה בין AZs, משאבים נטושים (EBS לא מחובר, snapshots, LBs).",
+    "ingestion של לוגים, ו-instances גדולים מדי.",
+    "Cost Anomaly Detection ו-Budgets להתראה מוקדמת.",
+    "תגיות לבעלות, ו-CUR עם Athena לפירוט."
+   ],
+   "f": "How do you make teams own their part of the bill?",
+   "w": "לחפש ידנית בקונסול שירות אחרי שירות.",
+   "r": "https://docs.aws.amazon.com/cost-management/latest/userguide/ce-what-is.html"
+  },
+  {
+   "id": "b5060193",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "t",
+   "q": "Someone deleted a production resource, and you need to know who and when. How do you find out?",
+   "p": [
+    "CloudTrail event history: 90 ימים של management events. לחפש `Delete*`.",
+    "השדות `userIdentity` ו-`sourceIPAddress` אומרים מי ומאיפה.",
+    "organization trail ל-S3, עם Athena, לתקופות ארוכות.",
+    "data events (למשל ברמת אובייקט ב-S3) צריך להפעיל מראש.",
+    "מניעה: SCP שחוסם מחיקה, deletion protection, ו-IaC."
+   ],
+   "f": "What wouldn't CloudTrail show you by default?",
+   "w": "להניח ש-data events נאספים כברירת מחדל.",
+   "r": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html"
+  },
+  {
+   "id": "85b365c6",
+   "t": 3,
+   "s": 16,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you back up and restore stateful data on AWS, and how do you know it works?",
+   "p": [
+    "AWS Backup עם plans ו-retention ל-EBS, RDS, EFS ו-DynamoDB.",
+    "RDS: automated backups ו-point-in-time recovery.",
+    "S3: versioning ו-replication.",
+    "עותקים לחשבון ול-region אחרים, ו-vault lock נגד מחיקה וכופרה.",
+    "להגדיר RPO ו-RTO, ולבדוק שחזור באופן קבוע."
+   ],
+   "f": "How often do you test restores, and what do you measure?",
+   "w": "לגבות בלי לבדוק שחזור. גיבוי שלא נבדק הוא לא גיבוי.",
+   "r": "https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html"
+  },
+  {
+   "id": "76ef4042",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "k",
+   "q": "What is Helm, and what problems does it solve? Explain chart, release and repository.",
+   "p": [
+    "Helm הוא package manager ומנוע templates ל-Kubernetes.",
+    "chart: templates, `values.yaml` ו-`Chart.yaml`.",
+    "release: התקנה של chart עם שם ו-namespace. כל revision נשמר כ-Secret בקלאסטר.",
+    "repository או OCI registry מפיצים charts עם גרסאות.",
+    "values לכל סביבה, והיסטוריה שמאפשרת upgrade ו-rollback."
+   ],
+   "f": "Where does Helm 3 store release history, and why does that matter?",
+   "w": "לחשוב ש-Helm 3 צריך Tiller.",
+   "r": "https://helm.sh/docs/intro/using_helm/"
+  },
+  {
+   "id": "f020c3ba",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "k",
+   "q": "How are values merged in Helm, and what's the order of precedence?",
+   "p": [
+    "ברירות המחדל ב-`values.yaml` של ה-chart.",
+    "ה-parent chart דורס values של subchart (תחת המפתח של ה-subchart).",
+    "קבצי `-f` לפי הסדר: האחרון גובר.",
+    "`--set` גובר על הכול.",
+    "maps מתמזגים לעומק, אבל lists מוחלפים בשלמותם. `null` מוחק מפתח."
+   ],
+   "f": "You pass a list of tolerations in an override file. What happens to the defaults?",
+   "w": "לחשוב ש-lists מתמזגים כמו maps.",
+   "r": "https://helm.sh/docs/chart_template_guide/values_files/"
+  },
+  {
+   "id": "60daaf5e",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "t",
+   "q": "`helm install` fails with a `YAML parse error` from a template. How do you debug it?",
+   "p": [
+    "`helm template --debug` מרנדר ומראה את הפלט, גם כשהוא שבור.",
+    "מספר השורה בשגיאה מתייחס ל-manifest המרונדר, לא לקובץ ה-template.",
+    "הכי נפוץ: הזחה. `nindent` ו-`indent` עם `toYaml`.",
+    "`{{-` ו-`-}}` אוכלים שורות חדשות ויכולים להדביק שורות.",
+    "`helm lint` לבדיקה מהירה."
+   ],
+   "f": "What's the difference between `indent` and `nindent`?",
+   "w": "לחפש את מספר השורה בקובץ ה-template המקורי.",
+   "r": "https://helm.sh/docs/chart_template_guide/debugging/"
+  },
+  {
+   "id": "e0691e88",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "k",
+   "q": "What is `values.schema.json` for?",
+   "p": [
+    "JSON Schema שמאמת values ב-install, upgrade, lint ו-template.",
+    "תופס שגיאות כתיב וסוגים שגויים (למשל `replicas: \"3\"`).",
+    "מגדיר שדות חובה.",
+    "מתעד את הממשק של ה-chart.",
+    "נכשל מוקדם עם שגיאה ברורה, במקום manifest שבור."
+   ],
+   "f": "What kind of mistake would the schema catch that `helm lint` wouldn't?",
+   "w": "לסמוך על README בלבד כדי שמשתמשים יעבירו values נכונים.",
+   "r": "https://helm.sh/docs/topics/charts/#schema-files"
+  },
+  {
+   "id": "4dcbe417",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "t",
+   "q": "A value like `enabled: \"false\"` or an image tag like `1.10` behaves unexpectedly in a template. Why?",
+   "p": [
+    "`\"false\"` הוא מחרוזת לא ריקה, ולכן `if` מתייחס אליה כ-true.",
+    "`1.10` בלי מרכאות נקרא כמספר: 1.1.",
+    "`quote` ו-`toString` ב-template, ומרכאות ב-values.",
+    "`values.schema.json` לאכיפת סוגים.",
+    "YAML מפרש גם `yes`, `on` ו-`no` לפי הגרסה."
+   ],
+   "f": "How would you make a boolean flag safe regardless of how users write it?",
+   "w": "לחשוב ש-YAML שומר כל ערך כמחרוזת.",
+   "r": "https://helm.sh/docs/chart_template_guide/data_types/"
+  },
+  {
+   "id": "e322b0c8",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you test a Helm chart before releasing it?",
+   "p": [
+    "`helm lint` לבדיקה בסיסית של המבנה.",
+    "`helm template` ואז kubeconform מול ה-schemas של Kubernetes.",
+    "helm-unittest ללוגיקה של ה-templates.",
+    "chart-testing (`ct lint`, `ct install`) על kind ב-CI.",
+    "`helm test`: pods שבודקים את ה-release אחרי התקנה."
+   ],
+   "f": "What does `ct` check that `helm lint` doesn't?",
+   "w": "לבדוק רק שה-template מתרנדר, בלי להתקין באמת.",
+   "r": "https://helm.sh/docs/topics/chart_tests/"
+  },
+  {
+   "id": "978af76d",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you distribute charts? Compare classic chart repositories and OCI registries.",
+   "p": [
+    "repository קלאסי: `index.yaml` על HTTP (GitHub Pages, S3, ChartMuseum).",
+    "OCI: דוחפים ל-registry כמו images (ECR, GHCR) עם `helm push` ו-`oci://`.",
+    "OCI משתמש באותה הזדהות ובאותן הרשאות של ה-registry.",
+    "`version` של ה-chart לפי SemVer.",
+    "חתימה ו-provenance לאימות."
+   ],
+   "f": "Why are many teams moving charts to OCI registries?",
+   "w": "לדחוף שוב chart עם אותה גרסה אחרי שינוי.",
+   "r": "https://helm.sh/docs/topics/registries/"
+  },
+  {
+   "id": "36117872",
+   "t": 4,
+   "s": 17,
+   "lv": 0,
+   "k": "t",
+   "q": "A subchart ignores the values you set for it. What's wrong?",
+   "p": [
+    "values ל-subchart חייבים להיות תחת השם שלו (או ה-alias) ב-values של ה-parent.",
+    "ערכים משותפים: תחת `global`.",
+    "ה-`condition` שלו כבוי.",
+    "לא הרצת `helm dependency update`, ונשארה גרסה ישנה ב-`charts/`.",
+    "לבדוק עם `helm get values` ו-`helm template --debug`."
+   ],
+   "f": "How do you check which values a release actually received?",
+   "w": "לשנות את ה-`values.yaml` של ה-subchart עצמו.",
+   "r": "https://helm.sh/docs/chart_template_guide/subcharts_and_globals/"
+  },
+  {
+   "id": "69ed7502",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you structure a reusable chart: helpers, named templates and library charts?",
+   "p": [
+    "`_helpers.tpl` עם `define` לשמות ול-labels (fullname מקוצר ל-63 תווים).",
+    "`include` עדיף על `template`, כי אפשר להעביר את התוצאה ב-pipe ל-`nindent`.",
+    "library chart (`type: library`) לתבניות משותפות בין charts.",
+    "`values.yaml` מתועד, ו-`values.schema.json` לאימות.",
+    "labels סטנדרטיים (`app.kubernetes.io/*`) בכל המשאבים."
+   ],
+   "f": "Why truncate names to 63 characters?",
+   "w": "להעתיק את אותם helpers לכל chart במקום library chart.",
+   "r": "https://helm.sh/docs/chart_template_guide/named_templates/"
+  },
+  {
+   "id": "279d4b72",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "k",
+   "q": "What are subcharts and dependencies, and how do you pass values to them?",
+   "p": [
+    "`dependencies` ב-`Chart.yaml` עם repository, טווח גרסאות, ו-`condition` או `tags` להפעלה.",
+    "`helm dependency update` מוריד ל-`charts/` ויוצר `Chart.lock`.",
+    "values ל-subchart נכתבים תחת המפתח של השם שלו (או ה-alias).",
+    "`global` זמין לכל ה-charts.",
+    "subchart לא יכול לקרוא values של ה-parent."
+   ],
+   "f": "How would you install the same subchart twice with different settings?",
+   "w": "לכתוב values של subchart ברמה העליונה ולצפות שיגיעו אליו.",
+   "r": "https://helm.sh/docs/chart_template_guide/subcharts_and_globals/"
+  },
+  {
+   "id": "b79360fe",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "t",
+   "q": "A template works with the defaults but breaks when a user leaves out a section or sets a nested value to null. How do you make the chart robust?",
+   "p": [
+    "להגן עם `if` ו-`with` לפני גישה לשדות מקוננים.",
+    "`default` לערכי ברירת מחדל.",
+    "`required` לערכים חובה, עם הודעה ברורה.",
+    "`values.schema.json` לאימות סוגים ושדות חובה.",
+    "טסטים עם helm-unittest ו-chart-testing למקרי קצה."
+   ],
+   "f": "What does `required` print, and when does it run?",
+   "w": "להניח שהמשתמשים תמיד יעבירו את כל ה-values.",
+   "r": "https://helm.sh/docs/howto/charts_tips_and_tricks/"
+  },
+  {
+   "id": "11435a13",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "t",
+   "q": "You changed a value in the chart's ConfigMap and upgraded, but the pods still use the old config. Why, and how do you fix it in the chart?",
+   "p": [
+    "env מ-ConfigMap נקרא רק בעליית הקונטיינר, ושינוי ב-ConfigMap לא משנה את ה-pod template.",
+    "אין שינוי ב-pod template = אין rollout.",
+    "תיקון: annotation עם checksum על ה-pod template, למשל `checksum/config` עם `sha256sum` של ה-configmap.",
+    "כל שינוי בקונפיגורציה משנה את ה-hash, וזה מפעיל rollout.",
+    "חלופות: controller כמו Reloader, או ConfigMap עם שם חדש בכל שינוי."
+   ],
+   "f": "What does the checksum annotation template look like?",
+   "w": "להריץ `kubectl rollout restart` ידנית אחרי כל upgrade.",
+   "r": "https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments"
+  },
+  {
+   "id": "0b04c0b8",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "k",
+   "q": "What are Helm hooks, and what are their pitfalls?",
+   "p": [
+    "מסמנים עם annotation `helm.sh/hook`: pre-install, post-install, pre-upgrade, pre-delete, test.",
+    "`helm.sh/hook-weight` קובע סדר.",
+    "`helm.sh/hook-delete-policy` קובע מתי למחוק: before-hook-creation, hook-succeeded.",
+    "משאבי hook לא מנוהלים כחלק מה-release, ולא נמחקים ב-uninstall.",
+    "hook שנכשל מכשיל את ה-release. ב-Argo CD הם מתורגמים ל-Argo hooks."
+   ],
+   "f": "Your pre-upgrade migration Job already exists from last time. What happens?",
+   "w": "לשכוח `hook-delete-policy`, כך שה-Job הקודם חוסם את ההרצה הבאה.",
+   "r": "https://helm.sh/docs/topics/charts_hooks/"
+  },
+  {
+   "id": "aef1b5bf",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "t",
+   "q": "Your chart works on one cluster but fails on another with `no matches for kind ... in version ...`. Why?",
+   "p": [
+    "ה-apiVersion לא קיים בגרסת ה-Kubernetes הזאת (הוסר, או חדש מדי).",
+    "CRD שה-chart מצפה לו לא מותקן.",
+    "`.Capabilities.APIVersions.Has` מאפשר לבחור apiVersion לפי הקלאסטר.",
+    "`kubeVersion` ב-`Chart.yaml` חוסם התקנה על גרסה לא נתמכת.",
+    "CRDs בתיקיית `crds/` מותקנים ראשונים, אבל לא מתעדכנים."
+   ],
+   "f": "How do you support two Kubernetes versions with one chart?",
+   "w": "לשנות את ה-apiVersion ידנית ב-manifest המרונדר.",
+   "r": "https://helm.sh/docs/chart_template_guide/builtin_objects/"
+  },
+  {
+   "id": "8b52b7d0",
+   "t": 4,
+   "s": 17,
+   "lv": 1,
+   "k": "k",
+   "q": "How does Helm handle CRDs, and why is that tricky?",
+   "p": [
+    "CRDs בתיקיית `crds/` מותקנים רק בהתקנה הראשונה. אף פעם לא מתעדכנים ולא נמחקים.",
+    "CRDs ב-`templates/` מתעדכנים, אבל מחיקת ה-release מוחקת אותם, ואת כל ה-CRs איתם.",
+    "גישה נפוצה: chart נפרד ל-CRDs, או ניהול שלהם מחוץ ל-Helm.",
+    "ב-GitOps: Argo CD עם sync waves ו-server-side apply."
+   ],
+   "f": "How would you upgrade CRDs that live in a chart's crds/ folder?",
+   "w": "לשים CRDs ב-templates בלי להבין שמחיקת ה-release מוחקת את כל הנתונים.",
+   "r": "https://helm.sh/docs/chart_best_practices/custom_resource_definitions/"
+  },
+  {
+   "id": "289c26ec",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "k",
+   "q": "What happens during `helm upgrade`, and how does `helm rollback` work?",
+   "p": [
+    "Helm מרנדר manifests חדשים ומחשב three-way merge: ה-manifest הקודם, ה-live, והחדש.",
+    "revision חדש נשמר כ-Secret (`sh.helm.release.v1.<name>.v<N>`).",
+    "rollback מיישם מחדש manifest של revision קודם, כ-revision חדש.",
+    "`--atomic` עושה rollback אוטומטי בכישלון; `--wait` מחכה ל-readiness.",
+    "`--history-max` מגביל כמה revisions נשמרים."
+   ],
+   "f": "Why does a rollback create a new revision number?",
+   "w": "לחשוב ש-rollback מוחק את ה-revisions האחרונים.",
+   "r": "https://helm.sh/docs/helm/helm_upgrade/"
+  },
+  {
+   "id": "863471a7",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "t",
+   "q": "`helm install` fails with `rendered manifests contain a resource that already exists`. What do you do?",
+   "p": [
+    "המשאב קיים ולא שייך ל-release הזה (נוצר ידנית, או ע\"י release אחר).",
+    "Helm בודק בעלות לפי annotations `meta.helm.sh/release-name` ו-`release-namespace`, ו-label `app.kubernetes.io/managed-by: Helm`.",
+    "אימוץ: להוסיף את ה-annotations וה-label למשאב הקיים.",
+    "או למחוק אותו אם זה בטוח, או לשנות שם ב-chart."
+   ],
+   "f": "How would you move an existing manually-created Deployment under Helm without downtime?",
+   "w": "למחוק משאב בפרודקשן בלי לבדוק מי יצר אותו.",
+   "r": "https://helm.sh/docs/helm/helm_install/"
+  },
+  {
+   "id": "52edff92",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "k",
+   "q": "What does `helm upgrade --install --atomic --wait` do, and why use it in CI?",
+   "p": [
+    "`--install`: מתקין אם ה-release לא קיים. אותה פקודה לכל ריצה.",
+    "`--wait`: מחכה שה-pods יהיו Ready וה-Jobs יסתיימו.",
+    "`--atomic`: rollback אוטומטי בכישלון (וכולל wait).",
+    "`--timeout` קובע כמה לחכות.",
+    "ה-CI נכשל בצורה ברורה, ולא משאיר release שבור."
+   ],
+   "f": "What's the downside of `--atomic` when you're debugging a failure?",
+   "w": "להריץ upgrade בלי `--wait`, כך שה-CI ירוק גם כשה-pods קורסים.",
+   "r": "https://helm.sh/docs/helm/helm_upgrade/"
+  },
+  {
+   "id": "03d7275e",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you see what a `helm upgrade` will change before you run it?",
+   "p": [
+    "plugin `helm diff` (`helm diff upgrade`) מראה את השינויים מול ה-release הנוכחי.",
+    "`helm template` ואז `kubectl diff`.",
+    "`--dry-run=server` מאמת מול ה-API server.",
+    "ב-GitOps: ה-diff של Argo CD ב-PR או לפני sync."
+   ],
+   "f": "Why can a client-side dry run miss problems?",
+   "w": "להריץ upgrade על פרודקשן בלי diff.",
+   "r": "https://helm.sh/docs/helm/helm_upgrade/"
+  },
+  {
+   "id": "04751d4c",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "t",
+   "q": "`helm list` shows nothing, but the app's resources are running in the cluster. Why?",
+   "p": [
+    "`helm list` עובד לפי namespace: צריך `-n` או `-A`.",
+    "release ב-failed או pending מופיע רק עם `--all`.",
+    "kube context אחר.",
+    "הותקן ע\"י Argo CD, שמשתמש ב-`helm template` ולא יוצר release.",
+    "ה-Secrets של ה-release נמחקו."
+   ],
+   "f": "How can you tell whether Argo CD or Helm manages a resource?",
+   "w": "להתקין שוב ולהתנגש במשאבים הקיימים.",
+   "r": "https://helm.sh/docs/helm/helm_list/"
+  },
+  {
+   "id": "3add2083",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between a chart's `version` and `appVersion`?",
+   "p": [
+    "`version`: גרסת ה-chart לפי SemVer. מעלים בכל שינוי ב-chart.",
+    "`appVersion`: גרסת האפליקציה שבתוך ה-chart, למידע.",
+    "הרבה charts משתמשים ב-`appVersion` כ-image tag ברירת מחדל.",
+    "dependencies ו-repository index עובדים לפי `version`."
+   ],
+   "f": "You fixed a typo in a template only. Which one do you bump?",
+   "w": "לשנות את ה-templates בלי להעלות את `version`.",
+   "r": "https://helm.sh/docs/topics/charts/#the-chartyaml-file"
+  },
+  {
+   "id": "5ea2dbb6",
+   "t": 4,
+   "s": 18,
+   "lv": 0,
+   "k": "t",
+   "q": "Your Helm release has hundreds of revisions, and upgrades are getting slow. What's going on?",
+   "p": [
+    "כל revision נשמר כ-Secret ב-namespace (manifest דחוס).",
+    "upgrade ו-list קוראים את ההיסטוריה.",
+    "`--history-max` מגביל את מספר ה-revisions.",
+    "לנקות revisions ישנים.",
+    "הרבה Secrets גדולים מגדילים גם את etcd."
+   ],
+   "f": "Where would you set `--history-max` so every pipeline uses it?",
+   "w": "למחוק את כל ה-Secrets של ה-release, כולל האחרון.",
+   "r": "https://helm.sh/docs/helm/helm_upgrade/"
+  },
+  {
+   "id": "70f47ee5",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "`helm upgrade` fails with `another operation (install/upgrade/rollback) is in progress`. How do you fix it?",
+   "p": [
+    "פעולה קודמת נקטעה (CI נהרג, timeout), וה-release נשאר בסטטוס `pending-*`.",
+    "`helm history` כדי לראות את המצב.",
+    "`helm rollback` ל-revision האחרון שהיה deployed.",
+    "בזהירות: למחוק את ה-Secret של ה-revision התקוע.",
+    "מניעה: `--atomic` עם `--timeout`, לא להרוג jobs באמצע upgrade, ונעילה ב-CI."
+   ],
+   "f": "How do you stop two pipelines upgrading the same release at once?",
+   "w": "למחוק את כל ה-release ולהתקין מחדש בפרודקשן.",
+   "r": "https://helm.sh/docs/helm/helm_history/"
+  },
+  {
+   "id": "6b5d5c85",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "After `helm upgrade`, a change someone made with kubectl was kept in one case and reverted in another. How does Helm decide?",
+   "p": [
+    "Helm 3 עושה three-way merge בין ה-manifest הקודם, החדש, וה-live.",
+    "שדה שלא מופיע ב-chart ושונה ידנית: נשאר.",
+    "שדה שה-chart מנהל ושונה ב-chart: נדרס לערך מה-chart.",
+    "שדה שהוסר מה-chart: מוסר גם מה-live.",
+    "המסקנה: לא לערוך ידנית משאבים שמנוהלים ע\"י Helm."
+   ],
+   "f": "What does `--force` change about this behaviour?",
+   "w": "לחשוב ש-Helm תמיד דורס את כל המשאב.",
+   "r": "https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
+  },
+  {
+   "id": "94e2d49b",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you manage Helm releases across many environments and clusters?",
+   "p": [
+    "values file לכל סביבה (`values-prod.yaml`).",
+    "helmfile להגדרה דקלרטיבית של releases וסביבות.",
+    "או GitOps (Argo CD, Flux) שמרנדר את ה-charts.",
+    "pin לגרסאות charts.",
+    "diff לפני apply, וסודות לא בתוך values ב-Git."
+   ],
+   "f": "What do you gain from Argo CD over running helmfile from CI?",
+   "w": "להריץ `helm upgrade` ידנית מהמחשב לכל סביבה.",
+   "r": "https://helmfile.readthedocs.io/en/latest/"
+  },
+  {
+   "id": "2e2b2a18",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "`helm upgrade --wait` times out, and the release is marked failed. How do you find the cause?",
+   "p": [
+    "`kubectl get pods` ו-events ב-namespace: Pending, CrashLoopBackOff, ImagePullBackOff, readiness.",
+    "`helm status` ו-`helm history`.",
+    "`--wait` מחכה ל-Deployments זמינים, PVCs מחוברים ו-Services עם כתובת.",
+    "timeout קצר מדי לאפליקציה שעולה לאט.",
+    "hook Job שתקוע."
+   ],
+   "f": "Which resources does `--wait` actually wait for?",
+   "w": "להגדיל את ה-timeout שוב ושוב בלי להסתכל על ה-pods.",
+   "r": "https://helm.sh/docs/helm/helm_upgrade/"
+  },
+  {
+   "id": "1684c009",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "A security audit finds database passwords in a Helm values file in Git. How do you fix it?",
+   "p": [
+    "רוטציה מיידית לכל הסיסמאות שנחשפו.",
+    "pattern של `existingSecret`: ה-chart מפנה ל-Secret שנוצר במקום אחר.",
+    "External Secrets Operator: ה-chart מרנדר ExternalSecret שמושך מ-Secrets Manager.",
+    "או helm-secrets עם SOPS, כך שב-Git יש רק קבצים מוצפנים.",
+    "לזכור: Helm שומר את ה-manifests המרונדרים (כולל Secrets) בקלאסטר, ו-`--set` עלול להופיע בלוגים של CI."
+   ],
+   "f": "Who can read secrets stored in Helm's release history?",
+   "w": "רק למחוק את הקובץ מ-Git, בלי רוטציה.",
+   "r": "https://helm.sh/docs/chart_best_practices/values/"
+  },
+  {
+   "id": "97424477",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "A rollback restored the old Deployment, but the app is still broken. What else might not have rolled back?",
+   "p": [
+    "migrations שרצו כ-hooks: ה-schema של ה-DB נשאר חדש.",
+    "CRDs בתיקיית `crds/` לא משתנים.",
+    "נתונים ב-PVCs.",
+    "משאבים חיצוניים ל-chart: Secrets מ-ESO, ConfigMaps אחרים, שירותים חיצוניים.",
+    "image tag שנדרס, כך שה-tag הישן מצביע על קוד חדש."
+   ],
+   "f": "How would you design migrations so a Helm rollback is safe?",
+   "w": "להניח ש-rollback של Helm מחזיר את כל המערכת למצב הקודם.",
+   "r": "https://helm.sh/docs/helm/helm_rollback/"
+  },
+  {
+   "id": "4e7c881c",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you design a CI pipeline for publishing Helm charts?",
+   "p": [
+    "lint, `ct lint` ו-unit tests.",
+    "התקנה לבדיקה על kind.",
+    "בדיקה שה-`version` עלה.",
+    "package ו-push ל-OCI registry, עם חתימה.",
+    "release notes; הצרכנים עושים pin לגרסה."
+   ],
+   "f": "How do consumers verify the chart they pull is the one you published?",
+   "w": "לפרסם chart בלי בדיקת התקנה אמיתית.",
+   "r": "https://helm.sh/docs/topics/provenance/"
+  },
+  {
+   "id": "be26cfef",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "k",
+   "q": "When would you choose Kustomize over Helm, or use both together?",
+   "p": [
+    "Kustomize: patches על YAML רגיל ו-overlays לכל סביבה, בלי שפת templates. מובנה ב-kubectl.",
+    "Helm: packaging והפצה, charts עם פרמטרים לצד שלישי, ומחזור חיים של release.",
+    "ביחד: `helm template` ואז patches של Kustomize (`helmCharts` ב-kustomization).",
+    "Argo CD תומך בשניהם.",
+    "הבחירה לפי מי צורך את זה: צוות פנימי או משתמשים חיצוניים."
+   ],
+   "f": "What does Helm give you that Kustomize can't?",
+   "w": "להציג אחד מהם כטוב יותר בכל מצב.",
+   "r": "https://kustomize.io/"
+  },
+  {
+   "id": "587e9b06",
+   "t": 4,
+   "s": 18,
+   "lv": 1,
+   "k": "t",
+   "q": "A third-party chart doesn't expose a setting you need, like a toleration. How do you change it without forking?",
+   "p": [
+    "לבדוק קודם את ה-values וה-README: אולי זה כבר קיים בשם אחר.",
+    "post-renderer: `helm --post-renderer` עם Kustomize שמוסיף את ה-patch.",
+    "Kustomize `helmCharts` עם patches, או Argo CD עם Kustomize מעל Helm.",
+    "לתרום את השינוי ל-upstream.",
+    "fork הוא מוצא אחרון, עם עלות תחזוקה."
+   ],
+   "f": "What's the maintenance risk of forking a third-party chart?",
+   "w": "לערוך את המשאבים ידנית אחרי ההתקנה.",
+   "r": "https://helm.sh/docs/topics/advanced/#post-rendering"
+  },
+  {
+   "id": "b83db415",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "k",
+   "q": "Explain the Terraform workflow: init, plan, apply. What happens in each step?",
+   "p": [
+    "`init`: מוריד providers ו-modules, מגדיר את ה-backend, ויוצר או מעדכן את ה-lock file.",
+    "`plan`: מרענן את ה-state מול המציאות ומחשב diff: יצירה, שינוי, מחיקה.",
+    "`apply`: מבצע את התוכנית ומעדכן את ה-state.",
+    "`plan -out` ואז `apply` לקובץ: מבצעים בדיוק את מה שנבדק.",
+    "ב-CI: plan על PR, ו-apply אחרי merge."
+   ],
+   "f": "Why apply a saved plan file instead of running apply directly?",
+   "w": "להריץ `apply` בלי לקרוא את ה-plan.",
+   "r": "https://developer.hashicorp.com/terraform/intro/core-workflow"
+  },
+  {
+   "id": "185225a2",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "k",
+   "q": "What are providers, and why do you pin their versions?",
+   "p": [
+    "provider הוא plugin שמדבר עם API (aws, kubernetes, github).",
+    "`required_providers` עם `source` ו-constraint (`~> 5.0`).",
+    "`.terraform.lock.hcl` נועל גרסה מדויקת ו-hashes. עושים לו commit.",
+    "שדרוג מכוון עם `terraform init -upgrade`, ולא בהפתעה.",
+    "provider aliases לכמה regions או חשבונות."
+   ],
+   "f": "What does the lock file protect you from?",
+   "w": "לא לעשות commit ל-lock file.",
+   "r": "https://developer.hashicorp.com/terraform/language/providers/requirements"
+  },
+  {
+   "id": "5e182fce",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between `count` and `for_each`, and why does it matter?",
+   "p": [
+    "`count` יוצר רשימה עם אינדקסים: `[0]`, `[1]`.",
+    "הסרת איבר מהאמצע מזיזה אינדקסים, ו-Terraform מוחק ויוצר מחדש.",
+    "`for_each` על map או set של מחרוזות נותן מפתחות יציבים.",
+    "המפתחות של `for_each` חייבים להיות ידועים בזמן plan.",
+    "`count` נוח להפעלה וכיבוי: `count = var.enabled ? 1 : 0`."
+   ],
+   "f": "How do you migrate an existing resource from count to for_each without recreating it?",
+   "w": "להשתמש ב-`count` על רשימה שמשתנה, ואז לראות מחיקות מפתיעות.",
+   "r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
+  },
+  {
+   "id": "6f886b3d",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "t",
+   "q": "`terraform plan` fails with a `Cycle` error. How do you approach it?",
+   "p": [
+    "שני משאבים (או יותר) מפנים זה לזה, ו-Terraform לא יכול לקבוע סדר.",
+    "דוגמה קלאסית: שני security groups שמפנים זה לזה בחוקים inline.",
+    "פתרון: להוציא את החוקים ל-resources נפרדים (`aws_vpc_security_group_ingress_rule`).",
+    "`terraform graph` כדי לראות את התלויות.",
+    "לבדוק `depends_on` מיותר שיצר את המעגל."
+   ],
+   "f": "Why do separate rule resources break the cycle?",
+   "w": "להוסיף עוד `depends_on`, שרק מחמיר את המעגל.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/graph"
+  },
+  {
+   "id": "e447343e",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "k",
+   "q": "What are variables, locals, data sources and outputs, and when do you use each?",
+   "p": [
+    "variables: קלט עם type, validation ו-`sensitive`.",
+    "locals: ערכים מחושבים ושמות, כדי לא לחזור על עצמך.",
+    "data sources: קריאה של משאבים קיימים (AMI, VPC לפי tags).",
+    "outputs: חושפים ערכים ל-caller או לקונפיגורציות אחרות.",
+    "להיזהר מתלות מוגזמת ב-remote state של stacks אחרים."
+   ],
+   "f": "When would you use a data source instead of a variable?",
+   "w": "לשים ערכים קשיחים בכל מקום במקום locals ו-variables.",
+   "r": "https://developer.hashicorp.com/terraform/language/values/locals"
+  },
+  {
+   "id": "95e208bc",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "t",
+   "q": "`terraform apply` fails halfway through with an API error. What state is your infrastructure in now?",
+   "p": [
+    "משאבים שנוצרו לפני השגיאה נרשמו ב-state.",
+    "משאב שנוצר חלקית יכול להיות מסומן tainted, להחלפה בהרצה הבאה.",
+    "אין rollback אוטומטי.",
+    "מתקנים את הסיבה ומריצים plan ו-apply שוב, ו-Terraform ממשיך מהמקום שבו עצר.",
+    "לקרוא את ה-plan החדש בעיון לפני ה-apply."
+   ],
+   "f": "What does `tainted` mean for the next plan?",
+   "w": "להניח ש-Terraform החזיר הכול למצב הקודם.",
+   "r": "https://developer.hashicorp.com/terraform/cli/state/taint"
+  },
+  {
+   "id": "cbc2aee9",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "t",
+   "q": "A security review finds a database password in plaintext in your Terraform state. How did it get there, and how do you fix it?",
+   "p": [
+    "Terraform שומר attributes של משאבים ב-state, כולל סיסמאות. `sensitive` רק מסתיר מהפלט.",
+    "ephemeral resources ו-write-only arguments (Terraform 1.10–1.11) שומרים ערכים מחוץ ל-state.",
+    "חלופה: לתת לשירות לנהל את הסיסמה (למשל RDS עם Secrets Manager), ולא להעביר אותה בכלל.",
+    "להגן על ה-state: הצפנה, גישה מוגבלת, versioning.",
+    "רוטציה לסיסמה שנחשפה."
+   ],
+   "f": "Who in your organisation can read the state bucket today?",
+   "w": "לחשוב ש-`sensitive = true` מצפין את הערך ב-state.",
+   "r": "https://developer.hashicorp.com/terraform/language/state/sensitive-data"
+  },
+  {
+   "id": "b988ebb0",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "t",
+   "q": "After upgrading the AWS provider, the plan shows lots of unexpected changes. What do you do?",
+   "p": [
+    "לקרוא את ה-upgrade guide וה-changelog של ה-provider (גרסה major שוברת).",
+    "ה-lock file השתנה: לבדוק מאיזו גרסה לאיזו.",
+    "השינויים הם לעתים ברירות מחדל חדשות או שמות שדות.",
+    "לשדרג בנפרד משינויים אחרים, ולהריץ קודם על סביבה לא פרודקשן.",
+    "לתקן את הקוד לפי ה-guide עד שה-plan נקי."
+   ],
+   "f": "How do you keep provider upgrades from piling up?",
+   "w": "לאשר את כל השינויים כי \"זה רק upgrade\".",
+   "r": "https://developer.hashicorp.com/terraform/language/providers/requirements#version-constraints"
+  },
+  {
+   "id": "0c21b49c",
+   "t": 5,
+   "s": 19,
+   "lv": 0,
+   "k": "t",
+   "q": "Your team built resources by hand in the console, and now you need them in Terraform. How do you do it without recreating them?",
+   "p": [
+    "`import` block (מגרסה 1.5): הצהרה בקוד, וה-plan מראה מה ייובא.",
+    "`terraform plan -generate-config-out` מייצר טיוטה של HCL.",
+    "הפקודה הישנה `terraform import` מעדכנת רק את ה-state.",
+    "לתקן את הקוד עד שה-plan לא מראה שינויים.",
+    "לעבוד בהדרגה, משאב אחרי משאב, ולא הכול בבת אחת."
+   ],
+   "f": "Why must the plan show no changes after the import?",
+   "w": "לכתוב resource חדש ולהריץ apply, ש-Terraform ינסה ליצור משאב כפול.",
+   "r": "https://developer.hashicorp.com/terraform/language/import"
+  },
+  {
+   "id": "7084a2aa",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you design reusable Terraform modules?",
+   "p": [
+    "module קטן וממוקד, עם variables מוגדרים (type, description, validation) ו-outputs.",
+    "בלי הגדרת provider בתוך ה-module. ה-caller מעביר providers.",
+    "גרסאות ל-modules (registry או git tags), וה-callers עושים pin.",
+    "לא לעטוף כל resource ב-module משלו.",
+    "examples וטסטים לכל module."
+   ],
+   "f": "What makes a module hard to upgrade for its consumers?",
+   "w": "ליצור module שהוא wrapper דק על resource אחד, עם כל הפרמטרים שלו.",
+   "r": "https://developer.hashicorp.com/terraform/language/modules/develop"
+  },
+  {
+   "id": "eba8f58e",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "t",
+   "q": "A plan wants to destroy and recreate a resource you didn't change. How do you find out why?",
+   "p": [
+    "ב-plan מופיע `# forces replacement` ליד השדה שגורם להחלפה.",
+    "גרסת provider חדשה שינתה ברירת מחדל, או את האופן שבו שדה מחושב.",
+    "אינדקס של `count` שזז.",
+    "resource ששונה לו שם או הועבר ל-module בלי בלוק `moved`.",
+    "שדה שמשתנה מחוץ ל-Terraform: `ignore_changes`. אף פעם לא לעשות apply בלי להבין."
+   ],
+   "f": "What does a `moved` block do?",
+   "w": "לאשר את ה-plan כי \"זה רק recreate\".",
+   "r": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+  },
+  {
+   "id": "1f864231",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you manage multiple environments with Terraform? Compare workspaces and separate directories.",
+   "p": [
+    "CLI workspaces: אותו קוד, state נפרד. פשוט, אבל קל להריץ על ה-workspace הלא נכון.",
+    "ב-workspaces אותו backend ואותם credentials לכל הסביבות.",
+    "תיקייה לכל סביבה שקוראת ל-modules משותפים: מפורש, backends ו-credentials נפרדים.",
+    "Terragrunt עוזר לא לחזור על הקוד בין התיקיות.",
+    "בפועל: חשבון AWS נפרד לכל סביבה."
+   ],
+   "f": "Why does HashiCorp say CLI workspaces aren't a good fit for strong environment isolation?",
+   "w": "להשתמש ב-workspaces עם אותם credentials ל-dev ול-prod.",
+   "r": "https://developer.hashicorp.com/terraform/language/state/workspaces"
+  },
+  {
+   "id": "bd9125a4",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "k",
+   "q": "What are lifecycle rules like `prevent_destroy`, `create_before_destroy` and `ignore_changes` used for?",
+   "p": [
+    "`create_before_destroy`: יוצר את החדש לפני מחיקת הישן, בלי downtime. צריך שמות ייחודיים (`name_prefix`).",
+    "`prevent_destroy`: plan נכשל אם הוא מוחק DB או bucket קריטי.",
+    "`ignore_changes`: שדות שמשתנים מבחוץ (desired capacity של ASG, tags מכלי אחר).",
+    "`replace_triggered_by`: החלפה כשמשאב אחר משתנה.",
+    "שימוש מוגזם ב-`ignore_changes` מסתיר drift."
+   ],
+   "f": "Does `prevent_destroy` protect a resource if you delete its block from the code?",
+   "w": "לשים `ignore_changes = all` כדי שה-plan יהיה נקי.",
+   "r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle"
+  },
+  {
+   "id": "341ac5c8",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "t",
+   "q": "A `create_before_destroy` replacement fails with `already exists`. Why?",
+   "p": [
+    "המשאב החדש נוצר עם אותו שם ייחודי כמו הישן, שעדיין קיים.",
+    "פתרון: `name_prefix`, או suffix אקראי (`random_id`).",
+    "`create_before_destroy` מתפשט גם למשאבים שתלויים בו.",
+    "יש משאבים שלא יכולים להתקיים פעמיים (אילוצי ייחודיות של ה-API)."
+   ],
+   "f": "Why does create_before_destroy propagate to dependencies?",
+   "w": "למחוק ידנית את המשאב הישן באמצע ה-apply.",
+   "r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#create_before_destroy"
+  },
+  {
+   "id": "8bdb3b51",
+   "t": 5,
+   "s": 19,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you write custom validation and checks in Terraform?",
+   "p": [
+    "`validation` ב-variables: `condition` ו-`error_message`.",
+    "`precondition` ו-`postcondition` בתוך `lifecycle`.",
+    "`check` blocks: assertions שמתריעים בלי לחסום.",
+    "`terraform test` (`.tftest.hcl`) עם plan או apply ועם mocks.",
+    "policy as code (OPA, Sentinel) ב-pipeline."
+   ],
+   "f": "What's the difference between a postcondition and a check block?",
+   "w": "לגלות קלט שגוי רק אחרי apply שנכשל.",
+   "r": "https://developer.hashicorp.com/terraform/language/expressions/custom-conditions"
+  },
+  {
+   "id": "225b747e",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "k",
+   "q": "What is Terraform state, and why is it needed?",
+   "p": [
+    "ממפה כל resource בקוד ל-ID אמיתי בענן.",
+    "שומר attributes, כדי לחשב diff ותלויות.",
+    "מאפשר ל-Terraform לדעת מה למחוק כשמשהו הוסר מהקוד.",
+    "מכיל ערכים רגישים, ולכן צריך הגנה.",
+    "בצוות: remote backend עם locking."
+   ],
+   "f": "What would happen if two people each had their own local state?",
+   "w": "לשמור state מקומי או ב-Git.",
+   "r": "https://developer.hashicorp.com/terraform/language/state/purpose"
+  },
+  {
+   "id": "4ceeb0dc",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you set up remote state for a team on AWS?",
+   "p": [
+    "S3 backend עם versioning והצפנה.",
+    "locking: `use_lockfile = true` (נעילה ב-S3, מגרסה 1.10), או טבלת DynamoDB בגישה הישנה.",
+    "גישה מוגבלת ב-IAM ל-bucket.",
+    "state נפרד לכל סביבה ורכיב, כדי להקטין blast radius.",
+    "את ה-bucket עצמו מקימים בנפרד (bootstrap)."
+   ],
+   "f": "Why turn on versioning for the state bucket?",
+   "w": "S3 backend בלי locking.",
+   "r": "https://developer.hashicorp.com/terraform/language/backend/s3"
+  },
+  {
+   "id": "e0d62f8e",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "t",
+   "q": "Terraform says `Error acquiring the state lock`. What do you do?",
+   "p": [
+    "מישהו אחר או pipeline אחר רץ עכשיו. מידע ה-lock מראה מי ומתי.",
+    "קודם לחכות ולבדוק.",
+    "אם ריצה קרסה והשאירה lock, ואתה בטוח ששום דבר לא רץ: `terraform force-unlock <ID>`.",
+    "force-unlock בזמן apply אחר יכול להשחית את ה-state.",
+    "concurrency ב-CI כדי למנוע ריצות במקביל."
+   ],
+   "f": "How do you make sure no pipeline is still running before force-unlock?",
+   "w": "לעשות force-unlock מיד בלי לבדוק מי מחזיק את ה-lock.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/force-unlock"
+  },
+  {
+   "id": "c73f808c",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "k",
+   "q": "Why split Terraform into multiple states, and how do they share data?",
+   "p": [
+    "blast radius קטן, plan מהיר יותר, ובעלות ברורה לכל צוות.",
+    "מחזורי חיים שונים: רשת משתנה לעתים רחוקות, אפליקציות לעתים קרובות.",
+    "שיתוף: outputs עם `terraform_remote_state`.",
+    "או צימוד רופף יותר: data sources לפי tags, או SSM parameters.",
+    "להימנע מתלויות מעגליות בין stacks."
+   ],
+   "f": "Why can `terraform_remote_state` become a problem?",
+   "w": "state אחד ענק לכל הארגון.",
+   "r": "https://developer.hashicorp.com/terraform/language/state/remote-state-data"
+  },
+  {
+   "id": "0dd0d310",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "t",
+   "q": "`terraform plan` works locally but fails in CI with authentication errors. What do you check?",
+   "p": [
+    "ל-CI יש credentials אחרים: OIDC, role ARN ו-audience נכונים.",
+    "env vars כמו `AWS_*` שמוגדרים או חסרים.",
+    "גם ה-backend צריך הרשאות: גישה ל-bucket של ה-state, בנפרד מה-provider.",
+    "region נכון, ו-`assume_role` מוגדר גם ב-provider וגם ב-backend.",
+    "מקומית זה עובד בזכות ה-profile שלך."
+   ],
+   "f": "Why can the backend and the provider end up using different credentials?",
+   "w": "להכניס את ה-access keys האישיים שלך ל-CI.",
+   "r": "https://developer.hashicorp.com/terraform/language/backend/s3#credentials-and-shared-configuration"
+  },
+  {
+   "id": "c61ea6d3",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between a normal plan, `plan -refresh-only`, and the old `terraform refresh`?",
+   "p": [
+    "plan רגיל: מרענן את ה-state בזיכרון ומציע שינויים כדי להתאים לקוד.",
+    "`-refresh-only`: מראה drift ומאפשר לעדכן את ה-state לערכים האמיתיים, בלי לשנות תשתית.",
+    "`terraform refresh` כותב ל-state ישירות בלי review. deprecated.",
+    "`apply -refresh-only` כשמקבלים שינוי ידני שאושר."
+   ],
+   "f": "When would you run an `apply -refresh-only`?",
+   "w": "להשתמש ב-`terraform refresh` שמעדכן state בלי לראות מה השתנה.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/plan#planning-modes"
+  },
+  {
+   "id": "397b3955",
+   "t": 5,
+   "s": 20,
+   "lv": 0,
+   "k": "t",
+   "q": "A `terraform destroy` in a dev environment is blocked or fails. What are common reasons?",
+   "p": [
+    "`prevent_destroy` ב-lifecycle.",
+    "S3 bucket לא ריק (צריך `force_destroy`).",
+    "deletion protection על RDS או על load balancer.",
+    "משאבים שנוצרו מחוץ ל-Terraform: ENIs של EKS או Lambda, LB של Kubernetes controller. הם מחזיקים את ה-VPC.",
+    "חסרות הרשאות IAM למחיקה."
+   ],
+   "f": "Why does a VPC deletion hang when an EKS cluster ran in it?",
+   "w": "למחוק את ה-state ולמחוק משאבים ידנית בקונסול.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/destroy"
+  },
+  {
+   "id": "0a86920a",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "t",
+   "q": "Someone changed a resource manually in the console. How do you detect drift, and what do you do about it?",
+   "p": [
+    "`terraform plan` מראה את ההבדל.",
+    "pipeline מתוזמן של drift: `plan -detailed-exitcode` מחזיר 2 כשיש שינויים.",
+    "להחליט: להחזיר עם apply, או לאמץ את השינוי לקוד.",
+    "`ignore_changes` רק כשיש בעלים חיצוני לגיטימי לשדה.",
+    "מניעה: הגבלת הרשאות כתיבה בקונסול, SCPs, וכל שינוי דרך PR."
+   ],
+   "f": "How would you alert on drift without auto-reverting it?",
+   "w": "להריץ apply אוטומטי שדורס כל שינוי ידני בלי לבדוק.",
+   "r": "https://developer.hashicorp.com/terraform/tutorials/state/resource-drift"
+  },
+  {
+   "id": "e92fbd9a",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you refactor Terraform code, like renaming resources or moving them into modules, without destroying infrastructure?",
+   "p": [
+    "`moved` block (`from` ו-`to`): דקלרטיבי, נראה ב-plan, ועובד גם לצרכנים של module.",
+    "`terraform state mv`: הדרך הישנה והאימפרטיבית.",
+    "`removed` block עם `destroy = false`: להוציא מה-state בלי למחוק.",
+    "ה-plan חייב להראות אפס מחיקות."
+   ],
+   "f": "Why is a moved block better than `state mv` for a shared module?",
+   "w": "לשנות שם ל-resource ולאשר plan שמוחק ויוצר אותו.",
+   "r": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+  },
+  {
+   "id": "2ad7cb62",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "t",
+   "q": "The state file got corrupted, or someone removed resources from it. How do you recover?",
+   "p": [
+    "S3 versioning: לשחזר גרסה קודמת של ה-state.",
+    "`terraform state pull` ו-`push` בזהירות, עם שימת לב ל-serial.",
+    "לייבא מחדש משאבים חסרים עם import blocks.",
+    "לא לערוך את קובץ ה-state ידנית, אלא כמוצא אחרון.",
+    "מניעה: versioning, locking וגישה מוגבלת."
+   ],
+   "f": "What does the `serial` in the state file protect against?",
+   "w": "להריץ apply על state חסר, ש-Terraform ינסה ליצור הכול מחדש.",
+   "r": "https://developer.hashicorp.com/terraform/cli/state/recover"
+  },
+  {
+   "id": "2c427b73",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "k",
+   "q": "What does a good Terraform CI/CD pipeline look like?",
+   "p": [
+    "ב-PR: `fmt -check`, `validate`, tflint, סריקת אבטחה (Checkov, Trivy).",
+    "plan שמתפרסם כ-comment ב-PR.",
+    "apply רק אחרי merge או אישור, מקובץ ה-plan.",
+    "credentials דרך OIDC לכל סביבה; role לקריאה בלבד ל-plan.",
+    "נעילה לכל state. כלים: Atlantis, HCP Terraform, Spacelift."
+   ],
+   "f": "Why give the plan step a read-only role?",
+   "w": "להריץ apply מהמחשב האישי ישירות לפרודקשן.",
+   "r": "https://www.runatlantis.io/docs/"
+  },
+  {
+   "id": "1bff3089",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "t",
+   "q": "Two engineers keep conflicting in the same state, and plans include each other's changes. How do you fix the workflow?",
+   "p": [
+    "apply רק מ-main ורק דרך ה-pipeline. בלי applies מקומיים.",
+    "plan ב-PR שמבוסס על main העדכני.",
+    "applies אחד אחרי השני: lock לכל state, ותור.",
+    "לפצל state לפי רכיב או צוות.",
+    "Atlantis נועל לפי PR ותיקייה."
+   ],
+   "f": "How does Atlantis prevent two PRs from applying to the same state?",
+   "w": "לתאם בצ'אט מי מריץ apply מתי.",
+   "r": "https://www.runatlantis.io/docs/locking.html"
+  },
+  {
+   "id": "71eeb9e9",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you handle Terraform across many AWS accounts and regions?",
+   "p": [
+    "provider aliases עם `assume_role` לכל חשבון ו-region.",
+    "state נפרד לכל חשבון ו-region.",
+    "account vending (Control Tower, AFT) ו-baseline כ-module.",
+    "Terragrunt או Stacks לתזמור.",
+    "OIDC מה-CI ל-role של deploy בכל חשבון."
+   ],
+   "f": "How do you pass an aliased provider into a module?",
+   "w": "credentials נפרדים ידניים לכל חשבון במקום assume_role.",
+   "r": "https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations"
+  },
+  {
+   "id": "36278f6f",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "k",
+   "q": "OpenTofu vs Terraform: what's the difference, and how would you decide?",
+   "p": [
+    "OpenTofu הוא fork שנוצר אחרי שינוי הרישיון של Terraform ל-BSL ב-2023. רישיון MPL, תחת Linux Foundation.",
+    "HCL ו-providers ברובם תואמים.",
+    "פיצ'רים מתפצלים: הצפנת state ב-OpenTofu; Stacks ו-HCP ב-Terraform.",
+    "שיקולים: מגבלות רישוי, תלות בשירותי HashiCorp, קהילה, ועלות מעבר."
+   ],
+   "f": "What would you test before migrating a codebase to OpenTofu?",
+   "w": "להציג אותם כאילו הם זהים לגמרי לתמיד.",
+   "r": "https://opentofu.org/docs/"
+  },
+  {
+   "id": "87417bd2",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "t",
+   "q": "Plan takes 20 minutes on a big state. How do you speed it up?",
+   "p": [
+    "state גדול = refresh של אלפי משאבים דרך API, עם rate limits.",
+    "לפצל ל-states קטנים יותר.",
+    "`-refresh=false` לפידבק מהיר (בזהירות).",
+    "`-parallelism` ו-plugin cache.",
+    "data sources שפונים ל-APIs איטיים."
+   ],
+   "f": "What's the risk of `-refresh=false`?",
+   "w": "להשתמש ב-`-target` כפתרון קבוע.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/plan#refresh-false"
+  },
+  {
+   "id": "4f044aee",
+   "t": 5,
+   "s": 20,
+   "lv": 1,
+   "k": "t",
+   "q": "During an incident, a teammate wants to run `terraform apply -target` to fix one resource. What do you say?",
+   "p": [
+    "`-target` מיועד למקרים חריגים ולהתאוששות. זה יכול להיות אחד מהם.",
+    "apply חלקי: ה-state מתרחק מהקוד, ותלויות מדלגות.",
+    "אחרי ה-incident: plan מלא כדי לוודא שהכול מתיישב.",
+    "אם צריך את זה באופן קבוע, זה סימן שצריך לפצל את ה-state."
+   ],
+   "f": "What would you check in the full plan after the incident?",
+   "w": "להפוך את `-target` להרגל יומיומי.",
+   "r": "https://developer.hashicorp.com/terraform/cli/commands/plan#resource-targeting"
   }
  ]
 }
