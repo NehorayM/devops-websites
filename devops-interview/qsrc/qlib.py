@@ -50,8 +50,8 @@ SECTIONS = [
     ("argo-ops",       "argocd",   "ArgoCD: RBAC, SSO, Secrets & Operations",       "ArgoCD ops",          56),
     ("ci-docker",      "ci",       "CI: Docker Image Builds",                       "Docker builds",       47),
     ("ci-sec",         "ci",       "CI: DevSecOps",                                 "DevSecOps",           47),
-    ("ci-test",        "ci",       "CI: Testing in the Pipeline",                   "Pipeline testing",    46),
-    ("ci-deploy",      "ci",       "CI: Pipeline Design & Deployment Strategies",   "Deploy strategies",   46),
+    ("ci-test",        "ci",       "CI: Testing in the Pipeline",                   "Pipeline testing",    45),
+    ("ci-deploy",      "ci",       "CI: Pipeline Design & Deployment Strategies",   "Deploy strategies",   47),
     ("aws-eks",        "aws",      "AWS: EKS & IAM",                                "EKS & IAM",           53),
     ("aws-net",        "aws",      "AWS: VPC, Compute & DNS",                       "VPC & compute",       53),
     ("aws-ops",        "aws",      "AWS: Storage, Secrets & Observability",         "S3, secrets, CW",     53),
@@ -75,7 +75,7 @@ REF_HOSTS = (
     "martinfowler.com", "prometheus.io", "opentelemetry.io", "kustomize.io",
     "github.com", "www.gnu.org", "systemd.io", "www.freedesktop.org", "docs.sonarsource.com",
     "external-secrets.io", "cert-manager.io", "karpenter.sh", "kubernetes-sigs.github.io",
-    "argoproj.github.io", "www.terraform.io", "coredns.io", "kubernetes.github.io", "keda.sh", "kyverno.io", "falco.org", "etcd.io", "sre.google", "opengitops.dev", "fluxcd.io", "argocd-image-updater.readthedocs.io", "kubectl.docs.kubernetes.io", "docs.kargo.io", "argocd-agent.readthedocs.io", "argocd-vault-plugin.readthedocs.io", "pythonspeed.com", "pip.pypa.io", "securitylab.github.com", "www.first.org", "www.cisa.gov", "www.checkov.io", "www.zaproxy.org", "www.conftest.dev", "docs.npmjs.com", "semgrep.dev", "nginx.org", "git-scm.com", "semver.org",
+    "argoproj.github.io", "www.terraform.io", "coredns.io", "kubernetes.github.io", "keda.sh", "kyverno.io", "falco.org", "etcd.io", "sre.google", "opengitops.dev", "fluxcd.io", "argocd-image-updater.readthedocs.io", "kubectl.docs.kubernetes.io", "docs.kargo.io", "argocd-agent.readthedocs.io", "argocd-vault-plugin.readthedocs.io", "pythonspeed.com", "pip.pypa.io", "securitylab.github.com", "www.first.org", "www.cisa.gov", "www.checkov.io", "www.zaproxy.org", "www.conftest.dev", "docs.npmjs.com", "semgrep.dev", "testing.googleblog.com", "docs.pact.io", "testcontainers.com", "java.testcontainers.org", "stryker-mutator.io", "playwright.dev", "grafana.com", "12factor.net", "pre-commit.com", "principlesofchaos.org", "nx.dev", "jestjs.io", "docs.pytest.org", "dora.dev", "trunkbaseddevelopment.com", "www.conventionalcommits.org", "nginx.org", "git-scm.com", "semver.org",
     "cheatsheetseries.owasp.org", "cloud.google.com", "learn.microsoft.com", "en.wikipedia.org",
 )
 
