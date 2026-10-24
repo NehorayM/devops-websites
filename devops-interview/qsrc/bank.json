@@ -142,319 +142,179 @@
 ],
 "questions": [
 {
-"s": 0,
-"q": "Containers in the same pod share which of the following by default?",
+"s": 1,
+"q": "A new Ingress returns 404 from the controller for every path. The backend Service works with `port-forward`. The cluster runs two ingress controllers. What do you check first?",
 "o": [
 [
 "A",
-"Nothing; containers in a pod are fully isolated"
+"Whether the backend Service is headless"
 ],
 [
 "B",
-"The root filesystem"
+"Whether CoreDNS has a record for the Ingress"
 ],
 [
 "C",
-"The process namespace"
+"Whether the pods have a liveness probe"
 ],
 [
 "D",
-"The network namespace (same IP, they talk over localhost) and any volumes mounted in both"
+"Whether `spec.ingressClassName` names the right controller"
 ]
 ],
 "a": [
 "D"
 ],
 "y": [
-"הם חולקים network namespace תמיד.",
-"לכל קונטיינר יש filesystem נפרד מה-image שלו. משתפים קבצים רק דרך volume.",
-"זה קורה רק עם `shareProcessNamespace: true`.",
-"כל הקונטיינרים בפוד חולקים IP ופורטים, ויכולים לשתף volumes. לכל אחד יש filesystem משלו."
+"Ingress עובד גם עם Services רגילים.",
+"Ingress לא נרשם ב-CoreDNS. ה-DNS החיצוני מצביע על ה-controller.",
+"Liveness לא קשור לניתוב ב-ingress.",
+"אם ה-class שגוי או חסר, ה-controller שמקבל את התעבורה מתעלם מה-Ingress ומחזיר את ה-default backend, כלומר 404."
 ],
-"x": "דוגמה: sidecar של proxy שמאזין ב-localhost:15001. זה עובד רק כי ה-network namespace משותף.",
+"x": "אחרי ה-class בודקים את ה-host header (`curl -H 'Host: app.example.com'`) ואת ה-pathType. אלה שלוש הסיבות הנפוצות ל-404.",
 "lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/#how-pods-manage-multiple-containers"
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class"
 },
 {
-"s": 0,
-"q": "You need exactly one log-collector pod on every node, including nodes added later. Which resource fits?",
+"s": 2,
+"q": "`kubectl create secret generic db --from-literal=password=abc` was run in `default`, but pods in `prod` fail with `secret \"db\" not found`. Why?",
 "o": [
 [
 "A",
-"Deployment with replicas equal to the node count"
+"Secrets created from literals are not readable by pods"
 ],
 [
 "B",
-"A static pod on the control plane"
+"The kubelet needs to be restarted to see new Secrets"
 ],
 [
 "C",
-"DaemonSet"
+"Secrets are namespaced; the pods can only reference Secrets in their own namespace"
 ],
 [
 "D",
-"StatefulSet with podAntiAffinity"
+"The Secret name must be uppercase"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"אין הבטחה שכל פוד ינחת על node אחר, וצריך לעדכן ידנית כשמספר ה-nodes משתנה.",
-"Static pod רץ רק על ה-node שבו נמצא הקובץ. הוא לא מתפזר לכל ה-cluster.",
-"DaemonSet מוודא שעל כל node מתאים רץ עותק, ומוסיף פוד אוטומטית כש-node חדש מצטרף.",
-"זה מסובך ושביר. גם כאן צריך לנהל את מספר ה-replicas ידנית."
+"אין הבדל בין literal לקובץ.",
+"ה-kubelet מוריד Secrets לפי צורך.",
+"כל Secret שייך ל-namespace אחד. צריך ליצור אותו ב-`prod` (או לסנכרן עם כלי).",
+"שמות חייבים להיות lowercase."
 ],
-"x": "תזכיר שאם יש taints על ה-nodes (למשל control-plane) צריך tolerations ב-DaemonSet כדי שירוץ גם שם.",
+"x": "בדיקה מהירה: `kubectl get secret db -n prod`. טעות ה-namespace היא הנפוצה ביותר ב-CreateContainerConfigError.",
 "lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/"
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/#restrictions"
 },
 {
-"s": 0,
-"q": "What is `minReadySeconds` on a Deployment for?",
+"s": 1,
+"q": "A `type: LoadBalancer` Service on a bare-metal cluster has stayed in `EXTERNAL-IP <pending>` for hours. Why?",
 "o": [
 [
 "A",
-"The minimum time between two rollouts"
+"The Service needs `externalTrafficPolicy: Local` first"
 ],
 [
 "B",
-"A new pod must stay Ready for that long, without crashing, before it counts as available"
+"LoadBalancer Services take a few hours to provision by design"
 ],
 [
 "C",
-"How long readiness probes wait before the first check"
+"The selector does not match any pods"
 ],
 [
 "D",
-"The delay before the scheduler places a new pod"
-]
-],
-"a": [
-"B"
-],
-"y": [
-"אין מגבלה כזו בין rollouts.",
-"זה מגן מפני פודים שעוברים readiness ואז קורסים מיד. ה-rollout לא ימשיך עד שהם הוכיחו יציבות.",
-"זה `initialDelaySeconds` בתוך ה-probe.",
-"השדה לא משפיע על scheduling."
-],
-"x": "שילוב טוב: `minReadySeconds` עם progressDeadlineSeconds ו-`rollout status` ב-pipeline. ככה rollout שבור נתפס מוקדם.",
-"lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds"
-},
-{
-"s": 0,
-"q": "Which list contains only real pod phases?",
-"o": [
-[
-"A",
-"Scheduled, Ready, NotReady, Evicted"
-],
-[
-"B",
-"Pending, Running, CrashLoopBackOff, Completed"
-],
-[
-"C",
-"Creating, Running, Terminating, Deleted"
-],
-[
-"D",
-"Pending, Running, Succeeded, Failed, Unknown"
+"Nothing in the cluster provisions load balancers; bare metal needs something like MetalLB"
 ]
 ],
 "a": [
 "D"
 ],
 "y": [
-"אלה conditions או reasons, לא phases.",
-"CrashLoopBackOff ו-Completed הם reasons שמוצגים ב-STATUS, לא phases.",
-"Terminating הוא תצוגה של kubectl לפוד עם deletionTimestamp. אין phase כזה.",
-"אלה חמשת ה-phases. כל השאר (CrashLoopBackOff, ContainerCreating) הם reasons של מצב קונטיינר."
+"המדיניות לא קשורה ליצירת ה-LB.",
+"בענן זה לוקח בדרך כלל דקות. ב-bare metal זה לא יקרה בכלל.",
+"חוסר ב-endpoints לא מונע הקצאת IP חיצוני.",
+"בענן ה-cloud controller manager יוצר LB. בלי ספק כזה אף אחד לא ממלא את ה-IP."
 ],
-"x": "ההבחנה בין phase, conditions ו-container state מראה הבנה של איך kubectl מחשב את עמודת STATUS.",
+"x": "כדאי להזכיר גם בענן: אם ה-cloud controller חסר הרשאות IAM, הסטטוס נשאר pending. ב-`describe svc` רואים את השגיאה.",
 "lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase"
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer"
 },
 {
-"s": 0,
-"q": "What is the difference between a liveness probe and a readiness probe?",
+"s": 1,
+"q": "How does a pod on node A reach a pod on node B, in the Kubernetes networking model?",
 "o": [
 [
 "A",
-"Liveness runs only at startup; readiness runs for the whole life of the pod"
+"Only through a Service"
 ],
 [
 "B",
-"Liveness failure restarts the container; readiness failure removes the pod from Service endpoints"
+"Directly by pod IP, without NAT; the CNI plugin makes the pod network routable across nodes"
 ],
 [
 "C",
-"Readiness failure restarts the pod; liveness failure only logs a warning"
+"Through the API server, which proxies pod traffic"
 ],
 [
 "D",
-"They are identical; readiness is the older name"
+"Through the node's public IP with port mapping"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"שניהם רצים לאורך כל החיים של הקונטיינר. ל-startup יש probe נפרד, `startupProbe`.",
-"זה ההבדל המרכזי. Readiness אומר 'אל תשלחו לי תעבורה', ו-liveness אומר 'אני תקוע, תפעילו אותי מחדש'.",
-"הפוך. Readiness לא מאתחל כלום.",
-"אלה שני מנגנונים שונים עם תוצאות שונות."
+"Service הוא נוחות, לא חובה. IP ישיר עובד.",
+"המודל דורש שכל פוד יגיע לכל פוד אחר ב-IP שלו, בלי NAT. ה-CNI מממש את זה עם overlay (VXLAN), ניתוב, או ENI בענן.",
+"ה-API server לא נמצא בנתיב של תעבורת פודים.",
+"זה מודל Docker הישן. Kubernetes מחייב IP לכל פוד."
 ],
-"x": "תוסיף ש-liveness לא אמור לבדוק תלויות חיצוניות כמו DB. אחרת תקלה ב-DB תגרום ל-restart לכל הפודים בבת אחת.",
+"x": "תזכיר את שלושת הכללים של מודל הרשת, ותן דוגמה: ב-EKS, VPC CNI נותן לפודים IP מה-VPC.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+"r": "https://kubernetes.io/docs/concepts/services-networking/#the-kubernetes-network-model"
 },
 {
-"s": 0,
-"q": "After a deploy, `kubectl get pods` shows new pods with `RESTARTS 5` and status `Error`, and `logs --previous` shows `exec /app/server: no such file or directory`. The binary is in the image. What is the most likely cause?",
+"s": 1,
+"q": "What is the default port range for NodePort Services?",
 "o": [
 [
 "A",
-"Wrong CPU architecture, or a missing dynamic loader such as glibc on Alpine"
+"30000–32767"
 ],
 [
 "B",
-"A volume mounted over `/app` hides the binary"
+"1–1024"
 ],
 [
 "C",
-"The container needs `privileged: true` to execute files"
+"8000–9000"
 ],
 [
 "D",
-"The image's file permissions block execution"
+"49152–65535"
 ]
 ],
 "a": [
 "A"
 ],
 "y": [
-"ההודעה מטעה: הקובץ קיים, אבל ה-interpreter או ה-dynamic loader שהוא צריך לא נמצא, או שהארכיטקטורה לא תואמת.",
-"אפשרי במקרים מסוימים, אבל אז `ls` היה מראה שהתיקייה ריקה. השאלה אומרת שהבינארי ב-image.",
-"הרשאות יתנו 'permission denied', לא 'no such file'.",
-"הרשאות חסרות נותנות `permission denied`, לא `no such file or directory`."
+"זה הטווח שמוגדר ב-kube-apiserver עם `--service-node-port-range`.",
+"אלה פורטים פריבילגיים, לא טווח ה-NodePort.",
+"אין ברירת מחדל כזו.",
+"זה טווח ה-ephemeral ports של IANA, לא של Kubernetes."
 ],
-"x": "שאלה שמבדילה בין מי שבנה images מורכבים: multi-arch builds (`docker buildx --platform`), CGO_ENABLED=0 ב-Go, ובחירת base image.",
-"lv": 0,
-"k": "t",
-"r": "https://docs.docker.com/build/building/multi-platform/"
-},
-{
-"s": 0,
-"q": "What is the default rolling-update behaviour of a Deployment when you change its pod template?",
-"o": [
-[
-"A",
-"All old pods are deleted first, then the new ones are created"
-],
-[
-"B",
-"Pods are updated in place without being recreated"
-],
-[
-"C",
-"maxSurge 25% and maxUnavailable 25%: new pods are added and old ones removed in steps"
-],
-[
-"D",
-"New pods are created one at a time, and each must be Ready for five minutes before the next"
-]
-],
-"a": [
-"C"
-],
-"y": [
-"זו אסטרטגיית `Recreate`, והיא לא ברירת המחדל. היא גורמת ל-downtime.",
-"שינוי ב-pod template תמיד יוצר פודים חדשים דרך ReplicaSet חדש. אין עדכון in-place.",
-"אלה ערכי ברירת המחדל של RollingUpdate. ה-Deployment יוצר ReplicaSet חדש ומעביר אליו פודים בהדרגה.",
-"אין המתנה של חמש דקות כברירת מחדל. `minReadySeconds` הוא 0 אלא אם מגדירים אותו."
-],
-"x": "תזכיר ש-`maxUnavailable: 0` יחד עם `maxSurge: 1` נותן zero-downtime, בתנאי שיש מספיק מקום ב-cluster.",
+"x": "שאלה קצרה, אבל כדאי להוסיף למה לא חושפים NodePort ישירות לאינטרנט: פורטים לא סטנדרטיים, וכל node הופך לנקודת כניסה.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment"
-},
-{
-"s": 0,
-"q": "A new node joined the cluster but the logging DaemonSet did not schedule a pod on it. The node has the taint `dedicated=gpu:NoSchedule`. What fixes it?",
-"o": [
-[
-"A",
-"Restart the kubelet on the new node"
-],
-[
-"B",
-"Increase the DaemonSet's replicas field"
-],
-[
-"C",
-"Add a matching toleration to the DaemonSet's pod template"
-],
-[
-"D",
-"Delete and recreate the DaemonSet"
-]
-],
-"a": [
-"C"
-],
-"y": [
-"ה-kubelet תקין. החסימה היא ב-scheduling.",
-"ל-DaemonSet אין שדה replicas. מספר הפודים נקבע לפי ה-nodes.",
-"Taint עם NoSchedule חוסם פודים בלי toleration מתאים. DaemonSet מכבד taints כמו כל פוד.",
-"יצירה מחדש עם אותו spec תיתקל באותו taint."
-],
-"x": "תציין שאפשר גם toleration כללי (`operator: Exists`) לסוכנים שחייבים לרוץ בכל מקום, ולהסביר מתי זה מסוכן.",
-"lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
-},
-{
-"s": 0,
-"q": "What does `kubectl rollout restart deployment/api` actually do?",
-"o": [
-[
-"A",
-"It patches the pod template with a `restartedAt` annotation, which triggers a normal rolling update"
-],
-[
-"B",
-"It restarts the containers in place without new pods"
-],
-[
-"C",
-"It deletes all pods at once"
-],
-[
-"D",
-"It restarts the kubelet on every node running the pods"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"השינוי ב-annotation נחשב לשינוי template, ולכן ReplicaSet חדש מחליף את הפודים בהדרגה, לפי אסטרטגיית ה-rollout.",
-"אין restart in-place. נוצרים פודים חדשים.",
-"המחיקה הדרגתית ומכבדת את maxUnavailable.",
-"הפקודה לא נוגעת ב-kubelet."
-],
-"x": "שימוש נפוץ: לטעון מחדש Secret שהשתנה כשהאפליקציה קוראת אותו רק בזמן עלייה. אפשר להזכיר גם checksum annotation ב-Helm.",
-"lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/"
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport"
 },
 {
 "s": 0,
@@ -466,15 +326,15 @@
 ],
 [
 "B",
-"SIGTERM is sent, then `preStop` runs after the container exits"
-],
-[
-"C",
 "The container is paused and its memory saved to disk"
 ],
 [
-"D",
+"C",
 "SIGKILL is sent immediately, then `preStop` runs"
+],
+[
+"D",
+"SIGTERM is sent, then `preStop` runs after the container exits"
 ]
 ],
 "a": [
@@ -482,9 +342,9 @@
 ],
 "y": [
 "ה-grace period (ברירת מחדל 30 שניות) כולל גם את זמן ה-preStop. בסופו נשלח SIGKILL.",
-"preStop רץ לפני ה-SIGTERM, לא אחרי.",
 "Kubernetes לא עושה checkpoint כחלק ממחיקת פוד.",
-"SIGKILL הוא המוצא האחרון, לא הצעד הראשון."
+"SIGKILL הוא המוצא האחרון, לא הצעד הראשון.",
+"preStop רץ לפני ה-SIGTERM, לא אחרי."
 ],
 "x": "תוסיף שבמקביל הפוד מוסר מה-endpoints. לכן `preStop` עם `sleep` קצר מונע שגיאות 502 בזמן deploy.",
 "lv": 0,
@@ -493,38 +353,108 @@
 },
 {
 "s": 0,
-"q": "`kubectl describe pod` shows `Last State: Terminated, Reason: OOMKilled, Exit Code: 137`. What happened?",
+"q": "When should a Deployment use the `Recreate` strategy instead of `RollingUpdate`?",
 "o": [
 [
 "A",
-"The node ran out of disk space and evicted the pod"
+"When the workload is managed by a DaemonSet"
 ],
 [
 "B",
-"The container exceeded its memory limit and the kernel OOM killer sent SIGKILL"
+"Whenever you need a zero-downtime release"
 ],
 [
 "C",
-"The liveness probe failed three times in a row"
+"When two versions must never run at the same time"
 ],
 [
 "D",
-"The application called `exit(137)` on a configuration error"
+"When the cluster has many spare nodes"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"ל-DaemonSet יש אסטרטגיות משלו (`RollingUpdate`, `OnDelete`).",
+"Recreate גורם בהכרח ל-downtime.",
+"Recreate מוריד את הישנים לפני שהחדשים עולים. מקבלים downtime, אבל אף פעם אין שתי גרסאות במקביל.",
+"עודף משאבים דווקא מאפשר rolling update."
+],
+"x": "דוגמה טובה: פוד עם PVC מסוג RWO. ב-RollingUpdate הפוד החדש לא יכול לעשות mount כל עוד הישן מחזיק את ה-volume.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment"
+},
+{
+"s": 0,
+"q": "A new node joined the cluster but the logging DaemonSet did not schedule a pod on it. The node has the taint `dedicated=gpu:NoSchedule`. What fixes it?",
+"o": [
+[
+"A",
+"Increase the DaemonSet's replicas field"
+],
+[
+"B",
+"Restart the kubelet on the new node"
+],
+[
+"C",
+"Delete and recreate the DaemonSet"
+],
+[
+"D",
+"Add a matching toleration to the DaemonSet's pod template"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"ל-DaemonSet אין שדה replicas. מספר הפודים נקבע לפי ה-nodes.",
+"ה-kubelet תקין. החסימה היא ב-scheduling.",
+"יצירה מחדש עם אותו spec תיתקל באותו taint.",
+"Taint עם NoSchedule חוסם פודים בלי toleration מתאים. DaemonSet מכבד taints כמו כל פוד."
+],
+"x": "תציין שאפשר גם toleration כללי (`operator: Exists`) לסוכנים שחייבים לרוץ בכל מקום, ולהסביר מתי זה מסוכן.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+},
+{
+"s": 0,
+"q": "You need a shell in a pod whose image is distroless, so `kubectl exec -it pod -- sh` fails. What do you use?",
+"o": [
+[
+"A",
+"Rebuild the image with bash added and redeploy it"
+],
+[
+"B",
+"`kubectl debug -it <pod> --image=busybox --target=<container>`"
+],
+[
+"C",
+"`kubectl attach -it <pod> -c <container>`"
+],
+[
+"D",
+"`kubectl port-forward <pod> 2222:22`, then ssh in"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"Eviction בגלל דיסק מסמן את הפוד כ-Failed עם reason של Evicted, לא OOMKilled על הקונטיינר.",
-"137 = 128+9, כלומר SIGKILL. עם reason של OOMKilled זה אומר שהקונטיינר עבר את ה-memory limit שלו.",
-"כשל של liveness מופיע ב-Events כ-'Liveness probe failed' והקונטיינר מקבל SIGTERM, לא reason של OOMKilled.",
-"תיאורטית אפשרי, אבל אז ה-reason היה Error ולא OOMKilled. ה-reason נקבע לפי מה שה-runtime ראה."
+"זה עובד, אבל איטי, ומשנה בדיוק את מה שאתה מנסה לחקור.",
+"Ephemeral container נכנס לפוד הקיים, ועם `--target` הוא חולק את ה-process namespace של הקונטיינר. ככה רואים תהליכים וקבצים בלי לשנות את ה-image.",
+"Attach מתחבר ל-stdin/stdout של התהליך הראשי. הוא לא נותן shell.",
+"בפוד אין sshd, ו-port-forward הוא לא shell."
 ],
-"x": "תגיד שבודקים אם ה-limit נמוך מדי או שיש memory leak (גרף זיכרון לאורך זמן). ב-JVM כדאי להזכיר heap שמוגדר מעל ה-limit.",
+"x": "תוסיף ש-`kubectl debug node/<name>` נותן shell על ה-node עצמו. זה שימושי לבדיקת בעיות ב-kubelet או ברשת.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/"
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container"
 },
 {
 "s": 0,
@@ -532,34 +462,349 @@
 "o": [
 [
 "A",
-"The container's command exits with code 1"
-],
-[
-"B",
-"The node's kubelet version is too old"
-],
-[
-"C",
 "A referenced ConfigMap or Secret key is missing"
 ],
 [
-"D",
+"B",
 "The image is too large for the node"
+],
+[
+"C",
+"The node's kubelet version is too old"
+],
+[
+"D",
+"The container's command exits with code 1"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"זו הסיבה הנפוצה ביותר. ה-kubelet לא יכול לבנות את הקונטיינר כי חסר מקור ל-env או ל-volume. ב-Events תראה איזה מהם.",
+"בעיה כזו תופיע בשלב ה-pull או כבעיית דיסק.",
+"זה נדיר מאוד ולא מתאים להודעה הזו.",
+"אז הסטטוס היה Error או CrashLoopBackOff. הקונטיינר אפילו לא נוצר."
+],
+"x": "`kubectl describe pod` יראה למשל `secret \"db-creds\" not found`. אחר כך בודקים namespace ושם. טעות נפוצה: ה-Secret נמצא ב-namespace אחר.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/"
+},
+{
+"s": 0,
+"q": "A pod is in CrashLoopBackOff. `kubectl logs <pod>` shows nothing useful because the container was just restarted. What is the most direct way to see why the last run died?",
+"o": [
+[
+"A",
+"`kubectl logs <pod> --previous`, then `kubectl describe pod` for the last state and exit code"
+],
+[
+"B",
+"`kubectl delete pod <pod>` so the ReplicaSet creates a fresh one"
+],
+[
+"C",
+"`kubectl get events --all-namespaces` and look for the newest event"
+],
+[
+"D",
+"`kubectl rollout restart` on the Deployment"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"`--previous` מציג את הלוגים של הקונטיינר הקודם שקרס, ו-`describe` מראה את `Last State`, ה-reason וה-exit code. זה בדיוק המידע שחסר.",
+"מחיקה רק מאפסת את ה-back-off ומוחקת את הראיות. הפוד החדש יקרוס מאותה סיבה.",
+"Events עוזרים, אבל הם לא מראים את פלט האפליקציה, ולרוב הסיבה האמיתית נמצאת בלוג של הריצה הקודמת.",
+"Restart יוצר פודים חדשים עם אותו template. זה לא מאבחן כלום."
+],
+"x": "תתאר סדר עבודה: `describe` (Events, Last State, exit code) ← `logs --previous` ← ואז השערה. מראיינים רוצים לשמוע שיטה, לא ניחוש.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/"
+},
+{
+"s": 2,
+"q": "What is the difference between `env` with `valueFrom.configMapKeyRef` and `envFrom` with `configMapRef`?",
+"o": [
+[
+"A",
+"`envFrom` reloads values live; `configMapKeyRef` does not"
+],
+[
+"B",
+"`configMapKeyRef` only works with Secrets"
+],
+[
+"C",
+"`configMapKeyRef` maps one key to a variable you name; `envFrom` imports every key as a variable"
+],
+[
+"D",
+"They are identical"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"אז הסטטוס היה Error או CrashLoopBackOff. הקונטיינר אפילו לא נוצר.",
-"זה נדיר מאוד ולא מתאים להודעה הזו.",
-"זו הסיבה הנפוצה ביותר. ה-kubelet לא יכול לבנות את הקונטיינר כי חסר מקור ל-env או ל-volume. ב-Events תראה איזה מהם.",
-"בעיה כזו תופיע בשלב ה-pull או כבעיית דיסק."
+"אף אחד מהם לא מתעדכן בזמן ריצה.",
+"יש `secretKeyRef` נפרד ל-Secrets.",
+"keyRef מאפשר שליטה בשמות ובחירה של מפתחות. envFrom מהיר, אבל מכניס הכול ועלול להתנגש בשמות קיימים.",
+"ההתנהגות שונה."
 ],
-"x": "`kubectl describe pod` יראה למשל `secret \"db-creds\" not found`. אחר כך בודקים namespace ושם. טעות נפוצה: ה-Secret נמצא ב-namespace אחר.",
+"x": "מפתחות שאינם שמות משתנים חוקיים (למשל עם נקודה) מדולגים ב-envFrom. זה edge case שכדאי להכיר.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/"
+},
+{
+"s": 2,
+"q": "A pod mounts a PVC and its app crashes with `read-only file system` on write. The PVC is ReadWriteOnce. What do you check first?",
+"o": [
+[
+"A",
+"Whether the mount is `readOnly: true`"
+],
+[
+"B",
+"Whether the image is distroless"
+],
+[
+"C",
+"Whether CoreDNS is reachable"
+],
+[
+"D",
+"Whether the PVC is too large"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"readOnly ב-mount הוא הסיבה הנפוצה. אם לא, ייתכן שה-filesystem נכשל ועבר ל-read-only אחרי שגיאות דיסק, וזה מופיע ב-dmesg של ה-node.",
+"distroless לא קשור להרשאות כתיבה על volume.",
+"DNS לא קשור לשאלה.",
+"גודל גדול לא גורם ל-read-only."
+],
+"x": "שווה להזכיר `readOnlyRootFilesystem` ב-securityContext, שמגן על ה-root אבל דורש emptyDir ל-`/tmp`.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/"
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/"
+},
+{
+"s": 0,
+"q": "A CronJob scheduled for `0 2 * * *` runs at 05:00 local time instead of 02:00. What is the likely reason, and the fix?",
+"o": [
+[
+"A",
+"It runs in the controller's zone (UTC); set `spec.timeZone`"
+],
+[
+"B",
+"`startingDeadlineSeconds` delays every run"
+],
+[
+"C",
+"The Job had to wait three hours for a node"
+],
+[
+"D",
+"Cron in Kubernetes uses a 12-hour clock"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"בלי `timeZone` ה-kube-controller-manager משתמש באזור הזמן שלו, לרוב UTC. הפרש של 3 שעות מתאים ל-UTC+3.",
+"השדה הזה מגביל איחור. הוא לא מוסיף איחור.",
+"אז היית רואה פוד Pending, וזה לא היה עקבי בדיוק בשלוש שעות.",
+"תחביר cron הוא 24 שעות."
+],
+"x": "תזכיר ש-`timeZone` נתמך (GA) מגרסה 1.27, ושצריך לחשוב על מעבר לשעון קיץ.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#time-zones"
+},
+{
+"s": 2,
+"q": "What does `volumeBindingMode: WaitForFirstConsumer` on a StorageClass do?",
+"o": [
+[
+"A",
+"It delays provisioning until a pod using the PVC is scheduled, so the volume lands in that pod's zone"
+],
+[
+"B",
+"It shares one volume between the first pods that request it"
+],
+[
+"C",
+"It keeps the volume read-only until the first write"
+],
+[
+"D",
+"It waits for an admin to approve each volume"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"כך ה-volume נוצר אחרי שה-scheduler בחר node, ומתאים לאילוצי ה-topology של הפוד.",
+"שיתוף נקבע לפי access mode.",
+"אין קשר להרשאות קריאה וכתיבה.",
+"אין שלב אישור ידני."
+],
+"x": "ההפך הוא `Immediate`, שיכול ליצור volume ב-AZ שאין בו מקום לפוד.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode"
+},
+{
+"s": 1,
+"q": "`kubectl port-forward svc/api 8080:80` works, but the Ingress returns 502 Bad Gateway. What should you check?",
+"o": [
+[
+"A",
+"Whether the pods were scheduled on control-plane nodes"
+],
+[
+"B",
+"The backend port, and whether the app expects HTTP or HTTPS"
+],
+[
+"C",
+"Whether the Service has `externalTrafficPolicy: Local`"
+],
+[
+"D",
+"Whether CoreDNS has a wildcard record for the host"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"המיקום לא משנה ל-Ingress.",
+"502 אומר שה-controller הגיע ל-backend וקיבל תשובה שגויה או ניתוק. port לא נכון או backend שמדבר HTTPS כשה-controller שולח HTTP הם סיבות נפוצות.",
+"המדיניות הזו לא רלוונטית ל-Ingress שמדבר עם ClusterIP.",
+"ה-controller מגיע ל-Services דרך endpoints, לא דרך DNS חיצוני."
+],
+"x": "תזכיר את לוג ה-controller: הוא מראה בדיוק לאיזה upstream ניסה להתחבר ומה קרה.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/ingress/"
+},
+{
+"s": 0,
+"q": "What is the relationship between a Deployment and a ReplicaSet?",
+"o": [
+[
+"A",
+"They are the same object with different names"
+],
+[
+"B",
+"A Deployment manages pods directly; ReplicaSets are only for StatefulSets"
+],
+[
+"C",
+"A Deployment creates and manages ReplicaSets, one per pod-template revision, and moves replicas between them"
+],
+[
+"D",
+"A ReplicaSet manages Deployments"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"אלה שני kinds שונים עם תפקידים שונים.",
+"StatefulSet מנהל פודים ישירות, בלי ReplicaSet.",
+"כל שינוי ב-template יוצר ReplicaSet חדש. ה-Deployment מנהל את המעבר ושומר ReplicaSets ישנים בשביל rollback.",
+"הפוך. Deployment נמצא מעל ReplicaSet."
+],
+"x": "תזכיר ש-`revisionHistoryLimit` (ברירת מחדל 10) קובע כמה ReplicaSets ישנים נשמרים, ושזה מה שמאפשר `rollout undo`.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+},
+{
+"s": 1,
+"q": "You need to quickly test whether pod A can reach Service B on port 5432. What is a good first command?",
+"o": [
+[
+"A",
+"`ping b` from your laptop"
+],
+[
+"B",
+"Restart pod B and watch its logs"
+],
+[
+"C",
+"`kubectl exec` into pod A (or a debug pod) and run `nc -zv b.ns.svc.cluster.local 5432`"
+],
+[
+"D",
+"`kubectl get svc b` and assume it works if it exists"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"המחשב שלך לא ברשת של ה-cluster, ו-ping ל-ClusterIP לא עובד בכל מקרה.",
+"Restart לא בודק קישוריות, וגורם להפרעה מיותרת.",
+"בודקים מנקודת המבט של הלקוח: DNS, ניתוב ופורט פתוח, בצעד אחד.",
+"קיום של Service לא אומר שיש endpoints או שה-NetworkPolicy מאפשרת."
+],
+"x": "אם לפוד אין כלים: `kubectl run tmp --rm -it --image=nicolaka/netshoot -- bash`. זה מראה שאתה מכיר כלי debug נפוצים.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/"
+},
+{
+"s": 0,
+"q": "After a deploy, `kubectl get pods` shows new pods with `RESTARTS 5` and status `Error`, and `logs --previous` shows `exec /app/server: no such file or directory`. The binary is in the image. What is the most likely cause?",
+"o": [
+[
+"A",
+"The container needs `privileged: true` to execute files"
+],
+[
+"B",
+"Wrong CPU architecture, or a missing dynamic loader such as glibc on Alpine"
+],
+[
+"C",
+"A volume mounted over `/app` hides the binary"
+],
+[
+"D",
+"The image's file permissions block execution"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"הרשאות יתנו 'permission denied', לא 'no such file'.",
+"ההודעה מטעה: הקובץ קיים, אבל ה-interpreter או ה-dynamic loader שהוא צריך לא נמצא, או שהארכיטקטורה לא תואמת.",
+"אפשרי במקרים מסוימים, אבל אז `ls` היה מראה שהתיקייה ריקה. השאלה אומרת שהבינארי ב-image.",
+"הרשאות חסרות נותנות `permission denied`, לא `no such file or directory`."
+],
+"x": "שאלה שמבדילה בין מי שבנה images מורכבים: multi-arch builds (`docker buildx --platform`), CGO_ENABLED=0 ב-Go, ובחירת base image.",
+"lv": 0,
+"k": "t",
+"r": "https://docs.docker.com/build/building/multi-platform/"
 },
 {
 "s": 0,
@@ -571,11 +816,11 @@
 ],
 [
 "B",
-"Add a `startupProbe` sized for the slow start"
+"Remove the liveness probe so the pod is never restarted"
 ],
 [
 "C",
-"Remove the liveness probe so the pod is never restarted"
+"Add a `startupProbe` sized for the slow start"
 ],
 [
 "D",
@@ -583,12 +828,12 @@
 ]
 ],
 "a": [
-"B"
+"C"
 ],
 "y": [
 "Readiness לא גורם ל-restart. מי שהורג את הקונטיינר הוא ה-liveness.",
-"`startupProbe` מנטרל את ה-liveness עד שהאפליקציה עלתה. ככה מגינים על אתחול איטי בלי להחליש את ה-liveness אחר כך.",
 "זה עובד, אבל מאבדים את ההגנה מפני deadlock אחרי שהאפליקציה כבר רצה.",
+"`startupProbe` מנטרל את ה-liveness עד שהאפליקציה עלתה. ככה מגינים על אתחול איטי בלי להחליש את ה-liveness אחר כך.",
 "בפוד של Deployment מותר רק `Always`. וגם אם היה אפשר, זה לא פותר את הבעיה."
 ],
 "x": "אפשר להזכיר גם `initialDelaySeconds` גבוה כפתרון ישן, ולהסביר למה `startupProbe` עדיף: הוא מגן רק בזמן ההפעלה.",
@@ -597,144 +842,424 @@
 "r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-startup-probes"
 },
 {
-"s": 0,
-"q": "A pod is stuck in `Init:CrashLoopBackOff`. What does that tell you?",
+"s": 2,
+"q": "A PVC uses a StorageClass with `reclaimPolicy: Delete`. What happens when the PVC is deleted?",
 "o": [
 [
 "A",
-"An init container keeps failing, so the app containers never start"
+"The data is archived to object storage"
 ],
 [
 "B",
-"The main container crashes during its init phase"
+"The PV is kept with status Released"
 ],
 [
 "C",
-"The kubelet failed to initialise the node"
+"The PVC cannot be deleted while the PV exists"
 ],
 [
 "D",
-"The pod is waiting for a PersistentVolume"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"Init containers רצים לפי הסדר ועד שהם מסתיימים בהצלחה. כל עוד אחד נכשל, האפליקציה לא עולה.",
-"הקידומת `Init:` מתייחסת ל-init containers, לא לשלב בתוך הקונטיינר הראשי.",
-"בעיה ב-node נראית אחרת (NotReady). כאן הפוד כבר שובץ ורץ.",
-"המתנה ל-volume נראית כ-Pending או ContainerCreating."
-],
-"x": "תגיד שבודקים עם `kubectl logs <pod> -c <init-container-name>`. הרבה אנשים שוכחים את `-c`.",
-"lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/"
-},
-{
-"s": 0,
-"q": "A CronJob scheduled for `0 2 * * *` runs at 05:00 local time instead of 02:00. What is the likely reason, and the fix?",
-"o": [
-[
-"A",
-"Cron in Kubernetes uses a 12-hour clock"
-],
-[
-"B",
-"The Job had to wait three hours for a node"
-],
-[
-"C",
-"`startingDeadlineSeconds` delays every run"
-],
-[
-"D",
-"It runs in the controller's zone (UTC); set `spec.timeZone`"
+"The PV and the underlying disk are deleted too"
 ]
 ],
 "a": [
 "D"
 ],
 "y": [
-"תחביר cron הוא 24 שעות.",
-"אז היית רואה פוד Pending, וזה לא היה עקבי בדיוק בשלוש שעות.",
-"השדה הזה מגביל איחור. הוא לא מוסיף איחור.",
-"בלי `timeZone` ה-kube-controller-manager משתמש באזור הזמן שלו, לרוב UTC. הפרש של 3 שעות מתאים ל-UTC+3."
+"אין ארכוב אוטומטי.",
+"זה קורה עם Retain.",
+"מחיקת PVC מותרת. מחיקה נחסמת רק כשפוד עדיין משתמש בו.",
+"עם Delete, מחיקת ה-PVC מוחקת גם את ה-PV ואת הדיסק בענן. הדאטה אובד."
 ],
-"x": "תזכיר ש-`timeZone` נתמך (GA) מגרסה 1.27, ושצריך לחשוב על מעבר לשעון קיץ.",
+"x": "לנתונים קריטיים: StorageClass עם `Retain`, ו-VolumeSnapshots לגיבוי. מראיינים אוהבים לשמוע איך מונעים אובדן דאטה בטעות.",
 "lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#time-zones"
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming"
 },
 {
-"s": 0,
-"q": "A container spec uses `image: myapp:latest` and no `imagePullPolicy`. What pull policy applies?",
+"s": 2,
+"q": "How do you grow a PVC from 10Gi to 20Gi?",
 "o": [
 [
 "A",
-"It depends on the node's container runtime"
+"Edit `spec.capacity.storage` on the PV only"
 ],
 [
 "B",
-"`IfNotPresent`"
+"Delete the PVC and create a bigger one with the same name"
 ],
 [
 "C",
-"`Always`"
+"Volumes cannot be resized once they are bound"
 ],
 [
 "D",
-"`Never`"
+"Edit the PVC's requested size, with expansion allowed"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"משנים את ה-PVC. ה-PV מתעדכן לפיו.",
+"זה ימחק את הדאטה (עם Delete) או ייצור דיסק חדש וריק.",
+"הרחבה נתמכת ברוב ה-CSI drivers.",
+"ה-CSI driver מגדיל את הדיסק, ולרוב גם את ה-filesystem. אי אפשר להקטין PVC."
+],
+"x": "תזכיר שבחלק מה-drivers צריך restart לפוד כדי שה-filesystem יורחב, ושב-StatefulSet משנים כל PVC בנפרד, כי `volumeClaimTemplates` לא מתעדכן.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#expanding-persistent-volumes-claims"
+},
+{
+"s": 1,
+"q": "What is the full DNS name of a Service called `db` in namespace `prod`, with the default cluster domain?",
+"o": [
+[
+"A",
+"`db.svc.prod.local`"
+],
+[
+"B",
+"`db.prod.pod.cluster.local`"
+],
+[
+"C",
+"`prod.db.cluster.local`"
+],
+[
+"D",
+"`db.prod.svc.cluster.local`"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"הסדר שגוי, וחסר cluster domain.",
+"`pod` משמש לרשומות של פודים, לא של Services.",
+"הסדר הפוך, וחסר `svc`.",
+"התבנית היא `<service>.<namespace>.svc.<cluster-domain>`. מתוך אותו namespace מספיק `db`."
+],
+"x": "תוסיף שמ-namespace אחר צריך לפחות `db.prod`, ושה-search domains ב-`/etc/resolv.conf` של הפוד הם מה שמשלים את השם.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/"
+},
+{
+"s": 2,
+"q": "Is a Kubernetes Secret encrypted by default?",
+"o": [
+[
+"A",
+"Yes; Secrets are always encrypted with AES in etcd"
+],
+[
+"B",
+"Yes; base64 is a strong encryption scheme"
+],
+[
+"C",
+"No; Secrets are stored in plain text files on every node"
+],
+[
+"D",
+"No; values are only base64-encoded, and stored unencrypted in etcd unless encryption at rest is configured"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"הצפנה ב-etcd דורשת `EncryptionConfiguration`. היא לא ברירת המחדל ב-cluster מנוהל עצמית.",
+"base64 הפיך בפקודה אחת.",
+"Secrets נשמרים ב-etcd, וה-kubelet מוריד אותם רק ל-nodes שבהם רצים פודים שצריכים אותם.",
+"base64 הוא קידוד, לא הצפנה. כל מי שיכול לקרוא את ה-Secret ב-API, או את etcd, רואה את הערך."
+],
+"x": "תזכיר את שכבות ההגנה: encryption at rest (או KMS), RBAC מצומצם על secrets, וניהול חיצוני (Vault, AWS Secrets Manager דרך External Secrets).",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/#information-security-for-secrets"
+},
+{
+"s": 2,
+"q": "What does `immutable: true` on a ConfigMap or Secret give you?",
+"o": [
+[
+"A",
+"The ability to share it across namespaces"
+],
+[
+"B",
+"Encryption of its values in etcd"
+],
+[
+"C",
+"No accidental edits, and kubelets stop watching it"
+],
+[
+"D",
+"Automatic restart of pods that use it"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"ברירת המחדל נקבעת ב-API server לפי ה-tag, לא לפי ה-runtime.",
-"זו ברירת המחדל רק כשיש tag שאינו `latest`.",
-"כשה-tag הוא `latest` או חסר, ברירת המחדל היא Always.",
-"Never אף פעם לא ברירת מחדל."
+"ConfigMap תמיד שייך ל-namespace אחד.",
+"Immutable לא מצפין שום דבר.",
+"אי אפשר לשנות את הנתונים, רק למחוק וליצור מחדש. ב-cluster גדול זה גם מוריד הרבה watches מה-API server.",
+"אין restart אוטומטי, וגם אין שינויים שצריך להגיב להם."
 ],
-"x": "תוסיף למה `latest` בפרודקשן זה רעיון רע: אי אפשר לדעת איזו גרסה רצה, ו-rollback לא עובד. עדיף tag קבוע או digest.",
+"x": "דפוס שימוש טוב: שם עם hash (`config-a1b2c3`) ו-immutable. כל שינוי יוצר אובייקט חדש וגורם ל-rollout מבוקר. Kustomize עושה את זה אוטומטית.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting"
+"r": "https://kubernetes.io/docs/concepts/configuration/configmap/#configmap-immutable"
 },
 {
-"s": 0,
-"q": "You deployed a bad image tag. The new pods are in ImagePullBackOff but the old ones are still serving traffic. What is the quickest safe recovery?",
+"s": 2,
+"q": "A pod is `Pending`, and its PVC is also `Pending`. `kubectl describe pvc` says `no persistent volumes available for this claim and no storage class is set`. What is the fix?",
 "o": [
 [
 "A",
-"`kubectl rollout undo deployment/<name>` to go back to the previous ReplicaSet"
+"Set a `storageClassName` on the PVC, or mark a StorageClass as the cluster default"
 ],
 [
 "B",
-"Wait: the Deployment rolls back automatically after progressDeadlineSeconds"
+"Change the PVC's access mode to ReadWriteMany"
 ],
 [
 "C",
-"Scale the Deployment to zero and back up"
+"Restart the kubelet on all nodes"
 ],
 [
 "D",
-"Delete the Deployment and apply it again from the last commit"
+"Delete the pod so the scheduler retries"
 ]
 ],
 "a": [
 "A"
 ],
 "y": [
-"`rollout undo` מחזיר את ה-template הקודם. ה-ReplicaSet הישן עדיין קיים, אז החזרה מהירה ובטוחה.",
-"Kubernetes לא עושה rollback אוטומטי. אחרי ה-deadline הוא רק מסמן `ProgressDeadlineExceeded`.",
-"Scale ל-0 מוריד את כל התעבורה, וה-template עדיין מצביע על ה-tag השבור.",
-"מחיקה מורידה גם את הפודים הישנים שעדיין משרתים, וזה גורם ל-outage מיותר."
+"בלי StorageClass אין dynamic provisioning, וה-PVC מחכה ל-PV סטטי שלא קיים.",
+"access mode שונה לא יוצר StorageClass.",
+"ה-kubelet לא יוצר PVs.",
+"ה-PVC עדיין יחכה. הבעיה היא באחסון, לא בפוד."
 ],
-"x": "תזכיר שב-GitOps הפתרון האמיתי הוא revert ב-Git, אחרת ArgoCD יחזיר את ה-tag השבור. `rollout undo` הוא פתרון חירום.",
+"x": "תזכיר את ה-annotation `storageclass.kubernetes.io/is-default-class`, ושב-EKS צריך להתקין את ה-EBS CSI driver כ-add-on.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment"
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#dynamic"
+},
+{
+"s": 1,
+"q": "What is a headless Service?",
+"o": [
+[
+"A",
+"A Service that defines no ports, only a name"
+],
+[
+"B",
+"A Service with `clusterIP: None`"
+],
+[
+"C",
+"A Service reachable only from inside the node"
+],
+[
+"D",
+"A Service with no selector, so no endpoints are managed"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"Headless יכול להגדיר ports. ההגדרה היא `clusterIP: None`.",
+"אין VIP ואין load balancing של kube-proxy. כל לקוח מקבל את רשימת ה-IPs. StatefulSets צריכים את זה בשביל DNS לכל פוד.",
+"זה תיאור של `internalTrafficPolicy: Local`, לא של headless.",
+"Service בלי selector הוא עדיין רגיל, עם ClusterIP. רק ה-endpoints מנוהלים ידנית."
+],
+"x": "תזכיר את השימוש: StatefulSet עם `pod-0.svc.ns.svc.cluster.local`, או לקוחות כמו gRPC שעושים load balancing בעצמם.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#headless-services"
+},
+{
+"s": 1,
+"q": "What is the difference between `port`, `targetPort` and `nodePort` on a Service?",
+"o": [
+[
+"A",
+"`targetPort` is only used by headless Services"
+],
+[
+"B",
+"`port` is the pod port, `targetPort` is the node port, `nodePort` is the load balancer port"
+],
+[
+"C",
+"`port` is the Service's own port, `targetPort` is the pod port traffic goes to, `nodePort` is opened on every node"
+],
+[
+"D",
+"All three must always be the same number"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"`targetPort` רלוונטי לכל Service עם selector.",
+"ההגדרות מבולבלות. `targetPort` הוא בצד הפוד.",
+"לקוח פונה ל-ClusterIP:port, התעבורה מגיעה לפוד ב-targetPort, ו-NodePort חושף את ה-Service על כל node.",
+"הם יכולים להיות שונים, וזה נפוץ: port 80 ו-targetPort 8080."
+],
+"x": "תזכיר ש-targetPort יכול להיות שם של פורט (`http`), ואז אפשר לשנות את המספר בפוד בלי לגעת ב-Service.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service"
+},
+{
+"s": 1,
+"q": "Which statement about Service discovery through environment variables is true?",
+"o": [
+[
+"A",
+"They only cover Services that existed when the pod started"
+],
+[
+"B",
+"They replace cluster DNS for Service discovery"
+],
+[
+"C",
+"They are only created for headless Services"
+],
+[
+"D",
+"Variables update live when Services change"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"המשתנים נוצרים בזמן יצירת הפוד. Service חדש לא יופיע בפודים קיימים, ולכן DNS הוא הדרך המומלצת.",
+"DNS הוא המנגנון העיקרי.",
+"הם נוצרים ל-Services עם ClusterIP.",
+"משתני סביבה לא מתעדכנים בתהליך שכבר רץ."
+],
+"x": "אפשר להזכיר `enableServiceLinks: false` כדי לבטל אותם ב-namespaces עם הרבה Services. זה מונע env ענק.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#environment-variables"
+},
+{
+"s": 1,
+"q": "`curl` from another pod to `<pod-ip>:8080` returns `connection refused`, but `kubectl exec` into the pod and `curl localhost:8080` works. What is the most likely cause?",
+"o": [
+[
+"A",
+"The pod is not Ready"
+],
+[
+"B",
+"The Service has the wrong selector"
+],
+[
+"C",
+"CoreDNS is not resolving the pod name"
+],
+[
+"D",
+"The app listens on `127.0.0.1` instead of `0.0.0.0`"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"Readiness משפיע על Services, לא על חיבור ישיר ל-IP של הפוד.",
+"הבדיקה הייתה ישירות ל-IP של הפוד, בלי Service.",
+"השתמשו ב-IP, אז DNS לא מעורב.",
+"מאזין על loopback מקבל רק חיבורים מתוך הפוד עצמו. מבחוץ החיבור נדחה. זו טעות קלאסית בהרבה frameworks."
+],
+"x": "`ss -lntp` בתוך הפוד מראה על איזו כתובת התהליך מאזין. דוגמאות: Flask ו-Rails עם ברירת מחדל localhost.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/"
+},
+{
+"s": 1,
+"q": "Pods resolve internal Service names, but every external name like `github.com` fails. CoreDNS is Running. What do you check?",
+"o": [
+[
+"A",
+"The Service CIDR configured on the API server"
+],
+[
+"B",
+"Whether the pods have a liveness probe"
+],
+[
+"C",
+"The CoreDNS `forward` upstream and whether it is reachable"
+],
+[
+"D",
+"Whether kube-proxy runs in IPVS mode"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Service CIDR שגוי היה שובר גם את השמות הפנימיים.",
+"לא קשור ל-DNS.",
+"שמות פנימיים נענים מה-kubernetes plugin. שמות חיצוניים עוברים forward ל-upstream. אם ה-upstream שגוי או חסום, רק הם נכשלים.",
+"שמות פנימיים עובדים, אז הניתוב ל-CoreDNS תקין."
+],
+"x": "תבדוק `kubectl -n kube-system get cm coredns -o yaml`, ובלוגים של CoreDNS חפש timeouts מול ה-upstream.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/"
+},
+{
+"s": 1,
+"q": "You apply a NetworkPolicy, but traffic it should block still flows. The YAML is correct. What is the most likely reason?",
+"o": [
+[
+"A",
+"kube-proxy must be restarted after every policy"
+],
+[
+"B",
+"NetworkPolicies only apply to new pods"
+],
+[
+"C",
+"NetworkPolicies take an hour to apply"
+],
+[
+"D",
+"The CNI plugin does not enforce NetworkPolicy"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"kube-proxy לא אוכף NetworkPolicy.",
+"הם חלים גם על פודים קיימים שתואמים ל-selector.",
+"האכיפה מהירה כשה-CNI תומך.",
+"ה-API מקבל את האובייקט, אבל האכיפה נעשית ב-CNI. Flannel לבדו לא אוכף. Calico ו-Cilium כן."
+],
+"x": "לפני שמחפשים באגים ב-YAML, שאלה ראשונה היא איזה CNI רץ. זה חוסך שעות.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#prerequisites"
 },
 {
 "s": 0,
@@ -742,29 +1267,29 @@
 "o": [
 [
 "A",
-"The node does not have enough CPU to start the image"
+"The Deployment uses `imagePullPolicy: IfNotPresent`"
 ],
 [
 "B",
-"No `imagePullSecrets` for that registry"
-],
-[
-"C",
 "The liveness probe path points at a missing endpoint"
 ],
 [
+"C",
+"The node does not have enough CPU to start the image"
+],
+[
 "D",
-"The Deployment uses `imagePullPolicy: IfNotPresent`"
+"No `imagePullSecrets` for that registry"
 ]
 ],
 "a": [
-"B"
+"D"
 ],
 "y": [
-"חוסר CPU נראה כ-Pending עם 'Insufficient cpu', לא כבעיית pull.",
-"Registry פרטי דורש credentials. בלי imagePullSecret ה-pull נכשל עם 401/403 שמופיע ב-Events.",
+"IfNotPresent רק חוסך pull אם ה-image כבר קיים. הוא לא גורם לכשל.",
 "Probe רץ רק אחרי שהקונטיינר עלה. כאן הוא אפילו לא נמשך.",
-"IfNotPresent רק חוסך pull אם ה-image כבר קיים. הוא לא גורם לכשל."
+"חוסר CPU נראה כ-Pending עם 'Insufficient cpu', לא כבעיית pull.",
+"Registry פרטי דורש credentials. בלי imagePullSecret ה-pull נכשל עם 401/403 שמופיע ב-Events."
 ],
 "x": "תזכיר את שלוש הסיבות הנפוצות: שם או tag שגויים, credentials חסרים, ו-rate limit (Docker Hub, 429). את ההודעה המדויקת רואים ב-`describe`.",
 "lv": 0,
@@ -773,38 +1298,563 @@
 },
 {
 "s": 0,
-"q": "What is a pod's `restartPolicy`, and at what level does it apply?",
+"q": "A CronJob runs a 20-minute report every 15 minutes. You never want two runs at the same time. Which setting do you use?",
 "o": [
 [
 "A",
-"It controls how often the pod is rescheduled after node failure"
+"`concurrencyPolicy: Replace`"
 ],
 [
 "B",
-"Always, OnFailure or Never; it is set once per pod and applies to all its regular containers"
+"`concurrencyPolicy: Forbid`"
 ],
 [
 "C",
-"It is set per container and decides which node the container moves to"
+"`suspend: true`"
 ],
 [
 "D",
-"It is only valid for Jobs"
+"`concurrencyPolicy: Allow`"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"Rescheduling אחרי נפילת node הוא עבודה של controllers, לא של restartPolicy.",
-"המדיניות נקבעת ברמת הפוד. ה-kubelet מפעיל מחדש קונטיינרים באותו פוד, על אותו node.",
-"Restart לא מעביר node. זה תמיד על אותו node.",
-"כל פוד מגדיר restartPolicy. ב-Deployment מותר רק Always."
+"Replace עוצר את הריצה הנוכחית ומתחיל חדשה. הדו\"ח לעולם לא יסתיים.",
+"Forbid מדלג על ריצה חדשה כל עוד הקודמת עדיין רצה.",
+"Suspend עוצר את כל הריצות העתידיות.",
+"זו ברירת המחדל, והיא מאפשרת ריצות חופפות. בדיוק מה שלא רוצים."
 ],
-"x": "שווה לציין חריג אחד: native sidecar ב-initContainers מקבל `restartPolicy: Always` ברמת הקונטיינר.",
+"x": "תוסיף שכדאי להגדיר גם `startingDeadlineSeconds`, כדי שריצה שפוספסה לא תתחיל באיחור גדול.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy"
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy"
+},
+{
+"s": 2,
+"q": "An app running as a non-root user gets `permission denied` writing to its PVC mount. What is the usual fix?",
+"o": [
+[
+"A",
+"Change the PVC access mode to ReadWriteMany"
+],
+[
+"B",
+"Add `privileged: true` to the container"
+],
+[
+"C",
+"Set `securityContext.fsGroup` on the pod"
+],
+[
+"D",
+"Run the container as root with `runAsUser: 0`"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"access mode לא קשור להרשאות filesystem.",
+"Privileged הוא הרשאה רחבה ומסוכנת, ולא נדרש כאן.",
+"fsGroup גורם ל-kubelet לשנות בעלות של קבוצה על ה-volume ב-mount, והתהליך מקבל הרשאת כתיבה.",
+"זה עובד, אבל פוגע באבטחה. לא הפתרון המומלץ."
+],
+"x": "תזכיר `fsGroupChangePolicy: OnRootMismatch`, שחוסך chown איטי על volumes גדולים בכל הפעלה.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#configure-volume-permission-and-ownership-change-policy-for-pods"
+},
+{
+"s": 0,
+"q": "What is `minReadySeconds` on a Deployment for?",
+"o": [
+[
+"A",
+"A new pod must stay Ready for that long, without crashing, before it counts as available"
+],
+[
+"B",
+"The minimum time between two rollouts"
+],
+[
+"C",
+"The delay before the scheduler places a new pod"
+],
+[
+"D",
+"How long readiness probes wait before the first check"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"זה מגן מפני פודים שעוברים readiness ואז קורסים מיד. ה-rollout לא ימשיך עד שהם הוכיחו יציבות.",
+"אין מגבלה כזו בין rollouts.",
+"השדה לא משפיע על scheduling.",
+"זה `initialDelaySeconds` בתוך ה-probe."
+],
+"x": "שילוב טוב: `minReadySeconds` עם progressDeadlineSeconds ו-`rollout status` ב-pipeline. ככה rollout שבור נתפס מוקדם.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds"
+},
+{
+"s": 0,
+"q": "Which workload type gives each replica a stable network identity and its own persistent volume?",
+"o": [
+[
+"A",
+"StatefulSet"
+],
+[
+"B",
+"ReplicaSet"
+],
+[
+"C",
+"DaemonSet"
+],
+[
+"D",
+"Deployment"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"StatefulSet נותן שמות קבועים (`web-0`, `web-1`), DNS יציב דרך headless Service, ו-PVC לכל replica דרך `volumeClaimTemplates`.",
+"ReplicaSet רק מחזיק מספר עותקים. אין לו זהות קבועה.",
+"DaemonSet מריץ פוד אחד לכל node. אין לו זהות לכל replica.",
+"פודים של Deployment הם זהים וניתנים להחלפה, עם שמות אקראיים ו-volume משותף אם בכלל."
+],
+"x": "תן דוגמאות: Kafka, Zookeeper, Postgres עם replication. וכדאי לציין שהרבה צוותים מעדיפים DB מנוהל (RDS) על פני StatefulSet.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/"
+},
+{
+"s": 1,
+"q": "What is the difference between `pathType: Prefix` and `pathType: Exact` in an Ingress?",
+"o": [
+[
+"A",
+"Prefix is a regular expression; Exact is a plain string"
+],
+[
+"B",
+"Exact ignores the query string; Prefix includes it"
+],
+[
+"C",
+"Prefix matches by path elements (`/api` matches `/api/v1`); Exact matches only that exact path"
+],
+[
+"D",
+"They behave the same; Exact is deprecated"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Prefix הוא לא regex. Regex קיים רק כ-annotation של controllers מסוימים.",
+"שניהם לא מסתכלים על query string.",
+"Prefix מתאים לפי מקטעים מופרדים ב-`/`. לכן `/api` לא מתאים ל-`/apiv2`, אבל כן ל-`/api/users`.",
+"שניהם פעילים ושונים."
+],
+"x": "תזכיר `ImplementationSpecific`, שההתנהגות שלו תלויה ב-controller. זה מקור נפוץ להפתעות במעבר בין controllers.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types"
+},
+{
+"s": 0,
+"q": "A pod is stuck in `Init:CrashLoopBackOff`. What does that tell you?",
+"o": [
+[
+"A",
+"The kubelet failed to initialise the node"
+],
+[
+"B",
+"The pod is waiting for a PersistentVolume"
+],
+[
+"C",
+"An init container keeps failing, so the app containers never start"
+],
+[
+"D",
+"The main container crashes during its init phase"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"בעיה ב-node נראית אחרת (NotReady). כאן הפוד כבר שובץ ורץ.",
+"המתנה ל-volume נראית כ-Pending או ContainerCreating.",
+"Init containers רצים לפי הסדר ועד שהם מסתיימים בהצלחה. כל עוד אחד נכשל, האפליקציה לא עולה.",
+"הקידומת `Init:` מתייחסת ל-init containers, לא לשלב בתוך הקונטיינר הראשי."
+],
+"x": "תגיד שבודקים עם `kubectl logs <pod> -c <init-container-name>`. הרבה אנשים שוכחים את `-c`.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/"
+},
+{
+"s": 0,
+"q": "You deployed a bad image tag. The new pods are in ImagePullBackOff but the old ones are still serving traffic. What is the quickest safe recovery?",
+"o": [
+[
+"A",
+"Delete the Deployment and apply it again from the last commit"
+],
+[
+"B",
+"`kubectl rollout undo deployment/<name>` to go back to the previous ReplicaSet"
+],
+[
+"C",
+"Wait: the Deployment rolls back automatically after progressDeadlineSeconds"
+],
+[
+"D",
+"Scale the Deployment to zero and back up"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"מחיקה מורידה גם את הפודים הישנים שעדיין משרתים, וזה גורם ל-outage מיותר.",
+"`rollout undo` מחזיר את ה-template הקודם. ה-ReplicaSet הישן עדיין קיים, אז החזרה מהירה ובטוחה.",
+"Kubernetes לא עושה rollback אוטומטי. אחרי ה-deadline הוא רק מסמן `ProgressDeadlineExceeded`.",
+"Scale ל-0 מוריד את כל התעבורה, וה-template עדיין מצביע על ה-tag השבור."
+],
+"x": "תזכיר שב-GitOps הפתרון האמיתי הוא revert ב-Git, אחרת ArgoCD יחזיר את ה-tag השבור. `rollout undo` הוא פתרון חירום.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-a-deployment"
+},
+{
+"s": 2,
+"q": "What is a PersistentVolumeClaim?",
+"o": [
+[
+"A",
+"A point-in-time backup of a PersistentVolume"
+],
+[
+"B",
+"A physical disk that is attached to a node"
+],
+[
+"C",
+"A permission for a pod to write to disk"
+],
+[
+"D",
+"A request for storage that binds to a PersistentVolume"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"גיבוי הוא VolumeSnapshot.",
+"זה ה-volume עצמו או ה-PV, לא ה-claim.",
+"PVC הוא בקשת אחסון, לא הרשאה.",
+"PVC הוא הצד של המשתמש. PV הוא המשאב בפועל. הפוד מפנה ל-PVC, ולא ישירות לדיסק."
+],
+"x": "ההפרדה בין PV ל-PVC מאפשרת למפתחים לבקש אחסון בלי לדעת איך הוא ממומש. זה הנקודה שכדאי להדגיש.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+},
+{
+"s": 1,
+"q": "What does the `nginx.ingress.kubernetes.io/rewrite-target` annotation typically do?",
+"o": [
+[
+"A",
+"Sets the read timeout towards the backend"
+],
+[
+"B",
+"Redirects every HTTP request to HTTPS"
+],
+[
+"C",
+"Rewrites the request path before it reaches the backend"
+],
+[
+"D",
+"Replaces the Host header sent to the backend"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Timeouts מוגדרים ב-annotations אחרות (`proxy-read-timeout`).",
+"זה `ssl-redirect`.",
+"שימושי כשהאפליקציה לא מודעת ל-prefix שלה. זו annotation ספציפית ל-ingress-nginx, לא חלק מה-Ingress API.",
+"יש annotation אחרת ל-upstream vhost."
+],
+"x": "נקודה לזכור: annotations לא ניידות בין controllers. זו אחת הסיבות למעבר ל-Gateway API.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.github.io/ingress-nginx/examples/rewrite/"
+},
+{
+"s": 0,
+"q": "How do init containers run relative to each other and to the app containers?",
+"o": [
+[
+"A",
+"After the app containers stop, for cleanup"
+],
+[
+"B",
+"In parallel with each other, then the app starts"
+],
+[
+"C",
+"In parallel with the app containers"
+],
+[
+"D",
+"One at a time, in order, each to successful completion, before any app container starts"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"ל-cleanup משתמשים ב-`preStop` hook, לא ב-init containers.",
+"הם רצים ברצף, לפי הסדר ב-spec.",
+"Init containers חוסמים את האפליקציה. הם לא רצים במקביל אליה.",
+"זה ההבדל המרכזי מ-sidecars ומקונטיינרים רגילים, שרצים במקביל."
+],
+"x": "דוגמה טובה לשימוש: המתנה ל-DB, הרצת migrations, או הורדת קונפיג. וכדאי להזכיר שהם חייבים להיות idempotent.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/"
+},
+{
+"s": 1,
+"q": "What does `externalTrafficPolicy: Local` do on a NodePort or LoadBalancer Service?",
+"o": [
+[
+"A",
+"It keeps the client source IP and only sends traffic to pods on the node that received it"
+],
+[
+"B",
+"It makes the Service use the node's local DNS"
+],
+[
+"C",
+"It forces all traffic to the pod with the lowest latency"
+],
+[
+"D",
+"It restricts the Service to clients inside the cluster"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"אין hop נוסף ואין SNAT, אז ה-IP של הלקוח נשמר. המחיר: nodes בלי פוד לא מקבלים תעבורה, והחלוקה יכולה להיות לא אחידה.",
+"אין קשר ל-DNS.",
+"kube-proxy לא מודד latency.",
+"זה לא תפקיד השדה. הוא משפיע על תעבורה חיצונית."
+],
+"x": "תזכיר שה-cloud load balancer משתמש ב-`healthCheckNodePort` כדי לדעת על אילו nodes יש פודים. זה מראה הבנה מקצה לקצה.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#external-traffic-policy"
+},
+{
+"s": 1,
+"q": "An Ingress path works, but the ingress controller returns 503 Service Unavailable. What is the most likely cause?",
+"o": [
+[
+"A",
+"The backend Service has no ready endpoints"
+],
+[
+"B",
+"The client sent the wrong Host header"
+],
+[
+"C",
+"The TLS certificate expired"
+],
+[
+"D",
+"The Ingress has the wrong `ingressClassName`"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"ה-controller מצא את ה-Ingress וה-Service, אבל אין לאן לשלוח. בודקים endpoints ו-readiness.",
+"Host שגוי מגיע ל-default backend ומחזיר 404.",
+"תעודה שפגה נותנת שגיאת TLS בצד הלקוח, לא 503.",
+"class שגוי נותן לרוב 404, כי ה-controller לא מכיר את ה-Ingress."
+],
+"x": "תבחין בין 404 (ניתוב), 502 (backend החזיר שגיאה או ניתק) ו-503 (אין backend זמין). מראיינים אוהבים את ההבחנה הזו.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/"
+},
+{
+"s": 1,
+"q": "When would a pod use `hostNetwork: true`?",
+"o": [
+[
+"A",
+"For node agents that must use the node's network stack"
+],
+[
+"B",
+"To allow the pod to resolve cluster DNS names"
+],
+[
+"C",
+"For every web app, to improve request performance"
+],
+[
+"D",
+"To give the pod its own public IP address"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"הפוד חולק את ה-network namespace של ה-node: אותו IP ואותם פורטים. מתאים לסוכנים, אבל מסוכן לאפליקציות רגילות.",
+"פודים רגילים משתמשים ב-DNS בלי זה.",
+"זה פוגע בבידוד, יוצר התנגשויות פורטים ועוקף NetworkPolicy.",
+"הפוד מקבל את ה-IP של ה-node, לא IP ציבורי משלו."
+],
+"x": "תזכיר ש-Pod Security Standards ברמת `baseline` ו-`restricted` חוסמים `hostNetwork`. זה קשר טוב לאבטחה.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+},
+{
+"s": 0,
+"q": "What is the default rolling-update behaviour of a Deployment when you change its pod template?",
+"o": [
+[
+"A",
+"All old pods are deleted first, then the new ones are created"
+],
+[
+"B",
+"New pods are created one at a time, and each must be Ready for five minutes before the next"
+],
+[
+"C",
+"maxSurge 25% and maxUnavailable 25%: new pods are added and old ones removed in steps"
+],
+[
+"D",
+"Pods are updated in place without being recreated"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"זו אסטרטגיית `Recreate`, והיא לא ברירת המחדל. היא גורמת ל-downtime.",
+"אין המתנה של חמש דקות כברירת מחדל. `minReadySeconds` הוא 0 אלא אם מגדירים אותו.",
+"אלה ערכי ברירת המחדל של RollingUpdate. ה-Deployment יוצר ReplicaSet חדש ומעביר אליו פודים בהדרגה.",
+"שינוי ב-pod template תמיד יוצר פודים חדשים דרך ReplicaSet חדש. אין עדכון in-place."
+],
+"x": "תזכיר ש-`maxUnavailable: 0` יחד עם `maxSurge: 1` נותן zero-downtime, בתנאי שיש מספיק מקום ב-cluster.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment"
+},
+{
+"s": 2,
+"q": "Which access mode lets many pods on many nodes read and write the same volume?",
+"o": [
+[
+"A",
+"ReadWriteOnce (RWO)"
+],
+[
+"B",
+"ReadWriteOncePod (RWOP)"
+],
+[
+"C",
+"ReadOnlyMany (ROX)"
+],
+[
+"D",
+"ReadWriteMany (RWX)"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"RWO מוגבל ל-node אחד, גם אם כמה פודים על אותו node יכולים להשתמש בו.",
+"RWOP מוגבל לפוד אחד בלבד.",
+"ROX מאפשר קריאה בלבד.",
+"RWX נתמך ב-filesystem משותף כמו NFS או EFS. בלוק כמו EBS לא תומך בו."
+],
+"x": "תזכיר ש-access mode הוא רק בקשה. צריך שה-storage backend באמת יתמוך בו.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes"
+},
+{
+"s": 0,
+"q": "What does `kubectl rollout restart deployment/api` actually do?",
+"o": [
+[
+"A",
+"It restarts the containers in place without new pods"
+],
+[
+"B",
+"It restarts the kubelet on every node running the pods"
+],
+[
+"C",
+"It deletes all pods at once"
+],
+[
+"D",
+"It patches the pod template with a `restartedAt` annotation, which triggers a normal rolling update"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין restart in-place. נוצרים פודים חדשים.",
+"הפקודה לא נוגעת ב-kubelet.",
+"המחיקה הדרגתית ומכבדת את maxUnavailable.",
+"השינוי ב-annotation נחשב לשינוי template, ולכן ReplicaSet חדש מחליף את הפודים בהדרגה, לפי אסטרטגיית ה-rollout."
+],
+"x": "שימוש נפוץ: לטעון מחדש Secret שהשתנה כשהאפליקציה קוראת אותו רק בזמן עלייה. אפשר להזכיר גם checksum annotation ב-Helm.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/"
 },
 {
 "s": 0,
@@ -812,15 +1862,15 @@
 "o": [
 [
 "A",
-"The labels in the template must be removed first"
+"Selectors can only be changed with `kubectl edit`"
 ],
 [
 "B",
-"The Deployment must be paused before changing selectors"
+"The labels in the template must be removed first"
 ],
 [
 "C",
-"Selectors can only be changed with `kubectl edit`"
+"The Deployment must be paused before changing selectors"
 ],
 [
 "D",
@@ -831,9 +1881,9 @@
 "D"
 ],
 "y": [
+"גם edit עובר דרך אותה ולידציה ונכשל.",
 "הבעיה היא שה-selector עצמו immutable.",
 "Pause לא משנה את ה-immutability.",
-"גם edit עובר דרך אותה ולידציה ונכשל.",
 "שינוי selector עלול ליתום ReplicaSets ופודים קיימים, ולכן ה-API חוסם אותו. צריך ליצור Deployment חדש."
 ],
 "x": "ב-Helm זו טעות נפוצה: מישהו משנה labels ב-chart וה-upgrade נכשל עם 'field is immutable'. הפתרון הוא מחיקה ויצירה מחדש, או שינוי שם.",
@@ -843,38 +1893,38 @@
 },
 {
 "s": 0,
-"q": "`kubectl rollout history deployment/web` shows only `<none>` in the CHANGE-CAUSE column. How do you make it useful?",
+"q": "Containers in the same pod share which of the following by default?",
 "o": [
 [
 "A",
-"Set the `kubernetes.io/change-cause` annotation on the Deployment with each change"
+"The network namespace (same IP, they talk over localhost) and any volumes mounted in both"
 ],
 [
 "B",
-"Increase `revisionHistoryLimit`"
+"The root filesystem"
 ],
 [
 "C",
-"Run `kubectl rollout history` with `--verbose`"
+"Nothing; containers in a pod are fully isolated"
 ],
 [
 "D",
-"Use `kubectl replace` instead of `kubectl apply`"
+"The process namespace"
 ]
 ],
 "a": [
 "A"
 ],
 "y": [
-"העמודה נלקחת מה-annotation הזה. כדאי שה-CI יכתוב בו גרסה או commit SHA.",
-"זה שומר יותר revisions, אבל לא ממלא את ה-cause.",
-"אין דגל כזה שממלא את העמודה.",
-"סוג הפקודה לא משנה."
+"כל הקונטיינרים בפוד חולקים IP ופורטים, ויכולים לשתף volumes. לכל אחד יש filesystem משלו.",
+"לכל קונטיינר יש filesystem נפרד מה-image שלו. משתפים קבצים רק דרך volume.",
+"הם חולקים network namespace תמיד.",
+"זה קורה רק עם `shareProcessNamespace: true`."
 ],
-"x": "הדגל הישן `--record` הוצא משימוש. הזכרת ה-annotation מראה שאתה מעודכן.",
+"x": "דוגמה: sidecar של proxy שמאזין ב-localhost:15001. זה עובד רק כי ה-network namespace משותף.",
 "lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#checking-rollout-history-of-a-deployment"
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/#how-pods-manage-multiple-containers"
 },
 {
 "s": 0,
@@ -890,11 +1940,11 @@
 ],
 [
 "C",
-"The image could not be pulled"
+"The Service type is ClusterIP instead of LoadBalancer"
 ],
 [
 "D",
-"The Service type is ClusterIP instead of LoadBalancer"
+"The image could not be pulled"
 ]
 ],
 "a": [
@@ -903,8 +1953,8 @@
 "y": [
 "כשל liveness גורם ל-restarts, ותראה את מונה ה-RESTARTS עולה.",
 "Running עם 0/1 אומר שהקונטיינר רץ אבל לא עבר readiness. פוד שלא Ready לא נכנס ל-endpoints.",
-"אז הסטטוס היה ImagePullBackOff או ErrImagePull, לא Running.",
-"סוג ה-Service לא משפיע על endpoints. הם נקבעים לפי selector ו-readiness."
+"סוג ה-Service לא משפיע על endpoints. הם נקבעים לפי selector ו-readiness.",
+"אז הסטטוס היה ImagePullBackOff או ErrImagePull, לא Running."
 ],
 "x": "בדיקה מהירה: `kubectl describe pod` ← Events עם 'Readiness probe failed', ואז `kubectl get endpointslices -l kubernetes.io/service-name=<svc>`.",
 "lv": 0,
@@ -912,214 +1962,144 @@
 "r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#readiness-probe"
 },
 {
-"s": 0,
-"q": "What is the relationship between a Deployment and a ReplicaSet?",
+"s": 1,
+"q": "What does a Service of `type: ExternalName` do?",
 "o": [
 [
 "A",
-"A Deployment creates and manages ReplicaSets, one per pod-template revision, and moves replicas between them"
+"It exposes the Service on an external IP"
 ],
 [
 "B",
-"A ReplicaSet manages Deployments"
+"It assigns the Service a public DNS name automatically"
 ],
 [
 "C",
-"They are the same object with different names"
+"It returns a CNAME to an external DNS name; no proxying and no endpoints"
 ],
 [
 "D",
-"A Deployment manages pods directly; ReplicaSets are only for StatefulSets"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"כל שינוי ב-template יוצר ReplicaSet חדש. ה-Deployment מנהל את המעבר ושומר ReplicaSets ישנים בשביל rollback.",
-"הפוך. Deployment נמצא מעל ReplicaSet.",
-"אלה שני kinds שונים עם תפקידים שונים.",
-"StatefulSet מנהל פודים ישירות, בלי ReplicaSet."
-],
-"x": "תזכיר ש-`revisionHistoryLimit` (ברירת מחדל 10) קובע כמה ReplicaSets ישנים נשמרים, ושזה מה שמאפשר `rollout undo`.",
-"lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
-},
-{
-"s": 0,
-"q": "A CronJob runs a 20-minute report every 15 minutes. You never want two runs at the same time. Which setting do you use?",
-"o": [
-[
-"A",
-"`concurrencyPolicy: Allow`"
-],
-[
-"B",
-"`concurrencyPolicy: Forbid`"
-],
-[
-"C",
-"`concurrencyPolicy: Replace`"
-],
-[
-"D",
-"`suspend: true`"
-]
-],
-"a": [
-"B"
-],
-"y": [
-"זו ברירת המחדל, והיא מאפשרת ריצות חופפות. בדיוק מה שלא רוצים.",
-"Forbid מדלג על ריצה חדשה כל עוד הקודמת עדיין רצה.",
-"Replace עוצר את הריצה הנוכחית ומתחיל חדשה. הדו\"ח לעולם לא יסתיים.",
-"Suspend עוצר את כל הריצות העתידיות."
-],
-"x": "תוסיף שכדאי להגדיר גם `startingDeadlineSeconds`, כדי שריצה שפוספסה לא תתחיל באיחור גדול.",
-"lv": 0,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#concurrency-policy"
-},
-{
-"s": 0,
-"q": "A pod is in CrashLoopBackOff. `kubectl logs <pod>` shows nothing useful because the container was just restarted. What is the most direct way to see why the last run died?",
-"o": [
-[
-"A",
-"`kubectl delete pod <pod>` so the ReplicaSet creates a fresh one"
-],
-[
-"B",
-"`kubectl logs <pod> --previous`, then `kubectl describe pod` for the last state and exit code"
-],
-[
-"C",
-"`kubectl rollout restart` on the Deployment"
-],
-[
-"D",
-"`kubectl get events --all-namespaces` and look for the newest event"
-]
-],
-"a": [
-"B"
-],
-"y": [
-"מחיקה רק מאפסת את ה-back-off ומוחקת את הראיות. הפוד החדש יקרוס מאותה סיבה.",
-"`--previous` מציג את הלוגים של הקונטיינר הקודם שקרס, ו-`describe` מראה את `Last State`, ה-reason וה-exit code. זה בדיוק המידע שחסר.",
-"Restart יוצר פודים חדשים עם אותו template. זה לא מאבחן כלום.",
-"Events עוזרים, אבל הם לא מראים את פלט האפליקציה, ולרוב הסיבה האמיתית נמצאת בלוג של הריצה הקודמת."
-],
-"x": "תתאר סדר עבודה: `describe` (Events, Last State, exit code) ← `logs --previous` ← ואז השערה. מראיינים רוצים לשמוע שיטה, לא ניחוש.",
-"lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/"
-},
-{
-"s": 0,
-"q": "You need a shell in a pod whose image is distroless, so `kubectl exec -it pod -- sh` fails. What do you use?",
-"o": [
-[
-"A",
-"`kubectl attach -it <pod> -c <container>`"
-],
-[
-"B",
-"Rebuild the image with bash added and redeploy it"
-],
-[
-"C",
-"`kubectl debug -it <pod> --image=busybox --target=<container>`"
-],
-[
-"D",
-"`kubectl port-forward <pod> 2222:22`, then ssh in"
+"It proxies traffic to an external host through kube-proxy"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"Attach מתחבר ל-stdin/stdout של התהליך הראשי. הוא לא נותן shell.",
-"זה עובד, אבל איטי, ומשנה בדיוק את מה שאתה מנסה לחקור.",
-"Ephemeral container נכנס לפוד הקיים, ועם `--target` הוא חולק את ה-process namespace של הקונטיינר. ככה רואים תהליכים וקבצים בלי לשנות את ה-image.",
-"בפוד אין sshd, ו-port-forward הוא לא shell."
+"זה תפקיד של LoadBalancer.",
+"Kubernetes לא רושם שמות ב-DNS ציבורי.",
+"זה כינוי DNS בלבד. שימושי כדי לתת שם פנימי קבוע ל-DB חיצוני, כמו endpoint של RDS.",
+"אין proxying. זה רק CNAME."
 ],
-"x": "תוסיף ש-`kubectl debug node/<name>` נותן shell על ה-node עצמו. זה שימושי לבדיקת בעיות ב-kubelet או ברשת.",
+"x": "תזכיר את המגבלה: TLS ו-Host headers. הלקוח מתחבר עם השם הפנימי, ותעודה של השם החיצוני עלולה לא להתאים.",
 "lv": 0,
-"k": "t",
-"r": "https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/#ephemeral-container"
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#externalname"
 },
 {
 "s": 0,
-"q": "How do init containers run relative to each other and to the app containers?",
+"q": "What is a pod's `restartPolicy`, and at what level does it apply?",
 "o": [
 [
 "A",
-"In parallel with each other, then the app starts"
+"It controls how often the pod is rescheduled after node failure"
 ],
 [
 "B",
-"After the app containers stop, for cleanup"
+"It is set per container and decides which node the container moves to"
 ],
 [
 "C",
-"In parallel with the app containers"
+"It is only valid for Jobs"
 ],
 [
 "D",
-"One at a time, in order, each to successful completion, before any app container starts"
+"Always, OnFailure or Never; it is set once per pod and applies to all its regular containers"
 ]
 ],
 "a": [
 "D"
 ],
 "y": [
-"הם רצים ברצף, לפי הסדר ב-spec.",
-"ל-cleanup משתמשים ב-`preStop` hook, לא ב-init containers.",
-"Init containers חוסמים את האפליקציה. הם לא רצים במקביל אליה.",
-"זה ההבדל המרכזי מ-sidecars ומקונטיינרים רגילים, שרצים במקביל."
+"Rescheduling אחרי נפילת node הוא עבודה של controllers, לא של restartPolicy.",
+"Restart לא מעביר node. זה תמיד על אותו node.",
+"כל פוד מגדיר restartPolicy. ב-Deployment מותר רק Always.",
+"המדיניות נקבעת ברמת הפוד. ה-kubelet מפעיל מחדש קונטיינרים באותו פוד, על אותו node."
 ],
-"x": "דוגמה טובה לשימוש: המתנה ל-DB, הרצת migrations, או הורדת קונפיג. וכדאי להזכיר שהם חייבים להיות idempotent.",
+"x": "שווה לציין חריג אחד: native sidecar ב-initContainers מקבל `restartPolicy: Always` ברמת הקונטיינר.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/"
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy"
 },
 {
 "s": 0,
-"q": "Which workload type gives each replica a stable network identity and its own persistent volume?",
+"q": "What is the difference between a liveness probe and a readiness probe?",
 "o": [
 [
 "A",
-"Deployment"
+"They are identical; readiness is the older name"
 ],
 [
 "B",
-"ReplicaSet"
+"Readiness failure restarts the pod; liveness failure only logs a warning"
 ],
 [
 "C",
-"DaemonSet"
+"Liveness failure restarts the container; readiness failure removes the pod from Service endpoints"
 ],
 [
 "D",
-"StatefulSet"
+"Liveness runs only at startup; readiness runs for the whole life of the pod"
 ]
 ],
 "a": [
-"D"
+"C"
 ],
 "y": [
-"פודים של Deployment הם זהים וניתנים להחלפה, עם שמות אקראיים ו-volume משותף אם בכלל.",
-"ReplicaSet רק מחזיק מספר עותקים. אין לו זהות קבועה.",
-"DaemonSet מריץ פוד אחד לכל node. אין לו זהות לכל replica.",
-"StatefulSet נותן שמות קבועים (`web-0`, `web-1`), DNS יציב דרך headless Service, ו-PVC לכל replica דרך `volumeClaimTemplates`."
+"אלה שני מנגנונים שונים עם תוצאות שונות.",
+"הפוך. Readiness לא מאתחל כלום.",
+"זה ההבדל המרכזי. Readiness אומר 'אל תשלחו לי תעבורה', ו-liveness אומר 'אני תקוע, תפעילו אותי מחדש'.",
+"שניהם רצים לאורך כל החיים של הקונטיינר. ל-startup יש probe נפרד, `startupProbe`."
 ],
-"x": "תן דוגמאות: Kafka, Zookeeper, Postgres עם replication. וכדאי לציין שהרבה צוותים מעדיפים DB מנוהל (RDS) על פני StatefulSet.",
+"x": "תוסיף ש-liveness לא אמור לבדוק תלויות חיצוניות כמו DB. אחרת תקלה ב-DB תגרום ל-restart לכל הפודים בבת אחת.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/"
+"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+},
+{
+"s": 2,
+"q": "What does a StorageClass define?",
+"o": [
+[
+"A",
+"Which provisioner creates volumes, and with what parameters"
+],
+[
+"B",
+"Which pods are allowed to request storage"
+],
+[
+"C",
+"How much storage each namespace may consume"
+],
+[
+"D",
+"Where volume backups are stored and for how long"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"ה-StorageClass הוא 'תבנית' לאחסון דינמי. PVC מבקש class, וה-CSI driver יוצר volume לפי הפרמטרים.",
+"הרשאות מוגדרות ב-RBAC ו-quota, לא ב-StorageClass.",
+"זה ResourceQuota.",
+"גיבויים מנוהלים בנפרד (VolumeSnapshotClass, Velero)."
+],
+"x": "דוגמה: class `gp3-encrypted` עם `type: gp3`, `encrypted: \"true\"` ו-`WaitForFirstConsumer`.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/storage-classes/"
 },
 {
 "s": 0,
@@ -1127,11 +2107,11 @@
 "o": [
 [
 "A",
-"The pod is rejected by the API server"
+"Both work because each container has its own IP"
 ],
 [
 "B",
-"Both work because each container has its own IP"
+"Kubernetes remaps the second container to port 8081"
 ],
 [
 "C",
@@ -1139,22 +2119,722 @@
 ],
 [
 "D",
-"Kubernetes remaps the second container to port 8081"
+"The pod is rejected by the API server"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"ה-API לא בודק התנגשות פורטים בזמן ריצה. הכשל קורה בקונטיינר.",
 "לפוד יש IP אחד שמשותף לכל הקונטיינרים.",
+"אין remapping אוטומטי.",
 "כמו שני תהליכים על אותו מחשב: פורט אחד, מאזין אחד. הקונטיינר השני ייכשל עם 'address already in use'.",
-"אין remapping אוטומטי."
+"ה-API לא בודק התנגשות פורטים בזמן ריצה. הכשל קורה בקונטיינר."
 ],
 "x": "הקשר לשאלה קודמת: זה בדיוק מה ש'shared network namespace' אומר בפועל.",
 "lv": 0,
 "k": "t",
 "r": "https://kubernetes.io/docs/concepts/workloads/pods/#pod-networking"
+},
+{
+"s": 2,
+"q": "What is the size limit for the data in a single ConfigMap or Secret?",
+"o": [
+[
+"A",
+"10 MiB"
+],
+[
+"B",
+"64 KiB"
+],
+[
+"C",
+"1 MiB"
+],
+[
+"D",
+"No limit"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"זה יותר מהמגבלה.",
+"המגבלה גבוהה יותר.",
+"המגבלה נובעת מגודל אובייקט מקסימלי ב-etcd. קבצים גדולים יותר שייכים ל-volume או ל-object storage.",
+"יש מגבלה, ו-API server ידחה אובייקט גדול מדי."
+],
+"x": "אם שואלים מה עושים עם קונפיג גדול: init container שמוריד מ-S3, או לפצל לכמה ConfigMaps.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/configuration/configmap/#motivation"
+},
+{
+"s": 2,
+"q": "Where do the files of a ConfigMap mounted at `/etc/app` come from inside the pod?",
+"o": [
+[
+"A",
+"Each key becomes a file named after the key, containing its value"
+],
+[
+"B",
+"The ConfigMap is mounted as a JSON file"
+],
+[
+"C",
+"Keys become directories"
+],
+[
+"D",
+"All keys are concatenated into one file"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"מפתח `app.yaml` הופך לקובץ `/etc/app/app.yaml`. אפשר לבחור מפתחות ספציפיים עם `items`.",
+"אין המרה ל-JSON.",
+"מפתחות הם קבצים.",
+"כל מפתח הוא קובץ נפרד."
+],
+"x": "תזכיר שה-mount מסתיר כל מה שהיה בתיקייה ב-image. לכן mount ל-`/etc` שלם הוא טעות קלאסית.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/configuration/configmap/#using-configmaps-as-files-from-a-pod"
+},
+{
+"s": 2,
+"q": "What is an `emptyDir` volume?",
+"o": [
+[
+"A",
+"A volume shared by all pods on the node"
+],
+[
+"B",
+"A scratch directory created when the pod starts and deleted when the pod is removed"
+],
+[
+"C",
+"A read-only volume with the container image's files"
+],
+[
+"D",
+"A persistent volume that survives pod deletion"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"כל פוד מקבל emptyDir משלו.",
+"emptyDir חי כל עוד הפוד חי (גם אחרי restart של קונטיינר). מתאים ל-cache או לשיתוף קבצים בין קונטיינרים באותו פוד.",
+"emptyDir מתחיל ריק וניתן לכתיבה.",
+"הוא נמחק עם הפוד."
+],
+"x": "תזכיר `medium: Memory`: emptyDir ב-RAM (tmpfs), שנספר במגבלת הזיכרון של הקונטיינר.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/#emptydir"
+},
+{
+"s": 1,
+"q": "Which component programs the iptables, IPVS or nftables rules that implement ClusterIP Services on each node?",
+"o": [
+[
+"A",
+"CoreDNS"
+],
+[
+"B",
+"The kube-scheduler"
+],
+[
+"C",
+"kube-proxy"
+],
+[
+"D",
+"etcd"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"CoreDNS רק מתרגם שמות ל-IPs.",
+"ה-scheduler משבץ פודים ל-nodes. אין לו קשר לרשת.",
+"kube-proxy צופה ב-Services וב-EndpointSlices ומתרגם אותם לכללי רשת על כל node.",
+"etcd שומר את המצב. הוא לא נוגע ב-nodes."
+],
+"x": "תזכיר שבחלק מה-CNIs (Cilium עם eBPF) אפשר להחליף לגמרי את kube-proxy.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/reference/networking/virtual-ips/"
+},
+{
+"s": 2,
+"q": "A PVC has been stuck in `Terminating` for a long time after you deleted it. What is the most likely reason?",
+"o": [
+[
+"A",
+"The disk is still being formatted"
+],
+[
+"B",
+"PVCs can only be deleted by the cluster admin"
+],
+[
+"C",
+"The storage class is ReadWriteMany"
+],
+[
+"D",
+"A pod still uses it, so the `kubernetes.io/pvc-protection` finalizer blocks deletion"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"פרמוט קורה ביצירה, לא במחיקה.",
+"כל מי שיש לו הרשאה יכול למחוק.",
+"access mode לא קשור לתהליך המחיקה.",
+"Kubernetes לא מוחק PVC שפוד עדיין מרכיב. כשהפוד נמחק, ה-finalizer מוסר והמחיקה מסתיימת."
+],
+"x": "`kubectl describe pvc` מראה `Used By`. מוצאים את הפוד ומוחקים אותו (או מקטינים את ה-workload).",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#storage-object-in-use-protection"
+},
+{
+"s": 1,
+"q": "What does an Ingress resource do by itself, without an ingress controller installed?",
+"o": [
+[
+"A",
+"It creates a cloud load balancer automatically"
+],
+[
+"B",
+"It opens port 80 on every node"
+],
+[
+"C",
+"It routes traffic through kube-proxy"
+],
+[
+"D",
+"Nothing; it is only configuration that a controller must read and implement"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"רק controller מסוים (למשל AWS Load Balancer Controller) עושה את זה.",
+"אין שום פעולה בלי controller.",
+"kube-proxy מטפל ב-Services, לא ב-Ingress.",
+"Ingress הוא רק API object. צריך controller (NGINX, Traefik, ALB) שקורא אותו ומגדיר proxy."
+],
+"x": "תזכיר את `ingressClassName`: כשיש כמה controllers, השדה הזה קובע מי מטפל ב-Ingress.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/ingress/#prerequisites"
+},
+{
+"s": 2,
+"q": "How do you expose a pod's own name and namespace to the app without calling the API?",
+"o": [
+[
+"A",
+"The Downward API, as environment variables or files"
+],
+[
+"B",
+"They are always in `/etc/hostname` and `/etc/namespace`"
+],
+[
+"C",
+"A ConfigMap created by an init container"
+],
+[
+"D",
+"Only through a sidecar that queries the API server"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"`fieldRef` עם `metadata.name` או `metadata.namespace`. ה-kubelet ממלא את הערכים בעצמו.",
+"hostname הוא שם הפוד, אבל `/etc/namespace` לא קיים.",
+"אפשרי, אבל מסורבל ודורש הרשאות API.",
+"ה-Downward API לא דורש גישה ל-API."
+],
+"x": "אפשר גם resource limits (`resourceFieldRef`). שימושי ל-JVM שמגדיר heap לפי ה-limit.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/downward-api/"
+},
+{
+"s": 1,
+"q": "What does `kubectl port-forward` actually do?",
+"o": [
+[
+"A",
+"It creates a NodePort Service temporarily"
+],
+[
+"B",
+"It changes the pod's containerPort"
+],
+[
+"C",
+"It opens the port on the node's firewall"
+],
+[
+"D",
+"It tunnels a local port through the API server and kubelet to a port on a pod"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"לא נוצר שום אובייקט ב-cluster.",
+"ה-spec של הפוד לא משתנה.",
+"אין שינוי ב-firewall.",
+"התעבורה עוברת דרך ה-API server, ולכן זה עובד גם בלי חשיפה ברשת. זה כלי debug, לא דרך לחשוף שירות."
+],
+"x": "תזכיר שעם `svc/` הפקודה בוחרת פוד אחד מה-Service. היא לא עושה load balancing בין כמה פודים.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/"
+},
+{
+"s": 2,
+"q": "After `helm upgrade` changed only a ConfigMap, the pods did not restart and kept old config. How do charts usually make pods roll on config changes?",
+"o": [
+[
+"A",
+"Use `imagePullPolicy: Always`"
+],
+[
+"B",
+"A checksum annotation of the ConfigMap on the pod template"
+],
+[
+"C",
+"Delete the namespace and reinstall the release"
+],
+[
+"D",
+"Set `restartPolicy: OnConfigChange`"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"pull policy לא גורם לשינוי ב-template.",
+"`checksum/config: {{ include ... | sha256sum }}`. כל שינוי ב-ConfigMap משנה את ה-hash, ולכן את ה-template, וזה מפעיל rolling update.",
+"גורם ל-downtime ומוחק משאבים.",
+"אין policy כזו."
+],
+"x": "תזכיר את החלופות: Reloader (controller), או שמות ConfigMap עם hash כמו ב-Kustomize.",
+"lv": 0,
+"k": "t",
+"r": "https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments"
+},
+{
+"s": 2,
+"q": "Which Secret type should hold a registry login used for image pulls?",
+"o": [
+[
+"A",
+"`kubernetes.io/dockerconfigjson`"
+],
+[
+"B",
+"`Opaque`"
+],
+[
+"C",
+"`kubernetes.io/tls`"
+],
+[
+"D",
+"`kubernetes.io/service-account-token`"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"זה ה-type ש-`kubectl create secret docker-registry` יוצר, ו-`imagePullSecrets` מצפה לו.",
+"Opaque כללי. ה-kubelet לא יקרא ממנו credentials של registry.",
+"type של TLS מחזיק cert ו-key.",
+"זה token של service account לגישה ל-API."
+],
+"x": "אפשר לצרף את ה-secret ל-ServiceAccount ב-`imagePullSecrets`, וכל הפודים שמשתמשים בו יקבלו אותו אוטומטית.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/#secret-types"
+},
+{
+"s": 0,
+"q": "Which list contains only real pod phases?",
+"o": [
+[
+"A",
+"Pending, Running, CrashLoopBackOff, Completed"
+],
+[
+"B",
+"Pending, Running, Succeeded, Failed, Unknown"
+],
+[
+"C",
+"Scheduled, Ready, NotReady, Evicted"
+],
+[
+"D",
+"Creating, Running, Terminating, Deleted"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"CrashLoopBackOff ו-Completed הם reasons שמוצגים ב-STATUS, לא phases.",
+"אלה חמשת ה-phases. כל השאר (CrashLoopBackOff, ContainerCreating) הם reasons של מצב קונטיינר.",
+"אלה conditions או reasons, לא phases.",
+"Terminating הוא תצוגה של kubectl לפוד עם deletionTimestamp. אין phase כזה."
+],
+"x": "ההבחנה בין phase, conditions ו-container state מראה הבנה של איך kubectl מחשב את עמודת STATUS.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase"
+},
+{
+"s": 0,
+"q": "`kubectl rollout history deployment/web` shows only `<none>` in the CHANGE-CAUSE column. How do you make it useful?",
+"o": [
+[
+"A",
+"Run `kubectl rollout history` with `--verbose`"
+],
+[
+"B",
+"Set the `kubernetes.io/change-cause` annotation on the Deployment with each change"
+],
+[
+"C",
+"Increase `revisionHistoryLimit`"
+],
+[
+"D",
+"Use `kubectl replace` instead of `kubectl apply`"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אין דגל כזה שממלא את העמודה.",
+"העמודה נלקחת מה-annotation הזה. כדאי שה-CI יכתוב בו גרסה או commit SHA.",
+"זה שומר יותר revisions, אבל לא ממלא את ה-cause.",
+"סוג הפקודה לא משנה."
+],
+"x": "הדגל הישן `--record` הוצא משימוש. הזכרת ה-annotation מראה שאתה מעודכן.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#checking-rollout-history-of-a-deployment"
+},
+{
+"s": 0,
+"q": "You need exactly one log-collector pod on every node, including nodes added later. Which resource fits?",
+"o": [
+[
+"A",
+"StatefulSet with podAntiAffinity"
+],
+[
+"B",
+"A static pod on the control plane"
+],
+[
+"C",
+"Deployment with replicas equal to the node count"
+],
+[
+"D",
+"DaemonSet"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"זה מסובך ושביר. גם כאן צריך לנהל את מספר ה-replicas ידנית.",
+"Static pod רץ רק על ה-node שבו נמצא הקובץ. הוא לא מתפזר לכל ה-cluster.",
+"אין הבטחה שכל פוד ינחת על node אחר, וצריך לעדכן ידנית כשמספר ה-nodes משתנה.",
+"DaemonSet מוודא שעל כל node מתאים רץ עותק, ומוסיף פוד אוטומטית כש-node חדש מצטרף."
+],
+"x": "תזכיר שאם יש taints על ה-nodes (למשל control-plane) צריך tolerations ב-DaemonSet כדי שירוץ גם שם.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/"
+},
+{
+"s": 1,
+"q": "An app in namespace `web` cannot reach `http://orders:8080`, but `http://orders.shop:8080` works. Why?",
+"o": [
+[
+"A",
+"Services can never be reached from another namespace"
+],
+[
+"B",
+"CoreDNS is not running in namespace `web`"
+],
+[
+"C",
+"A short name only resolves in the caller's own namespace"
+],
+[
+"D",
+"A firewall rule blocks port 8080 inside namespace `web`"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"אפשר, צריך רק שם מלא (אלא אם NetworkPolicy חוסמת).",
+"CoreDNS משרת את כל ה-cluster, ו-`orders.shop` עובד. אז DNS תקין.",
+"שם קצר מושלם עם ה-namespace של הפוד הקורא (`orders.web.svc...`). כדי להגיע ל-namespace אחר צריך לציין אותו.",
+"הפורט עובד עם השם המלא, אז הוא לא חסום."
+],
+"x": "שאלה בסיסית שבודקת אם אתה מבין את ה-search path ב-`/etc/resolv.conf` של הפוד.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#namespaces-of-services"
+},
+{
+"s": 1,
+"q": "After a deploy, users get 'connection refused' for about 10 seconds even though the rollout is RollingUpdate. New pods become Ready before the app has opened its port. What is missing?",
+"o": [
+[
+"A",
+"`maxSurge: 0`"
+],
+[
+"B",
+"A headless Service"
+],
+[
+"C",
+"A liveness probe"
+],
+[
+"D",
+"A readiness probe that actually checks the app is serving"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"זה מאט את ה-rollout, אבל לא פותר שליחה לפוד לא מוכן.",
+"Headless לא בודק מוכנות.",
+"Liveness לא מונע שליחת תעבורה מוקדמת.",
+"בלי readiness, Kubernetes מסמן את הפוד כ-Ready ברגע שהקונטיינר עלה, ושולח אליו תעבורה לפני שהאפליקציה מאזינה."
+],
+"x": "זו אחת הסיבות הנפוצות ל-downtime ב-rolling update. תשלב עם preStop בצד הסגירה כדי לקבל zero-downtime מלא.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+},
+{
+"s": 0,
+"q": "`kubectl describe pod` shows `Last State: Terminated, Reason: OOMKilled, Exit Code: 137`. What happened?",
+"o": [
+[
+"A",
+"The application called `exit(137)` on a configuration error"
+],
+[
+"B",
+"The node ran out of disk space and evicted the pod"
+],
+[
+"C",
+"The liveness probe failed three times in a row"
+],
+[
+"D",
+"The container exceeded its memory limit and the kernel OOM killer sent SIGKILL"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"תיאורטית אפשרי, אבל אז ה-reason היה Error ולא OOMKilled. ה-reason נקבע לפי מה שה-runtime ראה.",
+"Eviction בגלל דיסק מסמן את הפוד כ-Failed עם reason של Evicted, לא OOMKilled על הקונטיינר.",
+"כשל של liveness מופיע ב-Events כ-'Liveness probe failed' והקונטיינר מקבל SIGTERM, לא reason של OOMKilled.",
+"137 = 128+9, כלומר SIGKILL. עם reason של OOMKilled זה אומר שהקונטיינר עבר את ה-memory limit שלו."
+],
+"x": "תגיד שבודקים אם ה-limit נמוך מדי או שיש memory leak (גרף זיכרון לאורך זמן). ב-JVM כדאי להזכיר heap שמוגדר מעל ה-limit.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/"
+},
+{
+"s": 2,
+"q": "You updated a ConfigMap, but the app still uses the old values. The values are injected with `envFrom`. Why?",
+"o": [
+[
+"A",
+"ConfigMaps are cached by the API server for 24 hours"
+],
+[
+"B",
+"The ConfigMap must be marked `immutable: false` explicitly"
+],
+[
+"C",
+"`envFrom` only reads ConfigMaps at cluster creation"
+],
+[
+"D",
+"Environment variables are set only when the container starts"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין cache כזה. העדכון נשמר מיד ב-etcd.",
+"ברירת המחדל כבר mutable. זה לא מה שעוצר את העדכון.",
+"`envFrom` נקרא בכל יצירה של קונטיינר, לא רק פעם אחת ב-cluster.",
+"משתני סביבה נקבעים פעם אחת ביצירת הקונטיינר. צריך restart (למשל `rollout restart`) כדי שהערכים החדשים ייכנסו."
+],
+"x": "תשווה ל-volume mount: שם הקבצים מתעדכנים אחרי כמה עשרות שניות, אבל רק אם האפליקציה קוראת אותם מחדש. ותזכיר checksum annotation ב-Helm.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically"
+},
+{
+"s": 1,
+"q": "By default, with no NetworkPolicy in a namespace, which traffic is allowed to its pods?",
+"o": [
+[
+"A",
+"Only traffic from the same namespace"
+],
+[
+"B",
+"No traffic until a policy allows it"
+],
+[
+"C",
+"Only traffic from the ingress controller"
+],
+[
+"D",
+"All ingress and egress traffic"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין בידוד בין namespaces כברירת מחדל.",
+"זה default deny, וצריך להגדיר אותו במפורש.",
+"אין התנהגות כזו מובנית.",
+"Kubernetes פתוח כברירת מחדל. רק מרגע ש-NetworkPolicy בוחרת פוד, מה שלא מותר במפורש נחסם."
+],
+"x": "תציע default-deny לכל namespace, ואז allow ספציפי. ותזכיר שזה עובד רק אם ה-CNI תומך ב-NetworkPolicy.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#default-policies"
+},
+{
+"s": 1,
+"q": "Browsers get a certificate for `Kubernetes Ingress Controller Fake Certificate` on your HTTPS Ingress. What is wrong?",
+"o": [
+[
+"A",
+"The browser cache needs clearing"
+],
+[
+"B",
+"HTTPS is not supported by Ingress"
+],
+[
+"C",
+"The TLS Secret named in the Ingress is missing, in another namespace, or does not match the host"
+],
+[
+"D",
+"The backend pods must serve the certificate themselves"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"השרת באמת מגיש תעודה שגויה. זו לא בעיית cache.",
+"Ingress תומך ב-TLS דרך `spec.tls`.",
+"ה-controller לא מצא תעודה מתאימה ל-host ונפל לתעודת ברירת המחדל שלו. ה-Secret חייב להיות באותו namespace כמו ה-Ingress.",
+"ב-TLS termination רגיל, ה-controller מגיש את התעודה."
+],
+"x": "אם משתמשים ב-cert-manager: בודקים את ה-Certificate וה-CertificateRequest, ואת ה-challenge אם התעודה עדיין לא הונפקה.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/ingress/#tls"
+},
+{
+"s": 2,
+"q": "A pod is `Pending` with `pod has unbound immediate PersistentVolumeClaims`. What do you inspect next?",
+"o": [
+[
+"A",
+"The container image tag and pull policy"
+],
+[
+"B",
+"The PVC's events in `kubectl describe pvc`"
+],
+[
+"C",
+"The selector of the Service in front of the pod"
+],
+[
+"D",
+"The pod's liveness probe configuration"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"image נמשך רק אחרי שהפוד שובץ.",
+"הפוד מחכה ל-PVC. ה-events של ה-PVC מראים למה הוא לא נקשר.",
+"Services לא משפיעים על scheduling.",
+"הפוד לא רץ בכלל. probes לא רלוונטיים."
+],
+"x": "הסיבות הנפוצות: אין StorageClass, CSI driver לא מותקן או חסר הרשאות IAM, או quota על storage.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
 },
 {
 "s": 0,
@@ -1166,25 +2846,25 @@
 ],
 [
 "B",
-"The maximum number of pods that run in parallel"
-],
-[
-"C",
 "How long finished Jobs are kept before cleanup"
 ],
 [
-"D",
+"C",
 "How many times failed pods are retried before the Job is marked Failed"
+],
+[
+"D",
+"The maximum number of pods that run in parallel"
 ]
 ],
 "a": [
-"D"
+"C"
 ],
 "y": [
 "את זה קובע `activeDeadlineSeconds`.",
-"את זה קובע `parallelism`.",
 "את זה קובע `ttlSecondsAfterFinished`.",
-"ברירת המחדל היא 6. אחרי זה ה-Job מקבל condition של Failed עם reason `BackoffLimitExceeded`."
+"ברירת המחדל היא 6. אחרי זה ה-Job מקבל condition של Failed עם reason `BackoffLimitExceeded`.",
+"את זה קובע `parallelism`."
 ],
 "x": "אם שואלים על Jobs, טוב להכיר את כל הארבעה: `backoffLimit`, `parallelism`, `completions`, `activeDeadlineSeconds`.",
 "lv": 0,
@@ -1192,39 +2872,1544 @@
 "r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-backoff-failure-policy"
 },
 {
-"s": 0,
-"q": "When should a Deployment use the `Recreate` strategy instead of `RollingUpdate`?",
+"s": 1,
+"q": "A Service exists but `kubectl get endpointslices -l kubernetes.io/service-name=api` shows no endpoints, while the pods are Running and Ready. What is the most likely cause?",
 "o": [
 [
 "A",
-"When the cluster has many spare nodes"
+"kube-proxy is not running on the nodes"
 ],
 [
 "B",
-"When the workload is managed by a DaemonSet"
+"The Service selector does not match the pod labels"
 ],
 [
 "C",
-"When two versions must never run at the same time"
+"The pods do not expose a `containerPort`"
 ],
 [
 "D",
-"Whenever you need a zero-downtime release"
+"The Service type is ClusterIP instead of NodePort"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"kube-proxy צורך endpoints, הוא לא יוצר אותם. ה-EndpointSlice controller יוצר אותם.",
+"Endpoints נבנים מפודים שתואמים ל-selector ונמצאים במצב Ready. אם הפודים Ready ועדיין אין endpoints, כמעט תמיד יש אי-התאמה בין ה-labels.",
+"`containerPort` הוא בעיקר תיעודי. הוא לא תנאי להופעה ב-endpoints.",
+"סוג ה-Service לא משפיע על בניית ה-endpoints."
+],
+"x": "תשווה `kubectl get svc api -o yaml` (selector) מול `kubectl get pods --show-labels`. טעות נפוצה: `app: api` מול `app.kubernetes.io/name: api`.",
+"lv": 0,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#services-in-kubernetes"
+},
+{
+"s": 1,
+"q": "All DNS lookups inside the cluster time out. `kubectl get pods -n kube-system` shows the CoreDNS pods in CrashLoopBackOff with `Loop ... detected` in the logs. What is happening?",
+"o": [
+[
+"A",
+"CoreDNS forwards upstream to itself, creating a loop"
+],
+[
+"B",
+"kube-proxy is caching stale DNS entries on the nodes"
+],
+[
+"C",
+"CoreDNS needs more replicas to handle the load"
+],
+[
+"D",
+"The cluster domain is misspelled in the kubelet config"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"ה-loop plugin זיהה שהשאילתות חוזרות אליו, ועצר את CoreDNS כדי לא להציף את המערכת. נפוץ עם systemd-resolved שמפנה ל-127.0.0.53.",
+"kube-proxy לא מבצע caching ל-DNS.",
+"עוד replicas יקרסו מאותה סיבה.",
+"Domain שגוי לא גורם לקריסה עם הודעת loop."
+],
+"x": "הפתרון: להצביע ב-kubelet על resolv.conf האמיתי (`/run/systemd/resolve/resolv.conf`), או להגדיר forward ל-upstream מפורש בקונפיג של CoreDNS.",
+"lv": 0,
+"k": "t",
+"r": "https://coredns.io/plugins/loop/"
+},
+{
+"s": 0,
+"q": "A container spec uses `image: myapp:latest` and no `imagePullPolicy`. What pull policy applies?",
+"o": [
+[
+"A",
+"`IfNotPresent`"
+],
+[
+"B",
+"It depends on the node's container runtime"
+],
+[
+"C",
+"`Never`"
+],
+[
+"D",
+"`Always`"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"זו ברירת המחדל רק כשיש tag שאינו `latest`.",
+"ברירת המחדל נקבעת ב-API server לפי ה-tag, לא לפי ה-runtime.",
+"Never אף פעם לא ברירת מחדל.",
+"כשה-tag הוא `latest` או חסר, ברירת המחדל היא Always."
+],
+"x": "תוסיף למה `latest` בפרודקשן זה רעיון רע: אי אפשר לדעת איזו גרסה רצה, ו-rollback לא עובד. עדיף tag קבוע או digest.",
+"lv": 0,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting"
+},
+{
+"s": 0,
+"q": "You scale a StatefulSet from 3 replicas down to 1. What happens to the PersistentVolumeClaims of `db-1` and `db-2` by default?",
+"o": [
+[
+"A",
+"They are converted to emptyDir volumes"
+],
+[
+"B",
+"They are moved to `db-0`"
+],
+[
+"C",
+"They are kept, so the data is still there if you scale back up"
+],
+[
+"D",
+"They are deleted together with the pods"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"עודף משאבים דווקא מאפשר rolling update.",
-"ל-DaemonSet יש אסטרטגיות משלו (`RollingUpdate`, `OnDelete`).",
-"Recreate מוריד את הישנים לפני שהחדשים עולים. מקבלים downtime, אבל אף פעם אין שתי גרסאות במקביל.",
-"Recreate גורם בהכרח ל-downtime."
+"אין המרה כזו. PVC הוא אובייקט עצמאי.",
+"PVC שייך לזהות של replica מסוים. הוא לא עובר ל-replica אחר.",
+"ברירת המחדל של `persistentVolumeClaimRetentionPolicy` היא Retain. ה-PVC נשארים, וכש-`db-1` חוזר הוא מתחבר לאותו PVC.",
+"זה קורה רק אם מגדירים `whenScaled: Delete`. זו לא ברירת המחדל."
 ],
-"x": "דוגמה טובה: פוד עם PVC מסוג RWO. ב-RollingUpdate הפוד החדש לא יכול לעשות mount כל עוד הישן מחזיק את ה-volume.",
-"lv": 0,
+"x": "כדאי לציין שזה מכוון, כדי למנוע מחיקת דאטה בטעות, ושצריך לנקות PVC יתומים ידנית או להגדיר retention policy.",
+"lv": 1,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#recreate-deployment"
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
+},
+{
+"s": 0,
+"q": "A StatefulSet with the default `OrderedReady` policy is mid-rollout. `web-2` was updated to a broken image and never becomes Ready. You revert the image in the spec, but `web-2` stays broken. Why?",
+"o": [
+[
+"A",
+"You must also delete the PVC for the revert to apply"
+],
+[
+"B",
+"With OrderedReady the controller waits for the broken pod to become Ready before continuing, so you must delete `web-2` manually after reverting"
+],
+[
+"C",
+"The revert only applies after `terminationGracePeriodSeconds` has elapsed twice"
+],
+[
+"D",
+"StatefulSets do not support rolling updates"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"ה-PVC לא קשור ל-image. מחיקה שלו תמחק דאטה בלי סיבה.",
+"זו התנהגות מתועדת: אחרי revert ה-StatefulSet לא מוחק פוד שתקוע בגרסה השבורה. צריך למחוק אותו ידנית והוא ייווצר מה-template המתוקן.",
+"אין מנגנון כזה.",
+"יש להם `RollingUpdate` כברירת מחדל, מהאינדקס הגבוה לנמוך."
+],
+"x": "זה נקרא 'forced rollback' בתיעוד. ידע כזה מראה ניסיון אמיתי עם StatefulSets בפרודקשן.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#forced-rollback"
+},
+{
+"s": 0,
+"q": "Where do static pods come from, and how do you remove one?",
+"o": [
+[
+"A",
+"They are pods with `restartPolicy: Never`; you delete them normally"
+],
+[
+"B",
+"The kubelet runs them from manifest files in its static pod path (often `/etc/kubernetes/manifests`); you remove the file"
+],
+[
+"C",
+"They are created by a DaemonSet; you delete the DaemonSet"
+],
+[
+"D",
+"They come from the scheduler cache; you restart the scheduler"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"restartPolicy לא קשור לשאלה אם פוד הוא static.",
+"ה-API server מציג רק mirror pod. `kubectl delete` מוחק את ה-mirror, וה-kubelet מחזיר אותו מיד. צריך למחוק את הקובץ מה-node.",
+"Static pods לא מנוהלים על ידי שום controller ב-API.",
+"ה-scheduler לא מעורב. ה-kubelet מריץ אותם ישירות."
+],
+"x": "ב-kubeadm, רכיבי ה-control plane (apiserver, etcd) רצים כ-static pods. זה ידע טוב לשאלות על תחזוקת cluster.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/"
+},
+{
+"s": 1,
+"q": "In a NetworkPolicy `from` list, what is the difference between one entry with both `namespaceSelector` and `podSelector`, and two separate entries?",
+"o": [
+[
+"A",
+"One entry means OR; two entries mean AND"
+],
+[
+"B",
+"Two entries are invalid YAML"
+],
+[
+"C",
+"One entry means AND (those pods in those namespaces); two entries mean OR"
+],
+[
+"D",
+"There is no difference"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"הפוך.",
+"שתי רשומות הן חוקיות לגמרי.",
+"זה המקור לטעויות הנפוצות ביותר ב-NetworkPolicy. הבדל של מקף אחד ב-YAML הופך AND ל-OR ופותח הרבה יותר ממה שהתכוונת.",
+"יש הבדל מהותי בסמנטיקה."
+],
+"x": "תראה את ההבדל ב-YAML: `- namespaceSelector: ... podSelector: ...` מול `- namespaceSelector: ...` ו-`- podSelector: ...`. מראיינים מעריכים את הדיוק.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/#behavior-of-to-and-from-selectors"
+},
+{
+"s": 1,
+"q": "Requests through the NGINX ingress fail with 504 after exactly 60 seconds for a slow report endpoint. The backend eventually finishes. What do you change?",
+"o": [
+[
+"A",
+"Increase the pod's `terminationGracePeriodSeconds`"
+],
+[
+"B",
+"Lower the readiness probe period"
+],
+[
+"C",
+"Raise the proxy read timeout for that Ingress (for example `proxy-read-timeout`)"
+],
+[
+"D",
+"Add more replicas"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"השדה הזה רלוונטי לסגירת פוד, לא לבקשה בזמן ריצה.",
+"Readiness לא משפיע על timeout של בקשה.",
+"ברירת המחדל של proxy read timeout ב-NGINX היא 60 שניות. ה-ingress מוותר לפני שה-backend מסיים.",
+"בקשה בודדת עדיין לוקחת יותר מ-60 שניות."
+],
+"x": "תציע גם פתרון ארכיטקטוני: עבודה ארוכה הופכת ל-async (job ו-polling), במקום להאריך timeouts לנצח.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#custom-timeouts"
+},
+{
+"s": 2,
+"q": "What is the difference between ReadWriteOnce and ReadWriteOncePod?",
+"o": [
+[
+"A",
+"RWOP lets multiple nodes read but only one pod write"
+],
+[
+"B",
+"RWO is for block storage and RWOP for file storage"
+],
+[
+"C",
+"RWOP is just a newer alias for RWO"
+],
+[
+"D",
+"RWO is one node; RWOP is exactly one pod"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"RWOP לא מאפשר שום שיתוף.",
+"ההבדל הוא ברמת הבלעדיות, לא בסוג האחסון.",
+"אלה מצבים שונים עם הבטחות שונות.",
+"RWO מאפשר לכמה פודים על אותו node לכתוב. RWOP מבטיח כותב יחיד בכל ה-cluster."
+],
+"x": "שימוש: אפליקציות שחייבות כותב יחיד (DB, lock files), ו-RWO לא מספיק כי שני פודים יכולים לנחות על אותו node.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes"
+},
+{
+"s": 2,
+"q": "A ConfigMap is mounted as a volume, and updates normally appear in the pod within a minute. For one container they never appear. It mounts a single file with `subPath`. Why?",
+"o": [
+[
+"A",
+"The container's `imagePullPolicy` is `IfNotPresent`"
+],
+[
+"B",
+"subPath mounts are read-only, so the kubelet cannot update them"
+],
+[
+"C",
+"Files mounted with `subPath` do not receive ConfigMap updates"
+],
+[
+"D",
+"The ConfigMap is larger than 1 MiB"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"מדיניות pull לא משפיעה על volumes.",
+"הסיבה היא לא הרשאות. המנגנון של subPath פשוט לא מסתנכרן.",
+"subPath מקבע את הקובץ בזמן ה-mount. העדכון האוטומטי עובד רק כשמרכיבים את כל ה-volume.",
+"ConfigMap גדול מ-1 MiB לא היה נשמר בכלל."
+],
+"x": "פתרון: להרכיב את כל ה-ConfigMap לתיקייה, או לעשות restart בכל שינוי. מגבלה מתועדת שתופסת אנשים בפרודקשן.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath"
+},
+{
+"s": 1,
+"q": "On EKS with the AWS VPC CNI, new pods stay in `ContainerCreating` with `failed to assign an IP address to container`. Nodes have plenty of CPU and memory. What is the likely cause?",
+"o": [
+[
+"A",
+"CoreDNS is out of memory and dropping requests"
+],
+[
+"B",
+"The pods request more CPU than the nodes have"
+],
+[
+"C",
+"The subnet or the instance's ENIs ran out of IPs"
+],
+[
+"D",
+"kube-proxy is running in IPVS mode"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"CoreDNS לא מקצה IPs לפודים.",
+"CPU היה נותן Pending עם insufficient cpu, לא שגיאת IP.",
+"ב-VPC CNI כל פוד מקבל IP אמיתי מה-subnet. כשה-subnet מתמלא, או כשסוג המכונה הגיע למקסימום IPs, פודים לא מקבלים כתובת.",
+"מצב kube-proxy לא קשור להקצאת IP לפוד."
+],
+"x": "פתרונות: prefix delegation, subnets גדולים יותר, או custom networking עם CIDR משני. זו שאלה שמבדילה ניסיון אמיתי ב-EKS.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html"
+},
+{
+"s": 2,
+"q": "Two pods on different nodes mount the same EFS-backed RWX PVC. Writes from one pod appear in the other only after several seconds. Is this a bug?",
+"o": [
+[
+"A",
+"Yes; the PVC should be RWO"
+],
+[
+"B",
+"No; NFS-style client caching delays visibility"
+],
+[
+"C",
+"Yes; RWX volumes must be instantly consistent"
+],
+[
+"D",
+"No; Kubernetes batches writes every 10 seconds"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"RWO לא מאפשר שני nodes בכלל.",
+"NFS נותן close-to-open consistency. אפליקציות שדורשות עקביות מיידית צריכות locks או סנכרון מפורש.",
+"RWX מבטיח גישה, לא סמנטיקה של דיסק מקומי.",
+"Kubernetes לא מעורב בכתיבה עצמה."
+],
+"x": "תציין שלא כל workload מתאים ל-NFS. DBs, למשל, כמעט תמיד צריכים block storage.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/efs/latest/ug/nfs-consistency.html"
+},
+{
+"s": 1,
+"q": "Why is the Gateway API generally preferred over Ingress for new clusters?",
+"o": [
+[
+"A",
+"Role-based resources and standard routing features, without annotations"
+],
+[
+"B",
+"Gateway API is faster because it bypasses kube-proxy entirely"
+],
+[
+"C",
+"The Ingress API was removed from Kubernetes in v1.30"
+],
+[
+"D",
+"Gateway API works without any controller installed"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"Ingress מוגבל ל-HTTP בסיסי, וכל יכולת מתקדמת היא annotation שתלוי ב-controller. Gateway API מגדיר את היכולות האלה באופן סטנדרטי ונייד.",
+"הביצועים תלויים במימוש, לא ב-API.",
+"ה-Ingress API עדיין קיים ונתמך.",
+"גם Gateway API צריך מימוש (controller)."
+],
+"x": "תזכיר שפרויקט ingress-nginx הוכרז כ-retired ב-2025–2026, ושהמהלך הטבעי הוא מעבר ל-Gateway API. זה מראה שאתה מעודכן.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/"
+},
+{
+"s": 2,
+"q": "Pods are being evicted with `The node was low on resource: ephemeral-storage`. The app writes large temp files to `/tmp`. What is the right fix?",
+"o": [
+[
+"A",
+"Add a liveness probe that checks free disk"
+],
+[
+"B",
+"Increase the pod's memory request and limit"
+],
+[
+"C",
+"Set ephemeral-storage requests and limits"
+],
+[
+"D",
+"Disable disk-pressure eviction in the kubelet"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"probe לא מקטין את השימוש בדיסק.",
+"/tmp בקונטיינר כותב לדיסק, לא לזיכרון (אלא אם זה tmpfs).",
+"בלי requests ה-scheduler לא יודע כמה דיסק הפוד צריך. limits גורמים ל-eviction של הפוד הבעייתי בלבד, ולא של שכנים.",
+"ה-node יגיע ל-disk full, וזה גרוע יותר."
+],
+"x": "תזכיר שגם לוגים של קונטיינר ושכבת ה-writable של ה-image נספרים ב-ephemeral storage.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#local-ephemeral-storage"
+},
+{
+"s": 2,
+"q": "What is the purpose of `securityContext.readOnlyRootFilesystem: true`, and what usually breaks?",
+"o": [
+[
+"A",
+"It makes all volumes read-only"
+],
+[
+"B",
+"It only affects Windows containers"
+],
+[
+"C",
+"It encrypts the root filesystem"
+],
+[
+"D",
+"It blocks writes to the container's own filesystem"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"volumes מוגדרים בנפרד. רק ה-root נעול.",
+"זה עובד ב-Linux.",
+"אין הצפנה כאן.",
+"זה מקשה על תוקף להשאיר קבצים או לשנות binaries. אפליקציות שכותבות ל-/tmp נכשלות עד שמוסיפים emptyDir."
+],
+"x": "ב-Pod Security `restricted` זה לא חובה, אבל זו המלצה נפוצה ב-hardening.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/"
+},
+{
+"s": 2,
+"q": "What does the CSI (Container Storage Interface) give Kubernetes?",
+"o": [
+[
+"A",
+"Built-in encryption for every volume it mounts"
+],
+[
+"B",
+"A standard plugin API for out-of-tree storage drivers"
+],
+[
+"C",
+"A built-in tool for scheduled volume backups"
+],
+[
+"D",
+"A replacement for PersistentVolumeClaims"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"הצפנה תלויה ב-driver ובפרמטרים.",
+"לפני CSI, drivers היו in-tree וכל תיקון חיכה לגרסת Kubernetes. היום EBS, EFS ו-Ceph הם drivers חיצוניים.",
+"CSI מגדיר snapshots, אבל הוא לא כלי גיבוי.",
+"PVCs עדיין ה-API. CSI הוא מה שמממש אותם."
+],
+"x": "תזכיר את המיגרציה מ-in-tree ל-CSI (למשל `kubernetes.io/aws-ebs` ל-`ebs.csi.aws.com`), שהשפיעה על clusters ישנים.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/#csi"
+},
+{
+"s": 1,
+"q": "What is the difference between kube-proxy's iptables and IPVS modes at large scale?",
+"o": [
+[
+"A",
+"IPVS mode does not support ClusterIP Services"
+],
+[
+"B",
+"They are identical apart from how they log"
+],
+[
+"C",
+"iptables mode encrypts pod-to-pod traffic"
+],
+[
+"D",
+"IPVS uses hash tables; iptables walks long rule chains"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"IPVS תומך בכל סוגי ה-Services.",
+"המימוש והביצועים שונים מהותית.",
+"אין הצפנה בשום מצב של kube-proxy.",
+"ב-iptables מספר הכללים גדל עם ה-Services, ועדכונים איטיים. IPVS (ועכשיו גם nftables) מתוכננים ל-scale גדול."
+],
+"x": "תזכיר שמצב nftables הוא החדש והמומלץ לגרסאות עדכניות, ושב-eBPF (Cilium) אפשר לוותר על kube-proxy בכלל.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/reference/networking/virtual-ips/#proxy-modes"
+},
+{
+"s": 2,
+"q": "Your GitOps repo must contain database passwords, but you cannot commit plain Kubernetes Secrets. Which approaches are common?",
+"o": [
+[
+"A",
+"Commit them to a private repository only"
+],
+[
+"B",
+"External Secrets Operator, or Sealed Secrets"
+],
+[
+"C",
+"base64-encode the Secret twice before committing"
+],
+[
+"D",
+"Store them as ConfigMaps with restricted RBAC"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"ריפו פרטי מקטין את הסיכון, אבל הסודות עדיין בטקסט גלוי בהיסטוריה.",
+"ESO מושך מ-AWS Secrets Manager, Vault ודומיהם, ו-Git מכיל רק הפניה. Sealed Secrets מצפין עם מפתח שרק ה-controller ב-cluster יכול לפתוח.",
+"base64 כפול הוא עדיין קידוד הפיך.",
+"ConfigMaps לא מיועדים לסודות, וה-RBAC לא מגן על Git."
+],
+"x": "תוסיף את ה-trade-off: ESO נותן rotation ומקור אמת מרכזי. Sealed Secrets פשוט יותר, אבל rotation ידני ותלוי במפתח של ה-cluster.",
+"lv": 1,
+"k": "t",
+"r": "https://external-secrets.io/latest/"
+},
+{
+"s": 2,
+"q": "What does the Secrets Store CSI Driver do?",
+"o": [
+[
+"A",
+"It rotates service account tokens"
+],
+[
+"B",
+"It mounts secrets from an external store as files"
+],
+[
+"C",
+"It stores Secrets in a separate etcd cluster"
+],
+[
+"D",
+"It encrypts existing Kubernetes Secrets in etcd"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"ה-kubelet עושה את זה.",
+"הסודות לא חייבים לעבור דרך Kubernetes Secret. אפשר אופציונלית לסנכרן גם ל-Secret.",
+"אין etcd נפרד.",
+"זה תפקיד של EncryptionConfiguration."
+],
+"x": "תשווה ל-External Secrets Operator: ESO יוצר Kubernetes Secrets. ה-CSI driver מרכיב קבצים ישירות.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes-sigs.github.io/secrets-store-csi-driver/"
+},
+{
+"s": 0,
+"q": "Pods take exactly 30 seconds to terminate on every deploy and end with exit code 137. The Dockerfile uses `ENTRYPOINT sh -c \"node server.js\"`. What is wrong?",
+"o": [
+[
+"A",
+"Node.js ignores SIGTERM unless a handler is registered"
+],
+[
+"B",
+"The shell is PID 1 and never forwards SIGTERM to node"
+],
+[
+"C",
+"The readiness probe keeps the pod alive until it fails"
+],
+[
+"D",
+"Exit code 137 means the image layers are corrupt"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"Node כן מגיב ל-SIGTERM. הבעיה היא שהסיגנל לא מגיע אליו.",
+"בצורת shell, ה-`sh` מקבל את ה-SIGTERM ולא מעביר אותו. אחרי 30 שניות מגיע SIGKILL, וזה 137. הפתרון: exec form, או init קטן כמו tini.",
+"Readiness לא מעכב סגירה.",
+"137 הוא 128+9, כלומר SIGKILL. זה לא קשור ל-image."
+],
+"x": "תציע `ENTRYPOINT [\"node\",\"server.js\"]` או `exec` בתוך הסקריפט, ותסביר למה PID 1 מיוחד בלינוקס.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
+},
+{
+"s": 2,
+"q": "Why is a `hostPath` volume considered risky?",
+"o": [
+[
+"A",
+"hostPath is deprecated and fails on new clusters"
+],
+[
+"B",
+"It exposes the node's filesystem to the pod"
+],
+[
+"C",
+"hostPath volumes are deleted when the pod restarts"
+],
+[
+"D",
+"hostPath volumes are slower than network storage"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"hostPath עדיין נתמך, רק מוגבל על ידי Pod Security.",
+"פוד עם hostPath ל-`/` או ל-docker socket יכול לברוח מהבידוד. גם הדאטה קשור ל-node ספציפי.",
+"הקבצים נשארים על ה-node.",
+"הם בדרך כלל מהירים. הבעיה היא אבטחה וניידות."
+],
+"x": "Pod Security `baseline` אוסר hostPath. מותר רק ל-agents מערכתיים (CNI, log collectors) עם mount מוגבל ו-readOnly.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/#hostpath"
+},
+{
+"s": 1,
+"q": "How do you point a ClusterIP Service at a database outside the cluster, reachable by a fixed IP?",
+"o": [
+[
+"A",
+"Use `type: ExternalName` with the IP address"
+],
+[
+"B",
+"Add the IP to the Service's `externalIPs`"
+],
+[
+"C",
+"Run a pod with `hostNetwork: true` that forwards to the DB"
+],
+[
+"D",
+"Create the Service without a selector and an EndpointSlice with that IP"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"ExternalName מצפה לשם DNS. IP לא נתמך שם.",
+"externalIPs מגדיר כתובות שבהן ה-Service מקבל תעבורה, לא לאן הוא שולח.",
+"עובד, אבל מסורבל ומיותר.",
+"Service בלי selector לא מקבל endpoints אוטומטית. מגדירים EndpointSlice ידני עם ה-IP, וה-Service עובד כרגיל."
+],
+"x": "שימוש טוב: מיגרציה הדרגתית. היום ה-DB מחוץ ל-cluster, ומחר עוברים לפודים פנימיים בלי לשנות את הקוד.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors"
+},
+{
+"s": 0,
+"q": "A Deployment runs a script that does its work and exits with code 0. The pods keep going into CrashLoopBackOff. Why?",
+"o": [
+[
+"A",
+"The kubelet treats exit code 0 as an error inside a Deployment"
+],
+[
+"B",
+"The image has no ENTRYPOINT, so the script never starts"
+],
+[
+"C",
+"Deployments only allow `restartPolicy: Always`, so a finished container is restarted"
+],
+[
+"D",
+"The readiness probe fails after the script exits"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Exit 0 הוא הצלחה. הבעיה היא שה-Deployment מצפה שהתהליך ימשיך לרוץ.",
+"אז הקונטיינר בכלל לא היה מריץ את הסקריפט.",
+"Deployment מיועד לתהליכים שרצים לאורך זמן. עבודה שמסתיימת שייכת ל-Job, עם `restartPolicy: OnFailure` או `Never`.",
+"Probe הוא לא הסיבה. הקונטיינר יוצא בעצמו."
+],
+"x": "ב-describe תראה `Last State: Terminated, Reason: Completed, Exit Code: 0` יחד עם הרבה restarts. זה סימן מובהק לכך שה-workload הלא נכון נבחר.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/"
+},
+{
+"s": 0,
+"q": "A Job has `backoffLimit: 6` and `activeDeadlineSeconds: 60`. Its pod keeps failing, and the Job is marked Failed after 60 seconds with only 3 attempts. Why?",
+"o": [
+[
+"A",
+"`activeDeadlineSeconds` takes precedence over `backoffLimit`"
+],
+[
+"B",
+"`backoffLimit` counts minutes of back-off, not attempts"
+],
+[
+"C",
+"The kubelet caps retries at 3 regardless of the Job spec"
+],
+[
+"D",
+"With a deadline set, the Job halves its `backoffLimit`"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"התיעוד קובע במפורש שה-deadline גובר. ה-Job נעצר עם reason `DeadlineExceeded` גם אם נשארו ניסיונות.",
+"`backoffLimit` סופר ניסיונות, לא זמן.",
+"אין cap כזה ב-kubelet.",
+"אין קשר כזה בין השדות. כל אחד פועל בנפרד, וה-deadline פשוט גובר."
+],
+"x": "תזכיר שה-back-off בין ניסיונות גדל אקספוננציאלית (10s, 20s, 40s...). לכן מעט ניסיונות נכנסים בחלון קצר.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup"
+},
+{
+"s": 0,
+"q": "When is `kubectl delete pod --force --grace-period=0` dangerous for a StatefulSet pod?",
+"o": [
+[
+"A",
+"When the StatefulSet uses `podManagementPolicy: Parallel`"
+],
+[
+"B",
+"Never; it is the documented way to delete StatefulSet pods"
+],
+[
+"C",
+"Only when the pod has no PersistentVolumeClaims attached"
+],
+[
+"D",
+"When the node is unreachable and the pod may still be running there"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"`Parallel` משנה רק את סדר היצירה והמחיקה של הפודים. הסכנה של force delete קיימת בשתי המדיניות.",
+"התיעוד מזהיר במפורש מפני זה ב-StatefulSets.",
+"הסכנה גדולה יותר דווקא כשיש volumes.",
+"StatefulSet מבטיח 'at most one' לכל זהות. מחיקה בכוח עוקפת את ההבטחה הזו ועלולה ליצור split-brain או השחתת דאטה."
+],
+"x": "לפני force delete מוודאים שה-node באמת כבוי (למשל דרך ה-cloud provider). זה ההבדל בין מי שקרא את התיעוד למי שלא.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/run-application/force-delete-stateful-set-pod/"
+},
+{
+"s": 2,
+"q": "During a rolling update of a Deployment with one replica and an RWO volume, the new pod is stuck in `ContainerCreating` with `Multi-Attach error for volume`. Why?",
+"o": [
+[
+"A",
+"The volume is full and refuses new attachments"
+],
+[
+"B",
+"The EBS CSI driver is not installed on the node"
+],
+[
+"C",
+"The PVC access mode is ReadWriteMany"
+],
+[
+"D",
+"The old pod still holds the RWO volume on its node"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"דיסק מלא נותן שגיאות כתיבה, לא Multi-Attach.",
+"בלי driver ה-volume לא היה עובד גם קודם.",
+"RWX מאפשר כמה nodes. אז השגיאה לא הייתה מופיעה.",
+"RWO מתחבר ל-node אחד בכל פעם. ב-rolling update הפוד החדש עולה לפני שהישן ירד, ולכן אין מאיפה לקחת את ה-volume."
+],
+"x": "פתרונות: אסטרטגיית `Recreate`, StatefulSet, או storage שתומך ב-RWX (EFS). שאלה קלאסית שמחברת אחסון ל-rollouts.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes"
+},
+{
+"s": 1,
+"q": "Pods in namespace `payments` must accept traffic only from the ingress controller in namespace `ingress-nginx`. Your policy has `podSelector: {}` and `from: - podSelector: {matchLabels: {app: ingress-nginx}}`. Traffic is still blocked. Why?",
+"o": [
+[
+"A",
+"A `podSelector` alone in `from` only matches pods in the policy's own namespace"
+],
+[
+"B",
+"The ingress controller uses hostNetwork, so NetworkPolicies never apply"
+],
+[
+"C",
+"NetworkPolicies cannot reference other namespaces"
+],
+[
+"D",
+"`podSelector: {}` selects no pods"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"בלי `namespaceSelector`, ה-podSelector מחפש פודים ב-`payments` בלבד. צריך `namespaceSelector` ו-`podSelector` באותה רשומה.",
+"זה יכול לסבך, אבל ההסבר הכללי כאן הוא ה-selector.",
+"אפשר, דרך `namespaceSelector`.",
+"`{}` בוחר את כל הפודים ב-namespace."
+],
+"x": "תזכיר את ה-label האוטומטי `kubernetes.io/metadata.name` על namespaces. בעזרתו בוחרים namespace בלי להוסיף labels ידנית.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+},
+{
+"s": 0,
+"q": "What is the difference between `kubectl apply` and `kubectl replace` when updating a resource?",
+"o": [
+[
+"A",
+"`apply` deletes the object and creates it again"
+],
+[
+"B",
+"`apply` merges with the live object; `replace` overwrites it"
+],
+[
+"C",
+"`replace` only works on objects without a controller"
+],
+[
+"D",
+"They are identical; `replace` is the older name"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"זה מה ש-`replace --force` עושה, לא apply.",
+"apply הוא declarative ומשאיר שדות שאחרים מנהלים (למשל replicas של HPA, אם לא כתבת אותם). replace מחליף הכול ועלול למחוק אותם.",
+"replace עובד על כל resource.",
+"ההתנהגות שונה מהותית."
+],
+"x": "אפשר להזכיר Server-Side Apply ו-field managers. ArgoCD ו-Helm משתמשים במנגנונים האלה.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/"
+},
+{
+"s": 2,
+"q": "An app reads a mounted ConfigMap file and watches it with inotify, but never sees updates even though `cat` shows new content. Why?",
+"o": [
+[
+"A",
+"The kubelet swaps a symlink, so the file's inode never changes"
+],
+[
+"B",
+"ConfigMap volumes are mounted read-only"
+],
+[
+"C",
+"The file is cached in the page cache forever"
+],
+[
+"D",
+"inotify is disabled inside containers"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"הקבצים הם symlinks לתיקייה עם timestamp. העדכון מחליף את ה-symlink באופן אטומי, ו-watch על inode ישן לא רואה שינוי.",
+"read-only לא מונע מה-kubelet לעדכן.",
+"ה-cache לא מונע עדכון.",
+"inotify עובד בקונטיינרים."
+],
+"x": "הפתרון: לעשות watch על התיקייה (או על `..data`). זה הפתרון של רוב הספריות.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically"
+},
+{
+"s": 1,
+"q": "After adding a default-deny egress policy, pods cannot resolve any names, even though you allowed egress to the database. What did you forget?",
+"o": [
+[
+"A",
+"An egress rule to kube-dns/CoreDNS on port 53 over UDP and TCP"
+],
+[
+"B",
+"A ClusterRole that allows DNS queries"
+],
+[
+"C",
+"An ingress rule for the database pods"
+],
+[
+"D",
+"`hostNetwork: true` on the pods"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"Default deny על egress חוסם גם DNS. בלי פתיחה ל-CoreDNS אף שם לא נפתר, והחיבור ל-DB נכשל עוד לפני שהוא מתחיל.",
+"RBAC לא שולט על תעבורת רשת.",
+"הבעיה מתחילה ב-DNS. בלי פתרון שם אין בכלל חיבור.",
+"זה עוקף policies ופוגע באבטחה. זה לא פתרון."
+],
+"x": "דוגמה מעשית: selector על namespace `kube-system` ועל `k8s-app: kube-dns`, פורט 53 UDP ו-TCP.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+},
+{
+"s": 0,
+"q": "How do you declare a native sidecar container that starts before the app and keeps running alongside it?",
+"o": [
+[
+"A",
+"Put it in `initContainers` with `restartPolicy: Always`"
+],
+[
+"B",
+"Put it in `containers` with the annotation `sidecar: true`"
+],
+[
+"C",
+"Set `shareProcessNamespace: true`"
+],
+[
+"D",
+"Use a second Deployment with podAffinity to the app"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"זה המנגנון של native sidecars: init container שלא מסתיים, עולה לפני האפליקציה ונסגר אחריה.",
+"אין annotation כזה ב-Kubernetes.",
+"השדה הזה משתף רק את ה-process namespace. הוא לא קובע סדר עלייה.",
+"זה פוד נפרד. הוא לא חולק network namespace ו-volumes עם האפליקציה."
+],
+"x": "תסביר את הבעיה שזה פותר: Job עם sidecar של proxy (Istio) שלא מסתיים, או sidecar שנסגר לפני שהאפליקציה סיימה לשלוח לוגים.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/"
+},
+{
+"s": 1,
+"q": "Intermittent `connection reset` errors appear between pods under high load, and `conntrack -S` shows `insert_failed` climbing. What is a likely cause?",
+"o": [
+[
+"A",
+"CoreDNS is returning the wrong IPs"
+],
+[
+"B",
+"The Service selector is wrong"
+],
+[
+"C",
+"The pods' liveness probes are too frequent"
+],
+[
+"D",
+"conntrack table races or exhaustion in the SNAT/DNAT path on the node"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"DNS שגוי היה נותן שגיאות עקביות, לא resets לסירוגין תחת עומס.",
+"Selector שגוי היה נותן 0 endpoints. אף בקשה לא הייתה מצליחה.",
+"Probes לא יוצרים מספיק חיבורים כדי לגרום לזה.",
+"תחת עומס של הרבה חיבורים קצרים טבלת conntrack מתמלאת או נתקלת ב-races. אז חבילות נזרקות וחיבורים מתאפסים."
+],
+"x": "שאלה ברמת senior. תזכיר `nf_conntrack_max`, keep-alive כדי להפחית חיבורים חדשים, ובעיית ה-race הידועה ב-DNS עם UDP.",
+"lv": 1,
+"k": "t",
+"r": "https://www.kernel.org/doc/html/latest/networking/nf_conntrack-sysctl.html"
+},
+{
+"s": 1,
+"q": "Why can't you `ping` a ClusterIP even though `curl` to it works?",
+"o": [
+[
+"A",
+"ClusterIPs only accept IPv6 traffic by default"
+],
+[
+"B",
+"It is a virtual IP that only exists for the Service's ports"
+],
+[
+"C",
+"ICMP is blocked by the default NetworkPolicy"
+],
+[
+"D",
+"CoreDNS drops ICMP packets sent to Services"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"ClusterIP יכול להיות IPv4.",
+"אין interface עם ה-IP הזה. הכללים מטפלים רק ב-TCP/UDP על הפורטים של ה-Service. ICMP לא מתורגם לשום מקום.",
+"אין NetworkPolicy ברירת מחדל שחוסמת ICMP.",
+"CoreDNS לא מעורב ב-ping ל-IP."
+],
+"x": "תשובה טובה מראה הבנה של איך Services ממומשים: virtual IP ו-DNAT, לא מכונה אמיתית.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/reference/networking/virtual-ips/"
+},
+{
+"s": 2,
+"q": "On a multi-AZ cluster, a pod with an EBS-backed PVC is stuck `Pending` with `volume node affinity conflict`. What is happening?",
+"o": [
+[
+"A",
+"The volume's AZ has no node the pod can run on"
+],
+[
+"B",
+"The StorageClass reclaim policy is Retain"
+],
+[
+"C",
+"The PVC is bound to two PersistentVolumes at once"
+],
+[
+"D",
+"EBS volumes cannot be used in Kubernetes"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"EBS קשור ל-AZ אחד. אם אין שם node עם מקום, או שהפוד מוגבל ל-AZ אחר, אין לו לאן ללכת.",
+"reclaimPolicy קובע מה קורה אחרי מחיקה, לא איפה הפוד רץ.",
+"PVC נקשר ל-PV אחד בלבד.",
+"הם נתמכים דרך ה-EBS CSI driver."
+],
+"x": "תזכיר `volumeBindingMode: WaitForFirstConsumer`: ה-volume נוצר רק אחרי שהפוד שובץ, ולכן באותו AZ. זו הפרקטיקה הנכונה בענן.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode"
+},
+{
+"s": 0,
+"q": "What does a Job's `podFailurePolicy` let you do that `backoffLimit` alone cannot?",
+"o": [
+[
+"A",
+"Retry without any limit until the Job succeeds"
+],
+[
+"B",
+"Treat failures differently by exit code or by disruption"
+],
+[
+"C",
+"Emit an alert event every time a pod fails"
+],
+[
+"D",
+"Reschedule each failed pod onto a different node"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אפשר להתעלם מסוגים מסוימים של כשלים, אבל זה לא retry אינסופי.",
+"למשל: exit code 42 אומר באג בקוד, ואין טעם לנסות שוב. ו-eviction בגלל ניקוז node לא צריך להיספר כניסיון.",
+"Alerting מגיע מכלי monitoring, לא מה-Job.",
+"זה לא תפקיד של המדיניות הזו."
+],
+"x": "דוגמה טובה ל-ML או batch: לא לבזבז GPU על retry של קוד שבור, אבל לנסות שוב כשה-node נלקח (spot).",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-failure-policy"
+},
+{
+"s": 0,
+"q": "You remove the `app=web` label from one running pod that belongs to a Deployment selecting `app=web`. What happens?",
+"o": [
+[
+"A",
+"The ReplicaSet deletes the pod because its labels no longer match"
+],
+[
+"B",
+"The ReplicaSet creates a replacement and the old pod keeps running, orphaned"
+],
+[
+"C",
+"Nothing happens, because pod labels are immutable once set"
+],
+[
+"D",
+"The Deployment notices the drift and rolls out a new revision"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אף controller לא מוחק אותו, כי אף אחד כבר לא הבעלים שלו.",
+"ה-ReplicaSet רואה פחות פודים תואמים ומשלים אותם. הפוד המקורי נשאר בחיים מחוץ ל-Service, וטוב לחקירה.",
+"Labels על פודים ניתנים לשינוי.",
+"Rollout קורה רק כשה-template משתנה."
+],
+"x": "זו טכניקת debugging אמיתית: 'להוציא' פוד בעייתי מהתעבורה בלי להרוג אותו, ולחקור אותו בשקט.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#isolating-pods-from-a-replicaset"
+},
+{
+"s": 1,
+"q": "A gRPC client talks to a ClusterIP Service in front of 5 pods. One pod receives almost all the traffic. Why?",
+"o": [
+[
+"A",
+"`sessionAffinity: ClientIP` is the default"
+],
+[
+"B",
+"ClusterIP only supports one backend at a time"
+],
+[
+"C",
+"The other pods are failing their liveness probes"
+],
+[
+"D",
+"kube-proxy balances connections, and gRPC reuses one"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"ברירת המחדל היא `None`.",
+"ClusterIP מחלק בין כל ה-endpoints, אבל לפי חיבורים.",
+"Liveness גורם ל-restarts. הוא לא מסביר התפלגות לא אחידה של בקשות.",
+"kube-proxy בוחר backend ברמת החיבור (L4). חיבור HTTP/2 אחד מחזיק את כל הבקשות, ולכן הכול הולך לאותו פוד."
+],
+"x": "פתרונות: headless Service עם client-side load balancing ב-gRPC, service mesh (L7), או הגבלת max connection age בשרת.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies"
+},
+{
+"s": 2,
+"q": "How do you make Secrets encrypted at rest in etcd on a self-managed cluster?",
+"o": [
+[
+"A",
+"Enable TLS between kubectl and the API server"
+],
+[
+"B",
+"An `EncryptionConfiguration` on the API server, then rewrite Secrets"
+],
+[
+"C",
+"Set `type: Encrypted` on each Secret"
+],
+[
+"D",
+"Store Secrets in a ConfigMap with `immutable: true`"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"TLS מגן על התעבורה, לא על הנתונים ב-etcd.",
+"ה-API server מצפין לפני שהוא כותב ל-etcd. Secrets ישנים מוצפנים רק כשכותבים אותם מחדש.",
+"אין type כזה.",
+"Immutable לא קשור להצפנה."
+],
+"x": "תזכיר שב-EKS מפעילים envelope encryption עם KMS key. ותוסיף שצריך גם להגן על גיבויים של etcd.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/"
+},
+{
+"s": 2,
+"q": "How do you take a point-in-time backup of a PVC in a CSI-native way?",
+"o": [
+[
+"A",
+"A `VolumeSnapshot`, restored via a PVC `dataSource`"
+],
+[
+"B",
+"Run `kubectl cp` from the pod that mounts the PVC"
+],
+[
+"C",
+"Scale the pod to zero; Kubernetes snapshots it automatically"
+],
+[
+"D",
+"Set `reclaimPolicy: Snapshot` on the StorageClass"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"ה-snapshot API הוא סטנדרטי ונשען על יכולת ה-snapshot של ה-storage (EBS snapshot, למשל).",
+"`kubectl cp` מעתיק קבצים מתוך פוד. הוא לא snapshot עקבי.",
+"אין snapshot אוטומטי.",
+"אין policy כזו."
+],
+"x": "ל-DB חשוב crash-consistency: עדיף dump או freeze לפני snapshot, או כלי כמו Velero עם hooks.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/volume-snapshots/"
+},
+{
+"s": 2,
+"q": "Pods were restarted after a Secret rotation, yet a pod still authenticates with the old password. The Secret is mounted as a volume (no subPath) and the app reads the file once at startup. Your teammate says 'Kubernetes did not update the file'. What is the more likely explanation?",
+"o": [
+[
+"A",
+"etcd keeps a cached copy for each pod"
+],
+[
+"B",
+"Mounted Secrets never update after the pod starts"
+],
+[
+"C",
+"The app caches the value it read at startup"
+],
+[
+"D",
+"The old Secret is stored in the image"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"etcd לא שומר עותק לכל פוד.",
+"הם מתעדכנים, באיחור של עד דקה בערך, דרך סנכרון ה-kubelet.",
+"בלי subPath הקובץ מתעדכן אחרי זמן קצר. אם האפליקציה קוראת פעם אחת, היא צריכה restart אמיתי או reload.",
+"Secret לא נכנס ל-image."
+],
+"x": "תבדוק מה באמת קרה: `kubectl exec ... cat /path` מול הלוגים. ותציע Reloader או checksum annotation שמאתחלים אוטומטית.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/#mounted-secrets-are-updated-automatically"
+},
+{
+"s": 1,
+"q": "A Service with `sessionAffinity: ClientIP` still sends one user to different pods. The traffic comes through a cloud L7 load balancer. Why?",
+"o": [
+[
+"A",
+"ClientIP affinity only works with IPv6 clients"
+],
+[
+"B",
+"The affinity timeout defaults to one second"
+],
+[
+"C",
+"Affinity requires a headless Service"
+],
+[
+"D",
+"kube-proxy sees the load balancer's IPs, not the user's"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין מגבלה כזו.",
+"ברירת המחדל של ה-timeout היא 10800 שניות (3 שעות).",
+"Headless דווקא מבטל את ה-proxying של kube-proxy.",
+"Affinity נקבע לפי ה-source IP שמגיע ל-kube-proxy. דרך LB של L7 זה ה-IP של ה-LB, ולכמה nodes של ה-LB יש כמה IPs."
+],
+"x": "הפתרון הנכון הוא sticky session ב-L7 (cookie) בתוך ה-LB או ה-ingress, או אפליקציה stateless.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
+},
+{
+"s": 0,
+"q": "A rolling update with `maxUnavailable: 0` and `maxSurge: 1` is stuck: one new pod is Pending and the old pods are all still Running. Events say `0/5 nodes are available: insufficient memory`. What is going on?",
+"o": [
+[
+"A",
+"maxSurge must be 0 whenever maxUnavailable is 0"
+],
+[
+"B",
+"The Deployment was paused with `kubectl rollout pause`"
+],
+[
+"C",
+"The surge pod has no room, and maxUnavailable 0 forbids removing an old pod"
+],
+[
+"D",
+"The new image is broken and fails its readiness probe"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"maxSurge 1 היא בחירה לגיטימית. הבעיה היא הקיבולת.",
+"Deployment מושהה לא יוצר פוד חדש בכלל.",
+"שילוב של מקום חסר עם `maxUnavailable: 0` יוצר deadlock: החדש לא נכנס והישן לא יוצא. צריך להוסיף nodes (או autoscaler) או להתיר `maxUnavailable: 1`.",
+"אז הפוד היה מגיע לשלב pull או crash. כאן הוא אפילו לא שובץ."
+],
+"x": "תראה שאתה מבין את ה-trade-off: `maxUnavailable: 0` שומר על קיבולת, אבל דורש מקום פנוי ב-cluster.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable"
+},
+{
+"s": 1,
+"q": "What is `hostPort` on a container, and why is it usually avoided?",
+"o": [
+[
+"A",
+"It is required for kubelet health checks to work"
+],
+[
+"B",
+"It binds a node port to the container, one pod per node"
+],
+[
+"C",
+"It is the same thing as a NodePort Service"
+],
+[
+"D",
+"It exposes the container on the internet automatically"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"Probes עובדים בלי hostPort.",
+"שני פודים עם אותו hostPort לא יכולים לרוץ על אותו node, וה-scheduler צריך לקחת את זה בחשבון. בדרך כלל עדיף Service.",
+"NodePort פותח פורט על כל ה-nodes ומחלק עומס. hostPort קשור לפוד ספציפי על ה-node שלו.",
+"תלוי ב-firewall של ה-node. אין חשיפה אוטומטית."
+],
+"x": "דוגמה לגיטימית: ingress controller כ-DaemonSet עם hostPort 80/443 ב-bare metal.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/configuration/overview/#services"
+},
+{
+"s": 2,
+"q": "A pod references a Secret key with `secretKeyRef` and `optional: true`. The key is missing. What happens?",
+"o": [
+[
+"A",
+"The pod starts and the variable is simply not set"
+],
+[
+"B",
+"The pod fails with CreateContainerConfigError"
+],
+[
+"C",
+"The variable is set to an empty string"
+],
+[
+"D",
+"The kubelet generates a random value"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"`optional: true` אומר שהיעדרות היא לא שגיאה. בלי זה הפוד נתקע ב-CreateContainerConfigError.",
+"זה קורה רק כש-optional הוא false (ברירת המחדל).",
+"המשתנה לא מוגדר כלל, וזה שונה מ-empty.",
+"אין יצירת ערכים אוטומטית."
+],
+"x": "שימוש: feature flags או secrets שקיימים רק בחלק מהסביבות. אבל צריך לוודא שהאפליקציה מתמודדת עם ערך חסר.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/#restriction-secret-must-exist"
 },
 {
 "s": 0,
@@ -1232,29 +4417,29 @@
 "o": [
 [
 "A",
-"`timeZone: UTC`"
+"`successfulJobsHistoryLimit: 0`"
 ],
 [
 "B",
-"`concurrencyPolicy: Replace`"
-],
-[
-"C",
 "`startingDeadlineSeconds`"
 ],
 [
+"C",
+"`timeZone: UTC`"
+],
+[
 "D",
-"`successfulJobsHistoryLimit: 0`"
+"`concurrencyPolicy: Replace`"
 ]
 ],
 "a": [
-"C"
+"B"
 ],
 "y": [
-"אזור הזמן לא משפיע על ספירת הריצות שפוספסו.",
-"Concurrency לא קשור לספירת ריצות שפוספסו.",
+"זה רק קובע כמה Jobs ישנים נשמרים.",
 "בלי deadline ה-controller סופר את כל הריצות שפוספסו מאז הריצה האחרונה, ומעל 100 הוא מוותר. עם deadline הוא בודק רק את החלון הקצר.",
-"זה רק קובע כמה Jobs ישנים נשמרים."
+"אזור הזמן לא משפיע על ספירת הריצות שפוספסו.",
+"Concurrency לא קשור לספירת ריצות שפוספסו."
 ],
 "x": "זו שאלת edge-case קלאסית. התשובה מראה שקראת את התיעוד של CronJob לעומק.",
 "lv": 1,
@@ -1263,38 +4448,213 @@
 },
 {
 "s": 0,
-"q": "A Deployment runs a script that does its work and exits with code 0. The pods keep going into CrashLoopBackOff. Why?",
+"q": "A pod's container restarts every few minutes with exit code 143 and no OOM. `describe` shows `Liveness probe failed: Get http://10.0.1.5:8080/healthz: context deadline exceeded` during traffic peaks. What is the best fix?",
 "o": [
 [
 "A",
-"The readiness probe fails after the script exits"
+"Make the liveness check cheap and give it a realistic timeout"
 ],
 [
 "B",
-"Deployments only allow `restartPolicy: Always`, so a finished container is restarted"
+"Increase `terminationGracePeriodSeconds` to 120"
 ],
 [
 "C",
-"The image has no ENTRYPOINT, so the script never starts"
+"Make the app exit with 0 instead of 143 on SIGTERM"
 ],
 [
 "D",
-"The kubelet treats exit code 0 as an error inside a Deployment"
+"Remove the container's CPU and memory limits"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"143 = SIGTERM מה-kubelet אחרי כשל liveness. תחת עומס ה-endpoint איטי, ה-probe נכשל, וה-restart רק מגדיל את העומס על השאר.",
+"Grace period ארוך רק מאריך את הסגירה. הוא לא עוזר ל-probe שנכשל תחת עומס.",
+"ה-exit code הוא תוצאה של ה-SIGTERM, לא הסיבה.",
+"זה לא פותר probe שמגיב לאט, ויכול לגרום ל-noisy neighbours."
+],
+"x": "תסביר את ה-cascading failure: restarts תחת עומס מעבירים עוד עומס לפודים הנותרים, ואז גם הם נכשלים. מראיינים אוהבים את זה.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes"
+},
+{
+"s": 2,
+"q": "A pod with an `emptyDir` using `medium: Memory` keeps getting OOMKilled, though the app itself uses little memory. Why?",
+"o": [
+[
+"A",
+"Files written to a memory-backed emptyDir count against the container's memory limit"
+],
+[
+"B",
+"emptyDir always uses swap"
+],
+[
+"C",
+"Memory-backed emptyDir doubles the memory request"
+],
+[
+"D",
+"The kubelet reserves the whole node's memory for tmpfs"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"tmpfs יושב ב-RAM, וכל קובץ שנכתב אליו נספר בזיכרון. קבצים זמניים גדולים מגיעים ל-limit מהר.",
+"Kubernetes לא משתמש ב-swap כברירת מחדל.",
+"אין הכפלה. הקבצים פשוט נספרים.",
+"אין שמירה כזו."
+],
+"x": "תציע `sizeLimit` על ה-emptyDir, או disk-backed emptyDir אם המהירות לא קריטית.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/volumes/#emptydir-configuration-example"
+},
+{
+"s": 2,
+"q": "Who can read a Secret's value in a namespace?",
+"o": [
+[
+"A",
+"Only pods in the namespace that created it"
+],
+[
+"B",
+"Anyone who can read Secrets, or create pods there"
+],
+[
+"C",
+"Only users bound to cluster-admin"
+],
+[
+"D",
+"Nobody; values are write-only"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"Probe הוא לא הסיבה. הקונטיינר יוצא בעצמו.",
-"Deployment מיועד לתהליכים שרצים לאורך זמן. עבודה שמסתיימת שייכת ל-Job, עם `restartPolicy: OnFailure` או `Never`.",
-"אז הקונטיינר בכלל לא היה מריץ את הסקריפט.",
-"Exit 0 הוא הצלחה. הבעיה היא שה-Deployment מצפה שהתהליך ימשיך לרוץ."
+"פודים לא 'יוצרים' Secrets.",
+"RBAC על secrets הוא רק חלק מהתמונה. מי שיכול ליצור פוד יכול להרכיב כל Secret ב-namespace ולקרוא אותו.",
+"כל מי שיש לו הרשאה ב-namespace יכול.",
+"אין secrets write-only ב-Kubernetes."
 ],
-"x": "ב-describe תראה `Last State: Terminated, Reason: Completed, Exit Code: 0` יחד עם הרבה restarts. זה סימן מובהק לכך שה-workload הלא נכון נבחר.",
+"x": "נקודה חשובה בראיון אבטחה: 'create pods' שווה בפועל ל'read secrets'. מפרידים namespaces לפי רגישות.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/security/secrets-good-practices/#least-privilege-secrets"
+},
+{
+"s": 1,
+"q": "Your app's access logs show every request coming from node IPs instead of real client IPs. The Service is `type: LoadBalancer` with a Network Load Balancer. What change preserves the client IP?",
+"o": [
+[
+"A",
+"Set `externalTrafficPolicy: Local` on the Service"
+],
+[
+"B",
+"Set `sessionAffinity: ClientIP`"
+],
+[
+"C",
+"Add `hostNetwork: true` to the Service"
+],
+[
+"D",
+"Switch the Service to `type: ClusterIP`"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"עם `Cluster` (ברירת המחדל) kube-proxy עושה SNAT כשהוא מעביר ל-node אחר, וה-IP המקורי אובד. `Local` מבטל את ה-hop הזה.",
+"Affinity רק מצמיד לקוח לפוד. ה-IP עדיין מוחלף.",
+"`hostNetwork` הוא שדה של פוד, לא של Service.",
+"ClusterIP לא נגיש מבחוץ בכלל."
+],
+"x": "ב-L7 (ALB או ingress) מקבלים את ה-IP דרך `X-Forwarded-For`. כדאי להבחין בין שני המקרים בתשובה.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/"
+"r": "https://kubernetes.io/docs/tutorials/services/source-ip/"
+},
+{
+"s": 0,
+"q": "What is the main purpose of `ttlSecondsAfterFinished` on a Job?",
+"o": [
+[
+"A",
+"To kill the Job if it runs too long"
+],
+[
+"B",
+"To retry the Job after it fails"
+],
+[
+"C",
+"To clean up the Job and its pods after it finishes"
+],
+[
+"D",
+"To delay the start of the Job"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"את זה עושה `activeDeadlineSeconds`.",
+"Retry נשלט על ידי `backoffLimit`.",
+"בלי זה Jobs שהסתיימו נשארים לנצח ומעמיסים על ה-API ועל etcd.",
+"אין לזה קשר לזמן ההתחלה."
+],
+"x": "ב-CronJob עושים את זה עם `successfulJobsHistoryLimit` ו-`failedJobsHistoryLimit`. כדאי להכיר את שתי הדרכים.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/"
+},
+{
+"s": 2,
+"q": "You raised the storage size in a StatefulSet's `volumeClaimTemplates`, but `kubectl apply` is rejected. Why, and what do you do?",
+"o": [
+[
+"A",
+"The new size must be a power of two, like 16Gi or 32Gi"
+],
+[
+"B",
+"`volumeClaimTemplates` is immutable; resize each PVC"
+],
+[
+"C",
+"StatefulSets do not support persistent storage"
+],
+[
+"D",
+"The StatefulSet must be scaled to zero before the change"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אין מגבלה כזו.",
+"ה-API חוסם שינוי בתבנית. מגדילים כל PVC קיים ידנית, ואם רוצים שגם replicas חדשים יקבלו את הגודל, מוחקים את ה-StatefulSet עם `--cascade=orphan` ויוצרים מחדש.",
+"volumeClaimTemplates הוא בדיוק המנגנון שלהם.",
+"גם ב-0 replicas השדה לא ניתן לשינוי."
+],
+"x": "ה-`--cascade=orphan` משאיר את הפודים וה-PVC בחיים. זה טריק מתקדם שמראה ניסיון אמיתי.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#limitations"
 },
 {
 "s": 0,
@@ -1310,21 +4670,21 @@
 ],
 [
 "C",
-"Disable the readiness probe on the new pods"
+"Add a short `preStop` sleep before the app shuts down"
 ],
 [
 "D",
-"Add a short `preStop` sleep before the app shuts down"
+"Disable the readiness probe on the new pods"
 ]
 ],
 "a": [
-"D"
+"C"
 ],
 "y": [
 "Recreate מוריד את כל הפודים, וזה downtime מלא.",
 "זה הופך את הבעיה לגרועה יותר: הפוד נהרג מהר יותר, עוד לפני שהתעבורה הוסטה.",
-"בלי readiness, פודים חדשים יקבלו תעבורה לפני שהם מוכנים. זו בעיה נוספת.",
-"הסרה מה-endpoints וה-SIGTERM קורים במקביל. ה-sleep נותן ל-ingress ול-kube-proxy זמן להפסיק לשלוח תעבורה לפני שהאפליקציה נסגרת."
+"הסרה מה-endpoints וה-SIGTERM קורים במקביל. ה-sleep נותן ל-ingress ול-kube-proxy זמן להפסיק לשלוח תעבורה לפני שהאפליקציה נסגרת.",
+"בלי readiness, פודים חדשים יקבלו תעבורה לפני שהם מוכנים. זו בעיה נוספת."
 ],
 "x": "תסביר את ה-race condition: endpoints מתעדכנים באופן אסינכרוני. ה-sleep צריך להיות קטן מה-grace period.",
 "lv": 1,
@@ -1332,144 +4692,109 @@
 "r": "https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/"
 },
 {
-"s": 0,
-"q": "You scale a StatefulSet from 3 replicas down to 1. What happens to the PersistentVolumeClaims of `db-1` and `db-2` by default?",
+"s": 1,
+"q": "Pods make thousands of DNS queries per second to CoreDNS for external names like `api.stripe.com`, and many return NXDOMAIN first. What is the cause?",
 "o": [
 [
 "A",
-"They are moved to `db-0`"
+"`ndots:5` makes the resolver try search domains first"
 ],
 [
 "B",
-"They are deleted together with the pods"
+"The pods use TCP instead of UDP for DNS"
 ],
 [
 "C",
-"They are kept, so the data is still there if you scale back up"
+"CoreDNS has its cache plugin disabled by default"
 ],
 [
 "D",
-"They are converted to emptyDir volumes"
-]
-],
-"a": [
-"C"
-],
-"y": [
-"PVC שייך לזהות של replica מסוים. הוא לא עובר ל-replica אחר.",
-"זה קורה רק אם מגדירים `whenScaled: Delete`. זו לא ברירת המחדל.",
-"ברירת המחדל של `persistentVolumeClaimRetentionPolicy` היא Retain. ה-PVC נשארים, וכש-`db-1` חוזר הוא מתחבר לאותו PVC.",
-"אין המרה כזו. PVC הוא אובייקט עצמאי."
-],
-"x": "כדאי לציין שזה מכוון, כדי למנוע מחיקת דאטה בטעות, ושצריך לנקות PVC יתומים ידנית או להגדיר retention policy.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
-},
-{
-"s": 0,
-"q": "When is `kubectl delete pod --force --grace-period=0` dangerous for a StatefulSet pod?",
-"o": [
-[
-"A",
-"Only when the pod has no PersistentVolumeClaims attached"
-],
-[
-"B",
-"When the node is unreachable and the pod may still be running there"
-],
-[
-"C",
-"When the StatefulSet uses `podManagementPolicy: Parallel`"
-],
-[
-"D",
-"Never; it is the documented way to delete StatefulSet pods"
-]
-],
-"a": [
-"B"
-],
-"y": [
-"הסכנה גדולה יותר דווקא כשיש volumes.",
-"StatefulSet מבטיח 'at most one' לכל זהות. מחיקה בכוח עוקפת את ההבטחה הזו ועלולה ליצור split-brain או השחתת דאטה.",
-"`Parallel` משנה רק את סדר היצירה והמחיקה של הפודים. הסכנה של force delete קיימת בשתי המדיניות.",
-"התיעוד מזהיר במפורש מפני זה ב-StatefulSets."
-],
-"x": "לפני force delete מוודאים שה-node באמת כבוי (למשל דרך ה-cloud provider). זה ההבדל בין מי שקרא את התיעוד למי שלא.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/tasks/run-application/force-delete-stateful-set-pod/"
-},
-{
-"s": 0,
-"q": "Pods take exactly 30 seconds to terminate on every deploy and end with exit code 137. The Dockerfile uses `ENTRYPOINT sh -c \"node server.js\"`. What is wrong?",
-"o": [
-[
-"A",
-"Node.js ignores SIGTERM unless a handler is registered"
-],
-[
-"B",
-"Exit code 137 means the image layers are corrupt"
-],
-[
-"C",
-"The readiness probe keeps the pod alive until it fails"
-],
-[
-"D",
-"The shell is PID 1 and never forwards SIGTERM to node"
-]
-],
-"a": [
-"D"
-],
-"y": [
-"Node כן מגיב ל-SIGTERM. הבעיה היא שהסיגנל לא מגיע אליו.",
-"137 הוא 128+9, כלומר SIGKILL. זה לא קשור ל-image.",
-"Readiness לא מעכב סגירה.",
-"בצורת shell, ה-`sh` מקבל את ה-SIGTERM ולא מעביר אותו. אחרי 30 שניות מגיע SIGKILL, וזה 137. הפתרון: exec form, או init קטן כמו tini."
-],
-"x": "תציע `ENTRYPOINT [\"node\",\"server.js\"]` או `exec` בתוך הסקריפט, ותסביר למה PID 1 מיוחד בלינוקס.",
-"lv": 1,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination"
-},
-{
-"s": 0,
-"q": "A rolling update with `maxUnavailable: 0` and `maxSurge: 1` is stuck: one new pod is Pending and the old pods are all still Running. Events say `0/5 nodes are available: insufficient memory`. What is going on?",
-"o": [
-[
-"A",
-"The surge pod has no room, and maxUnavailable 0 forbids removing an old pod"
-],
-[
-"B",
-"maxSurge must be 0 whenever maxUnavailable is 0"
-],
-[
-"C",
-"The new image is broken and fails its readiness probe"
-],
-[
-"D",
-"The Deployment was paused with `kubectl rollout pause`"
+"External names must be registered in the CoreDNS ConfigMap"
 ]
 ],
 "a": [
 "A"
 ],
 "y": [
-"שילוב של מקום חסר עם `maxUnavailable: 0` יוצר deadlock: החדש לא נכנס והישן לא יוצא. צריך להוסיף nodes (או autoscaler) או להתיר `maxUnavailable: 1`.",
-"maxSurge 1 היא בחירה לגיטימית. הבעיה היא הקיבולת.",
-"אז הפוד היה מגיע לשלב pull או crash. כאן הוא אפילו לא שובץ.",
-"Deployment מושהה לא יוצר פוד חדש בכלל."
+"שם עם פחות מ-5 נקודות נחשב 'יחסי', וה-resolver מנסה קודם `api.stripe.com.<ns>.svc.cluster.local` ועוד. כל ניסיון כזה הוא שאילתה מבוזבזת.",
+"הפרוטוקול לא מסביר NXDOMAIN על search domains.",
+"ה-cache פלאגין מופעל בקונפיג ברירת המחדל. גם עם cache, הבעיה היא כמות השאילתות.",
+"שמות חיצוניים נפתרים דרך forward ל-upstream. אין צורך לרשום אותם."
 ],
-"x": "תראה שאתה מבין את ה-trade-off: `maxUnavailable: 0` שומר על קיבולת, אבל דורש מקום פנוי ב-cluster.",
+"x": "פתרונות: נקודה בסוף השם (`api.stripe.com.`), `dnsConfig` עם `ndots: 2`, או NodeLocal DNSCache. ידע כזה מגיע מניסיון ב-production.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#max-unavailable"
+"r": "https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config"
+},
+{
+"s": 1,
+"q": "What does `internalTrafficPolicy: Local` on a Service do?",
+"o": [
+[
+"A",
+"It restricts the Service to the same namespace"
+],
+[
+"B",
+"Traffic from pods in the cluster is only sent to endpoints on the same node"
+],
+[
+"C",
+"It blocks external traffic to the Service"
+],
+[
+"D",
+"It makes DNS return only local pod IPs"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"השדה לא קשור ל-namespaces.",
+"שימושי ל-DaemonSet כמו log agent: כל פוד מדבר עם הסוכן על ה-node שלו. אם אין endpoint מקומי, התעבורה נזרקת.",
+"זה לא תפקיד השדה. תעבורה חיצונית נשלטת על ידי `externalTrafficPolicy`.",
+"DNS לא משתנה. ה-routing משתנה ב-kube-proxy."
+],
+"x": "תשווה ל-`externalTrafficPolicy`: שני שדות דומים, אחד לתעבורה פנימית ואחד לחיצונית.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/service-traffic-policy/"
+},
+{
+"s": 2,
+"q": "What does a `projected` volume do?",
+"o": [
+[
+"A",
+"It combines several volume sources into one directory"
+],
+[
+"B",
+"It makes a PVC available on several nodes"
+],
+[
+"C",
+"It caches a network volume on local disk"
+],
+[
+"D",
+"It mirrors a volume from another namespace"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"projected מאחד כמה מקורות בתיקייה אחת. כך גם ה-service account token מורכב בפוד: token עם תוקף מוגבל, ה-CA ו-namespace.",
+"זה תלוי ב-access mode, לא ב-projected.",
+"אין caching כזה.",
+"volumes לא חוצים namespaces."
+],
+"x": "תזכיר bound service account tokens: עם audience ותוקף, ומתחדשים אוטומטית. זה הבסיס של IRSA ב-EKS.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/projected-volumes/"
 },
 {
 "s": 0,
@@ -1477,29 +4802,29 @@
 "o": [
 [
 "A",
-"Automatically rolls back to the previous revision"
-],
-[
-"B",
-"Sets the `Progressing` condition to False with reason `ProgressDeadlineExceeded`, and does nothing else"
-],
-[
-"C",
 "Pauses the Deployment so no further changes are accepted"
 ],
 [
-"D",
+"B",
 "Deletes the new ReplicaSet and its pods"
+],
+[
+"C",
+"Sets the `Progressing` condition to False with reason `ProgressDeadlineExceeded`, and does nothing else"
+],
+[
+"D",
+"Automatically rolls back to the previous revision"
 ]
 ],
 "a": [
-"B"
+"C"
 ],
 "y": [
-"אין auto-rollback ב-Deployment. זה תפקיד של כלים כמו Argo Rollouts או ה-pipeline.",
-"ה-controller רק מדווח. אפשר לזהות את זה עם `kubectl rollout status`, שיוצא עם קוד שגיאה, ולהחליט מה לעשות.",
 "Pause קורה רק עם `kubectl rollout pause`. ה-deadline לא עושה pause.",
-"ה-ReplicaSet החדש נשאר כמו שהוא, כדי שתוכל לחקור."
+"ה-ReplicaSet החדש נשאר כמו שהוא, כדי שתוכל לחקור.",
+"ה-controller רק מדווח. אפשר לזהות את זה עם `kubectl rollout status`, שיוצא עם קוד שגיאה, ולהחליט מה לעשות.",
+"אין auto-rollback ב-Deployment. זה תפקיד של כלים כמו Argo Rollouts או ה-pipeline."
 ],
 "x": "ב-CI כדאי להריץ `kubectl rollout status --timeout` ולהכשיל את ה-pipeline. ככה מחברים את ה-deadline ל-rollback אוטומטי.",
 "lv": 1,
@@ -1507,144 +4832,39 @@
 "r": "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#failed-deployment"
 },
 {
-"s": 0,
-"q": "What is the main purpose of `ttlSecondsAfterFinished` on a Job?",
+"s": 2,
+"q": "You deleted a PVC whose PV had `reclaimPolicy: Retain`, then created a new PVC with the same name. It stays Pending, and the old PV shows `Released`. Why does it not bind?",
 "o": [
 [
 "A",
-"To kill the Job if it runs too long"
+"The StorageClass must be switched to Delete first"
 ],
 [
 "B",
-"To delay the start of the Job"
+"The Released PV still has a `claimRef` to the old PVC"
 ],
 [
 "C",
-"To retry the Job after it fails"
+"Released PVs are locked for 24 hours, then rebind"
 ],
 [
 "D",
-"To clean up the Job and its pods after it finishes"
+"The new PVC must use a different name than the old one"
 ]
 ],
 "a": [
-"D"
+"B"
 ],
 "y": [
-"את זה עושה `activeDeadlineSeconds`.",
-"אין לזה קשר לזמן ההתחלה.",
-"Retry נשלט על ידי `backoffLimit`.",
-"בלי זה Jobs שהסתיימו נשארים לנצח ומעמיסים על ה-API ועל etcd."
+"זה ימחק את הדאטה. לא מה שרוצים.",
+"Retain שומר את הדאטה, ולכן Kubernetes לא מצמיד אותו אוטומטית ל-claim חדש. מסירים את ה-`claimRef` (או יוצרים PV חדש) אחרי שבודקים את הדאטה.",
+"אין נעילה זמנית ואין rebind אוטומטי. ב-Retain ה-PV נשאר Released עד שמישהו מטפל בו.",
+"השם לא משנה. ה-claimRef מצביע על ה-UID הישן."
 ],
-"x": "ב-CronJob עושים את זה עם `successfulJobsHistoryLimit` ו-`failedJobsHistoryLimit`. כדאי להכיר את שתי הדרכים.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/ttlafterfinished/"
-},
-{
-"s": 0,
-"q": "Where do static pods come from, and how do you remove one?",
-"o": [
-[
-"A",
-"They come from the scheduler cache; you restart the scheduler"
-],
-[
-"B",
-"They are pods with `restartPolicy: Never`; you delete them normally"
-],
-[
-"C",
-"The kubelet runs them from manifest files in its static pod path (often `/etc/kubernetes/manifests`); you remove the file"
-],
-[
-"D",
-"They are created by a DaemonSet; you delete the DaemonSet"
-]
-],
-"a": [
-"C"
-],
-"y": [
-"ה-scheduler לא מעורב. ה-kubelet מריץ אותם ישירות.",
-"restartPolicy לא קשור לשאלה אם פוד הוא static.",
-"ה-API server מציג רק mirror pod. `kubectl delete` מוחק את ה-mirror, וה-kubelet מחזיר אותו מיד. צריך למחוק את הקובץ מה-node.",
-"Static pods לא מנוהלים על ידי שום controller ב-API."
-],
-"x": "ב-kubeadm, רכיבי ה-control plane (apiserver, etcd) רצים כ-static pods. זה ידע טוב לשאלות על תחזוקת cluster.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/"
-},
-{
-"s": 0,
-"q": "A Job has `backoffLimit: 6` and `activeDeadlineSeconds: 60`. Its pod keeps failing, and the Job is marked Failed after 60 seconds with only 3 attempts. Why?",
-"o": [
-[
-"A",
-"`activeDeadlineSeconds` takes precedence over `backoffLimit`"
-],
-[
-"B",
-"With a deadline set, the Job halves its `backoffLimit`"
-],
-[
-"C",
-"`backoffLimit` counts minutes of back-off, not attempts"
-],
-[
-"D",
-"The kubelet caps retries at 3 regardless of the Job spec"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"התיעוד קובע במפורש שה-deadline גובר. ה-Job נעצר עם reason `DeadlineExceeded` גם אם נשארו ניסיונות.",
-"אין קשר כזה בין השדות. כל אחד פועל בנפרד, וה-deadline פשוט גובר.",
-"`backoffLimit` סופר ניסיונות, לא זמן.",
-"אין cap כזה ב-kubelet."
-],
-"x": "תזכיר שה-back-off בין ניסיונות גדל אקספוננציאלית (10s, 20s, 40s...). לכן מעט ניסיונות נכנסים בחלון קצר.",
+"x": "תסביר שזה מכוון: מונע מ-claim חדש לקבל בטעות דאטה של מישהו אחר.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/#job-termination-and-cleanup"
-},
-{
-"s": 0,
-"q": "You remove the `app=web` label from one running pod that belongs to a Deployment selecting `app=web`. What happens?",
-"o": [
-[
-"A",
-"The ReplicaSet creates a replacement and the old pod keeps running, orphaned"
-],
-[
-"B",
-"Nothing happens, because pod labels are immutable once set"
-],
-[
-"C",
-"The Deployment notices the drift and rolls out a new revision"
-],
-[
-"D",
-"The ReplicaSet deletes the pod because its labels no longer match"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"ה-ReplicaSet רואה פחות פודים תואמים ומשלים אותם. הפוד המקורי נשאר בחיים מחוץ ל-Service, וטוב לחקירה.",
-"Labels על פודים ניתנים לשינוי.",
-"Rollout קורה רק כשה-template משתנה.",
-"אף controller לא מוחק אותו, כי אף אחד כבר לא הבעלים שלו."
-],
-"x": "זו טכניקת debugging אמיתית: 'להוציא' פוד בעייתי מהתעבורה בלי להרוג אותו, ולחקור אותו בשקט.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#isolating-pods-from-a-replicaset"
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#retain"
 },
 {
 "s": 0,
@@ -1652,29 +4872,29 @@
 "o": [
 [
 "A",
-"A finalizer on the pod has not been removed by the controller that owns it"
-],
-[
-"B",
 "The pod's image is still downloading"
 ],
 [
+"B",
+"The grace period is one hour by default"
+],
+[
 "C",
-"The ReplicaSet is recreating it"
+"A finalizer on the pod has not been removed by the controller that owns it"
 ],
 [
 "D",
-"The grace period is one hour by default"
+"The ReplicaSet is recreating it"
 ]
 ],
 "a": [
-"A"
+"C"
 ],
 "y": [
-"פוד עם finalizers לא יימחק עד שהם מוסרים. בודקים עם `kubectl get pod -o jsonpath='{.metadata.finalizers}'`, ואז מוצאים את ה-controller שאמור להסיר אותו.",
 "Pull לא קשור לסגירה.",
-"ReplicaSet יוצר פוד חדש עם שם אחר. הוא לא מחזיק את הישן.",
-"ברירת המחדל היא 30 שניות."
+"ברירת המחדל היא 30 שניות.",
+"פוד עם finalizers לא יימחק עד שהם מוסרים. בודקים עם `kubectl get pod -o jsonpath='{.metadata.finalizers}'`, ואז מוצאים את ה-controller שאמור להסיר אותו.",
+"ReplicaSet יוצר פוד חדש עם שם אחר. הוא לא מחזיק את הישן."
 ],
 "x": "תזכיר ש-`--force --grace-period=0` מסיר את האובייקט מה-API בלי לוודא שהתהליך מת. ב-StatefulSet זה מסוכן, כי יכולים לרוץ שני פודים עם אותה זהות.",
 "lv": 1,
@@ -1682,179 +4902,109 @@
 "r": "https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/"
 },
 {
-"s": 0,
-"q": "A pod's container restarts every few minutes with exit code 143 and no OOM. `describe` shows `Liveness probe failed: Get http://10.0.1.5:8080/healthz: context deadline exceeded` during traffic peaks. What is the best fix?",
+"s": 1,
+"q": "What does Topology Aware Routing (topology hints) on a Service aim to do?",
 "o": [
 [
 "A",
-"Make the app exit with 0 instead of 143 on SIGTERM"
+"Encrypt all traffic that crosses zones"
 ],
 [
 "B",
-"Remove the container's CPU and memory limits"
+"Prefer endpoints in the client's own zone"
 ],
 [
 "C",
-"Increase `terminationGracePeriodSeconds` to 120"
+"Pin each client to a single pod permanently"
 ],
 [
 "D",
-"Make the liveness check cheap and give it a realistic timeout"
+"Route traffic to the node with the most free CPU"
 ]
 ],
 "a": [
-"D"
+"B"
 ],
 "y": [
-"ה-exit code הוא תוצאה של ה-SIGTERM, לא הסיבה.",
-"זה לא פותר probe שמגיב לאט, ויכול לגרום ל-noisy neighbours.",
-"Grace period ארוך רק מאריך את הסגירה. הוא לא עוזר ל-probe שנכשל תחת עומס.",
-"143 = SIGTERM מה-kubelet אחרי כשל liveness. תחת עומס ה-endpoint איטי, ה-probe נכשל, וה-restart רק מגדיל את העומס על השאר."
+"אין הצפנה כחלק מהמנגנון.",
+"ה-EndpointSlice controller מוסיף hints לפי zone, ו-kube-proxy מעדיף endpoints קרובים, כל עוד יש מספיק קיבולת בכל zone.",
+"זה session affinity, לא topology.",
+"אין ניתוב לפי עומס ב-kube-proxy."
 ],
-"x": "תסביר את ה-cascading failure: restarts תחת עומס מעבירים עוד עומס לפודים הנותרים, ואז גם הם נכשלים. מראיינים אוהבים את זה.",
+"x": "תזכיר את העלות: ב-AWS תעבורה בין AZs עולה כסף. זה נושא FinOps שמראיינים בכירים אוהבים.",
 "lv": 1,
-"k": "t",
-"r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes"
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/"
 },
 {
-"s": 0,
-"q": "What is the difference between `kubectl apply` and `kubectl replace` when updating a resource?",
+"s": 2,
+"q": "Why is mounting a Secret as a file often preferred over exposing it as an environment variable?",
 "o": [
 [
 "A",
-"`apply` merges with the live object; `replace` overwrites it"
+"Secrets cannot be used as environment variables"
 ],
 [
 "B",
-"They are identical; `replace` is the older name"
+"Env vars leak more easily and never update"
 ],
 [
 "C",
-"`replace` only works on objects without a controller"
+"Environment variable values are limited to 255 bytes"
 ],
 [
 "D",
-"`apply` deletes the object and creates it again"
+"Files are encrypted and env vars are not"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אפשר, עם `secretKeyRef`.",
+"קבצים מתעדכנים כשה-Secret משתנה (בלי subPath) ופחות נוטים לדלוף. משתני סביבה נשארים קבועים ועוברים לכל תהליך בן.",
+"אין מגבלה כזו.",
+"בתוך הקונטיינר שניהם נגישים כטקסט גלוי לתהליך."
+],
+"x": "תזכיר שהקבצים יושבים ב-tmpfs על ה-node, ולא על הדיסק.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/security/secrets-good-practices/"
+},
+{
+"s": 1,
+"q": "What are EndpointSlices, and why did they replace Endpoints objects for large Services?",
+"o": [
+[
+"A",
+"They split endpoints into small objects, so updates stay small"
+],
+[
+"B",
+"They replaced Services entirely in recent versions"
+],
+[
+"C",
+"They store the DNS records that CoreDNS serves"
+],
+[
+"D",
+"They are a security feature that hides pod IPs from clients"
 ]
 ],
 "a": [
 "A"
 ],
 "y": [
-"apply הוא declarative ומשאיר שדות שאחרים מנהלים (למשל replicas של HPA, אם לא כתבת אותם). replace מחליף הכול ועלול למחוק אותם.",
-"ההתנהגות שונה מהותית.",
-"replace עובד על כל resource.",
-"זה מה ש-`replace --force` עושה, לא apply."
+"ב-Endpoints ישן היה אובייקט אחד ענק. כל שינוי שלח את כולו לכל kube-proxy. Slices קטנים (עד 100 כברירת מחדל) מפחיתים מאוד את העומס.",
+"Services עדיין קיימים. Slices רק מחזיקים את ה-backends.",
+"CoreDNS קורא אותם, אבל הם לא רשומות DNS.",
+"הם לא מסתירים שום דבר."
 ],
-"x": "אפשר להזכיר Server-Side Apply ו-field managers. ArgoCD ו-Helm משתמשים במנגנונים האלה.",
+"x": "שאלה על scalability. תזכיר שב-cluster גדול עם rolling updates תכופים זה ההבדל בין control plane יציב לחנוק.",
 "lv": 1,
 "k": "k",
-"r": "https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/"
-},
-{
-"s": 0,
-"q": "How do you declare a native sidecar container that starts before the app and keeps running alongside it?",
-"o": [
-[
-"A",
-"Set `shareProcessNamespace: true`"
-],
-[
-"B",
-"Put it in `containers` with the annotation `sidecar: true`"
-],
-[
-"C",
-"Put it in `initContainers` with `restartPolicy: Always`"
-],
-[
-"D",
-"Use a second Deployment with podAffinity to the app"
-]
-],
-"a": [
-"C"
-],
-"y": [
-"השדה הזה משתף רק את ה-process namespace. הוא לא קובע סדר עלייה.",
-"אין annotation כזה ב-Kubernetes.",
-"זה המנגנון של native sidecars: init container שלא מסתיים, עולה לפני האפליקציה ונסגר אחריה.",
-"זה פוד נפרד. הוא לא חולק network namespace ו-volumes עם האפליקציה."
-],
-"x": "תסביר את הבעיה שזה פותר: Job עם sidecar של proxy (Istio) שלא מסתיים, או sidecar שנסגר לפני שהאפליקציה סיימה לשלוח לוגים.",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/"
-},
-{
-"s": 0,
-"q": "A StatefulSet with the default `OrderedReady` policy is mid-rollout. `web-2` was updated to a broken image and never becomes Ready. You revert the image in the spec, but `web-2` stays broken. Why?",
-"o": [
-[
-"A",
-"With OrderedReady the controller waits for the broken pod to become Ready before continuing, so you must delete `web-2` manually after reverting"
-],
-[
-"B",
-"The revert only applies after `terminationGracePeriodSeconds` has elapsed twice"
-],
-[
-"C",
-"StatefulSets do not support rolling updates"
-],
-[
-"D",
-"You must also delete the PVC for the revert to apply"
-]
-],
-"a": [
-"A"
-],
-"y": [
-"זו התנהגות מתועדת: אחרי revert ה-StatefulSet לא מוחק פוד שתקוע בגרסה השבורה. צריך למחוק אותו ידנית והוא ייווצר מה-template המתוקן.",
-"אין מנגנון כזה.",
-"יש להם `RollingUpdate` כברירת מחדל, מהאינדקס הגבוה לנמוך.",
-"ה-PVC לא קשור ל-image. מחיקה שלו תמחק דאטה בלי סיבה."
-],
-"x": "זה נקרא 'forced rollback' בתיעוד. ידע כזה מראה ניסיון אמיתי עם StatefulSets בפרודקשן.",
-"lv": 1,
-"k": "t",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#forced-rollback"
-},
-{
-"s": 0,
-"q": "What does a Job's `podFailurePolicy` let you do that `backoffLimit` alone cannot?",
-"o": [
-[
-"A",
-"Emit an alert event every time a pod fails"
-],
-[
-"B",
-"Reschedule each failed pod onto a different node"
-],
-[
-"C",
-"Retry without any limit until the Job succeeds"
-],
-[
-"D",
-"Treat failures differently by exit code or by disruption"
-]
-],
-"a": [
-"D"
-],
-"y": [
-"Alerting מגיע מכלי monitoring, לא מה-Job.",
-"זה לא תפקיד של המדיניות הזו.",
-"אפשר להתעלם מסוגים מסוימים של כשלים, אבל זה לא retry אינסופי.",
-"למשל: exit code 42 אומר באג בקוד, ואין טעם לנסות שוב. ו-eviction בגלל ניקוז node לא צריך להיספר כניסיון."
-],
-"x": "דוגמה טובה ל-ML או batch: לא לבזבז GPU על retry של קוד שבור, אבל לנסות שוב כשה-node נלקח (spot).",
-"lv": 1,
-"k": "k",
-"r": "https://kubernetes.io/docs/concepts/workloads/controllers/job/#pod-failure-policy"
+"r": "https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/"
 }
 ]
 }
