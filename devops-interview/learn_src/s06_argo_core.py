@@ -130,6 +130,59 @@ spec:
          "Health is checked once a day",
          x="Deployment הוא Healthy כשה-pods זמינים, וזה תלוי ב-readiness. בדיקה פונקציונלית צריך להוסיף, למשל PostSync hook."),
       ]),
+
+  MOD("argo-in-practice", "בפועל: argocd CLI, app-of-apps ו-resource tracking",
+      "לקרוא את הפלט של `argocd app get`, להסביר app-of-apps, ולדעת איך Argo CD מזהה אילו משאבים שלו.",
+      [P("בראיון על Argo CD מצפים שתדע לא רק מה זה GitOps, אלא איך זה נראה ביום עבודה: מה ה-CLI מראה, איך מארגנים עשרות Applications, ומה קורה מתחת למכסה."),
+       CODE("""$ argocd app get shop-api
+Name:               argocd/shop-api
+Project:            shop
+Sync Policy:        Automated (Prune)
+Sync Status:        OutOfSync from main (4c1e2a9)
+Health Status:      Degraded
+
+GROUP  KIND        NAMESPACE  NAME      STATUS     HEALTH    HOOK  MESSAGE
+       Service     shop       api       Synced     Healthy         service/api unchanged
+apps   Deployment  shop       api       OutOfSync  Degraded        Deployment "api" exceeded its progress deadline""", cap="שני סטטוסים נפרדים: sync מול Git, ו-health של המשאבים"),
+       TABLE(["שילוב", "פירוש", "צעד ראשון"],
+             ["Synced + Healthy", "הקלאסטר תואם ל-Git והכול בריא", "אין"],
+             ["OutOfSync + Healthy", "יש diff, אבל מה שרץ בריא", "`argocd app diff`: שינוי ב-Git או drift ידני?"],
+             ["Synced + Degraded", "Git הוחל, אבל המשאבים לא בריאים", "בעיית אפליקציה: describe, logs, events"],
+             ["Synced + Progressing", "rollout עדיין רץ", "לחכות, או לבדוק progressDeadlineSeconds"]),
+       H("App of apps"),
+       P("Application אחד (root) מצביע על תיקייה ב-Git שמכילה manifests של Applications אחרים. כך מוסיפים שירות חדש ב-commit, בלי ללחוץ ב-UI. ApplicationSet הוא הדרך המודרנית לאותה מטרה כשיש דפוס חוזר (תיקייה לכל שירות, קלאסטר לכל סביבה)."),
+       TREE(["אוסף Applications שונים מאוד זה מזה", "app-of-apps"],
+            ["אותו דפוס על הרבה תיקיות או קלאסטרים", "ApplicationSet עם generator"],
+            ["Application אחד, הרבה סביבות", "ApplicationSet עם list או cluster generator"]),
+       H("Resource tracking"),
+       P("Argo CD צריך לדעת אילו משאבים בקלאסטר שייכים לאיזה Application, כדי לחשב diff ולעשות prune. מגרסה 3.0 ברירת המחדל היא annotation (`argocd.argoproj.io/tracking-id`). השיטה הישנה השתמשה ב-label `app.kubernetes.io/instance`, שהתנגש עם charts של Helm שמשתמשים באותו label."),
+       KEY("Argo CD בודק את Git כל שלוש דקות כברירת מחדל (`timeout.reconciliation`). webhook מה-Git provider מקצר את זה לשניות. אם 'שינוי ב-Git לא מגיע', בודקים webhook, refresh ידני, ו-cache של ה-repo-server."),
+       TRAP("שני Applications שמנהלים את אותו משאב (למשל אותו ConfigMap) נלחמים זה בזה: כל sync של אחד גורם ל-OutOfSync בשני. ב-UI מופיעה אזהרת SharedResourceWarning. לכל משאב צריך בעלים אחד."),
+       ASK("Explain the difference between sync status and health status.",
+           "How do you manage dozens of Applications without clicking in the UI?",
+           "A commit was merged but Argo CD didn't pick it up for minutes. Why?",
+           "How does Argo CD know which resources belong to an Application?"),
+      ],
+      [C("An Application shows `Synced` and `Degraded`. What does that mean?",
+         "Git was applied, but the resources themselves are unhealthy",
+         "Git and the cluster differ",
+         "The repo can't be reached",
+         "Argo CD itself is down",
+         x="Synced אומר שהקלאסטר תואם ל-Git. Degraded מתאר את מצב המשאבים, למשל Deployment שלא מגיע ל-ready. זו בעיה של האפליקציה, לא של GitOps."),
+       C("What is the app-of-apps pattern?",
+         "A root Application that points at a folder of other Application manifests",
+         "One Application that deploys to every cluster",
+         "A Helm chart that installs Argo CD",
+         "A UI view that groups Applications",
+         x="ה-root Application מסנכרן manifests של Applications. הוספת שירות היא commit לתיקייה הזאת."),
+       C("How often does Argo CD poll Git by default, and what makes it faster?",
+         "About every three minutes; a Git webhook triggers a refresh immediately",
+         "Every second; nothing is needed",
+         "Once a day; a cron job",
+         "Only on manual sync",
+         x="timeout.reconciliation הוא 180 שניות כברירת מחדל. webhook מה-Git provider גורם לרענון מיידי."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -211,11 +264,11 @@ spec:
      ("The pods are crashing", "pods קורסים נותנים Degraded."),
      ("The Application has no project", "project חסר נדחה כבר ביצירה."),
      x="Missing מופיע לפני ה-sync הראשון, או אחרי שמישהו מחק משאב ידנית. sync יוצר אותו."),
-   F("gitops", "How do you roll back a bad change in a GitOps setup?",
-     ("Revert the commit in Git and let Argo CD sync it", "נכון. Git נשאר מקור האמת."),
-     ("Edit the Deployment with kubectl", "selfHeal יחזיר את השינוי, ו-Git לא יתאים."),
-     ("Delete the Application", "זה מוחק את השירות, לא מחזיר גרסה."),
-     ("Restart the repo-server", "restart לא משנה את מה שב-Git."),
-     x="git revert מחזיר את המצב הקודם ב-Git, ו-Argo CD מיישם אותו. ההיסטוריה נשארת מלאה, וה-live וה-Git ממשיכים להתאים."),
+   F("argo-in-practice", "Two Applications keep flipping each other to OutOfSync, and the UI shows SharedResourceWarning. What is wrong?",
+     ("Both Applications manage the same Kubernetes resource", "נכון. כל אחד מחיל את הגרסה שלו, והשני רואה drift."),
+     ("The repo-server cache is full", "cache לא יוצר אזהרה על משאב משותף."),
+     ("Auto-sync is disabled on both", "בלי auto-sync לא היה היפוך אוטומטי בכלל."),
+     ("The cluster has two API servers", "API servers מרובים הם HA רגיל ולא גורמים לזה."),
+     x="SharedResourceWarning אומר שאותו משאב מתויג על ידי שני Applications. כל sync דורס את השני. מעבירים את המשאב ל-Application אחד בלבד."),
  ],
 }

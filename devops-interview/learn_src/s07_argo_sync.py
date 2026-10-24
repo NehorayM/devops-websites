@@ -125,6 +125,74 @@ spec:
          "A sync window",
          x="SharedResourceWarning אומר שמשאב מנוהל ע\"י יותר מ-Application אחד. בוחרים בעלים אחד ומסירים מהשני."),
       ]),
+
+  MOD("sync-in-practice", "בפועל: ignoreDifferences, Server-Side Apply ו-hooks",
+      "לפתור OutOfSync שלא נגמר, לבחור sync options נכונים, ולכתוב PostSync hook שבודק את הגרסה.",
+      [P("רוב התקלות היומיומיות ב-Argo CD הן לא באגים אלא הגדרות sync. כאן ההגדרות שפותרות אותן, עם דוגמאות."),
+       H("OutOfSync שלא נגמר"),
+       P("controller אחר ממלא שדה שאתה לא מגדיר ב-Git: HPA משנה `replicas`, webhook מוסיף `caBundle`, mutating admission מוסיף labels. Argo CD רואה diff בכל רענון. הפתרון: להתעלם מהשדה."),
+       CODE("""spec:
+  ignoreDifferences:
+  - group: apps
+    kind: Deployment
+    jsonPointers: [/spec/replicas]       # HPA מנהל את זה
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    jqPathExpressions: ['.webhooks[]?.clientConfig.caBundle']
+  syncPolicy:
+    syncOptions:
+    - RespectIgnoreDifferences=true    # גם sync לא ידרוס את השדה""", cap="בלי RespectIgnoreDifferences, ה-diff מוסתר אבל sync עדיין מחזיר את הערך מ-Git"),
+       H("Sync options נפוצים"),
+       TABLE(["Option", "מתי"],
+             ["`CreateNamespace=true`", "ה-namespace לא קיים עדיין"],
+             ["`ServerSideApply=true`", "CRD גדול שנכשל ב-`metadata.annotations: Too long`, או כמה managers לאותו משאב"],
+             ["`PruneLast=true`", "למחוק משאבים ישנים רק אחרי שהחדשים בריאים"],
+             ["`ApplyOutOfSyncOnly=true`", "Application ענק; להחיל רק את מה שהשתנה"],
+             ["`Replace=true`", "שדה immutable; מוחק ויוצר מחדש. מסוכן"]),
+       KEY("CRD ו-Custom Resource באותו sync: dry-run נכשל על ה-CR כי ה-CRD עוד לא קיים (`the server could not find the requested resource`). פתרונות: sync wave נמוך ל-CRD, או annotation `argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true` על ה-CR."),
+       H("PostSync hook שבודק את הגרסה"),
+       CODE("""apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: curl
+        image: curlimages/curl:8.10.1
+        args: ["--fail", "--retry", "5", "http://api.shop/healthz"]""", cap="hook שנכשל מסמן את ה-sync כ-Failed"),
+       TRAP("`hook-delete-policy: HookSucceeded` לבד משאיר Job שנכשל, וה-sync הבא נכשל על `already exists`. `BeforeHookCreation` מוחק את הקודם לפני יצירה, ומשאיר את האחרון לחקירה."),
+       ASK("Argo CD shows OutOfSync forever on `replicas`. Why, and how do you fix it?",
+           "How do you run a database migration before the new version rolls out?",
+           "When would you enable Server-Side Apply in Argo CD?",
+           "A CRD and its custom resources are in the same app and sync fails. Why?"),
+      ],
+      [C("An HPA changes `replicas`, and the app is always OutOfSync. What fixes it?",
+         "`ignoreDifferences` on `/spec/replicas`, with `RespectIgnoreDifferences=true`",
+         "Turn off the HPA",
+         "Set `Replace=true`",
+         "Delete the Application and recreate it",
+         x="ignoreDifferences מסתיר את השדה מה-diff, ו-RespectIgnoreDifferences מונע מ-sync להחזיר את הערך מ-Git."),
+       C("A large CRD fails to sync with `metadata.annotations: Too long`. Which option helps?",
+         "`ServerSideApply=true`",
+         "`PruneLast=true`",
+         "`CreateNamespace=true`",
+         "`ApplyOutOfSyncOnly=true`",
+         x="client-side apply שומר את כל ה-manifest ב-annotation שמוגבלת בגודל. Server-Side Apply לא משתמש בה."),
+       C("Which hook delete policy avoids `already exists` after a failed PostSync Job?",
+         "`BeforeHookCreation`",
+         "`HookSucceeded` only",
+         "`HookFailed` only",
+         "No policy at all",
+         x="BeforeHookCreation מוחק את ה-Job הקודם לפני יצירת חדש, ולכן גם Job שנכשל לא חוסם את ה-sync הבא."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -205,11 +273,11 @@ spec:
      ("`Replace=true`", "Replace מחליף משאבים במקום להחיל."),
      ("`CreateNamespace=true`", "יוצר את ה-namespace בלבד."),
      x="ב-Applications עם מאות משאבים, ApplyOutOfSyncOnly חוסך apply למשאבים שכבר תואמים, ומקצר את ה-sync."),
-   F("sync-options", "Two Applications both manage the same Namespace. What should you do?",
-     ("Pick one owner and remove the resource from the other", "נכון. משאב צריך בעלים אחד."),
-     ("Enable selfHeal on both", "הם ימשיכו לדרוס זה את זה."),
-     ("Add the resource to a third Application", "זה מוסיף עוד מתחרה."),
-     ("Ignore the SharedResourceWarning", "האזהרה מצביעה על באג אמיתי."),
-     x="כששני Applications מנהלים משאב, כל sync של אחד משנה אותו ומוציא את השני מ-sync. מחליטים מי הבעלים, ובודקים גם tracking method."),
+   F("sync-in-practice", "A custom resource fails dry-run because its CRD is created in the same sync. What is a clean fix?",
+     ("Put the CRD in an earlier sync wave, or mark the CR with `SkipDryRunOnMissingResource=true`", "נכון. ה-CRD נוצר קודם, או שה-CR מדלג על dry-run."),
+     ("Disable auto-sync", "זה לא משנה את סדר ההחלה."),
+     ("Use `Replace=true` on the CRD", "Replace מוחק ויוצר מחדש, ולא פותר את ה-dry-run של ה-CR."),
+     ("Move the CR to another cluster", "ה-CR צריך את ה-CRD באותו קלאסטר."),
+     x="dry-run רץ לפני שה-CRD קיים, ולכן ה-API לא מכיר את ה-kind. wave נמוך ל-CRD, או SkipDryRunOnMissingResource על ה-CR, פותרים את הסדר."),
  ],
 }

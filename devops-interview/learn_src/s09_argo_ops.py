@@ -122,6 +122,66 @@ policy.csv: |
          "Scale the Deployment to zero",
          x="cascade=false מוחק רק את ה-Application. עם resources finalizer ובלי הדגל, כל המשאבים נמחקים."),
       ]),
+
+  MOD("ops-in-practice", "בפועל: RBAC policies, התראות ו-metrics",
+      "לכתוב שורות policy ל-Argo CD, להגדיר התראה על sync שנכשל, ולנטר את Argo CD עצמו.",
+      [P("Argo CD בפרודקשן הוא רכיב קריטי: כל deploy עובר דרכו. כאן הקבצים שמגדירים מי מורשה, איך יודעים שמשהו נכשל, ומה מנטרים."),
+       H("RBAC: שורות policy"),
+       CODE("""# argocd-rbac-cm
+policy.default: role:readonly
+policy.csv: |
+  p, role:shop-dev, applications, get,  shop/*, allow
+  p, role:shop-dev, applications, sync, shop/*, allow
+  p, role:shop-dev, applications, delete, shop/*, deny
+  p, role:ci,       applications, sync, */*,    allow
+  g, my-org:shop-team, role:shop-dev      # קבוצה מה-SSO מקבלת role
+scopes: '[groups]'""", cap="p = הרשאה: role, resource, action, project/app, effect. g = שיוך"),
+       TABLE(["שדה", "דוגמה", "הערה"],
+             ["resource", "applications, applicationsets, clusters, repositories, logs, exec", "exec ו-logs דורשים הרשאה נפרדת"],
+             ["action", "get, create, update, delete, sync, override, action/*", "override מאפשר לשנות parameters ב-UI"],
+             ["object", "`shop/*`", "project ואחריו שם Application"]),
+       KEY("`policy.default: role:readonly` נותן לכל משתמש מחובר לראות הכול. בארגון עם הרבה צוותים עדיף default ריק, והרשאות לפי project, כי גם קריאה חושפת manifests ושמות של secrets."),
+       H("התראות"),
+       CODE("""# argocd-notifications-cm (Argo CD Notifications מובנה)
+trigger.on-sync-failed: |
+  - when: app.status.operationState.phase in ['Error', 'Failed']
+    send: [app-sync-failed]
+template.app-sync-failed: |
+  message: "{{.app.metadata.name}} sync failed: {{.app.status.operationState.message}}"
+# ועל ה-Application:
+# notifications.argoproj.io/subscribe.on-sync-failed.slack: deploys""", cap="trigger, template ו-subscription"),
+       H("לנטר את Argo CD"),
+       TABLE(["Metric", "מה הוא מראה"],
+             ["`argocd_app_info{sync_status, health_status}`", "מצב כל Application; התראה על Degraded או OutOfSync לאורך זמן"],
+             ["`argocd_app_sync_total{phase}`", "כמות syncs לפי תוצאה"],
+             ["`argocd_app_reconcile` (histogram)", "כמה זמן לוקח reconcile; עלייה = controller עמוס"],
+             ["`argocd_git_request_total`", "פניות ל-Git; קפיצה מסבירה rate limits"]),
+       TRAP("התראה על כל OutOfSync רועשת: כל commit יוצר OutOfSync לכמה שניות. מתריעים על OutOfSync או Degraded שנמשך יותר מכמה דקות, ועל sync שנכשל."),
+       ASK("How do you give a team access only to their own apps in Argo CD?",
+           "How do you get notified when a sync fails?",
+           "Which Argo CD metrics would you alert on?",
+           "How do you back up and upgrade Argo CD safely?"),
+      ],
+      [C("In `p, role:shop-dev, applications, sync, shop/*, allow`, what does `shop/*` mean?",
+         "Every Application in the `shop` project",
+         "Every namespace called shop",
+         "Every Git branch starting with shop",
+         "Every cluster labelled shop",
+         x="ה-object בפורמט project/application. shop/* הוא כל ה-Applications בפרויקט shop."),
+       C("Which component sends Slack messages when a sync fails?",
+         "Argo CD Notifications, with a trigger, a template and a subscription",
+         "The repo-server",
+         "The ApplicationSet controller",
+         "Dex",
+         x="Notifications מגיע מובנה. trigger מגדיר מתי, template מה לשלוח, ו-annotation על ה-Application לאן."),
+       C("Why not alert on every OutOfSync status?",
+         "Every commit makes apps OutOfSync briefly, so the alert would be noise",
+         "OutOfSync can't be measured",
+         "OutOfSync is always healthy",
+         "Prometheus can't read Argo CD",
+         x="OutOfSync קצר הוא חלק רגיל מכל deploy. מתריעים על מצב שנמשך דקות, או על sync שנכשל."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -203,11 +263,11 @@ policy.csv: |
      ("Through the Ingress logs", "Ingress לא יודע מה מצב ה-Application."),
      ("With a larger repo-server", "גודל לא קשור להתראות."),
      x="argocd_app_info חושף sync ו-health לכל Application. התראה על Degraded לאורך זמן, או trigger של Notifications, מגיעה לבעלים בזמן."),
-   F("operations", "What is a safe way to upgrade Argo CD?",
-     ("Read the upgrade notes and move one minor version at a time, testing in staging first", "נכון. שינויי ברירות מחדל מפתיעים."),
-     ("Jump several major versions at once", "קפיצה כזו מחברת את כל השינויים השוברים יחד."),
-     ("Upgrade production first because it matters most", "פרודקשן הוא המקום האחרון לגלות שבירה."),
-     ("Delete Argo CD and reinstall from scratch", "התקנה מחדש עלולה למחוק Applications."),
-     x="upgrade notes מפרטים שינויים שוברים. גרסת minor אחת בכל פעם, גיבוי, CRDs מעודכנים, ו-instance של staging מקטינים סיכון."),
+   F("ops-in-practice", "Every logged-in user can see every Application, including other teams' manifests. Which setting causes this?",
+     ("`policy.default: role:readonly` in argocd-rbac-cm", "נכון. ה-default חל על כל משתמש מחובר."),
+     ("`scopes: '[groups]'`", "זה קובע מאיזה claim לקרוא קבוצות, לא את ברירת המחדל."),
+     ("The AppProject's `sourceRepos`", "sourceRepos מגביל מאיפה מותר למשוך manifests, לא מי רואה."),
+     ("Dex being enabled", "Dex מטפל בהתחברות, לא בהרשאות."),
+     x="policy.default נותן role לכל מי שהתחבר ואין לו כלל אחר. readonly חושף את כל ה-Applications. default ריק והרשאות לפי project מגבילים כל צוות לשלו."),
  ],
 }

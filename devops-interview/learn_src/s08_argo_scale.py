@@ -124,6 +124,68 @@ spec:
          "Adding sync waves",
          x="sharding מחלק את הקלאסטרים בין כמה replicas של ה-controller, כך שכל אחד עושה reconcile לפחות Applications."),
       ]),
+
+  MOD("scale-in-practice", "בפועל: matrix generator, sharding ו-progressive syncs",
+      "לכתוב ApplicationSet שמשלב שירותים וקלאסטרים, ולהסביר איך Argo CD גדל לאלפי Applications.",
+      [P("ב-Mid-Senior שואלים איך מנהלים 30 שירותים על 6 קלאסטרים בלי 180 קבצים שכתובים ביד, ומה נשבר כש-Argo CD גדל."),
+       H("Matrix generator"),
+       CODE("""apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata: {name: services}
+spec:
+  goTemplate: true
+  generators:
+  - matrix:
+      generators:
+      - git:                       # כל תיקייה תחת services/ היא שירות
+          repoURL: https://github.com/org/deploy.git
+          revision: main
+          directories: [{path: services/*}]
+      - clusters:                  # כל קלאסטר עם label env=prod
+          selector: {matchLabels: {env: prod}}
+  template:
+    metadata: {name: '{{.path.basename}}-{{.name}}'}
+    spec:
+      project: prod
+      source: {repoURL: https://github.com/org/deploy.git, targetRevision: main, path: '{{.path.path}}'}
+      destination: {server: '{{.server}}', namespace: '{{.path.basename}}'}
+  syncPolicy:
+    preserveResourcesOnDeletion: true   # מחיקת ה-AppSet לא מוחקת את השירותים""", cap="שירות לכל תיקייה × קלאסטר לכל prod"),
+       KEY("ApplicationSet הוא הבעלים של ה-Applications שהוא יוצר. שינוי ב-generator שמוריד שורה מוחק Application, ועם finalizer זה מוחק גם את המשאבים. preserveResourcesOnDeletion ו-`applicationsSync: create-update` (בלי delete) מגינים מפני מחיקה בטעות."),
+       H("מה נשבר כשגדלים"),
+       TABLE(["סימפטום", "סיבה", "פתרון"],
+             ["רענונים איטיים, CPU גבוה ב-controller", "controller אחד על הרבה קלאסטרים", "sharding: כמה replicas ל-application-controller, קלאסטרים מחולקים ביניהם"],
+             ["manifests נבנים לאט", "repo-server מרנדר Helm ו-Kustomize שוב ושוב", "עוד replicas ל-repo-server, cache, monorepo עם paths"],
+             ["OOM ב-controller", "watch על כל סוגי המשאבים בכל קלאסטר", "`resource.exclusions` למשאבים שלא צריך (Events, Leases)"],
+             ["Git rate limit", "polling של הרבה Applications", "webhooks, ו-timeout.reconciliation ארוך יותר"]),
+       H("Progressive syncs"),
+       P("ApplicationSet יכול לעדכן Applications בשלבים: קודם dev, אחר כך staging, ואז prod, רק אם השלב הקודם Healthy. זה `strategy.type: RollingSync` עם steps לפי labels. התכונה עדיין לא GA, ולכן הרבה צוותים מממשים את אותו רעיון עם promotion ב-Git (PR לכל סביבה)."),
+       TRAP("cluster generator כולל גם את הקלאסטר המקומי (in-cluster) אם הוא רשום עם labels מתאימים. selector בלי labels בוחר את כל הקלאסטרים, ושירות של dev יכול להגיע לפרודקשן."),
+       ASK("How would you deploy 30 services to 6 clusters with Argo CD?",
+           "What happens to the Applications when you delete an ApplicationSet?",
+           "Argo CD gets slow with 2,000 Applications. What do you tune?",
+           "How do you promote a change from staging to prod with GitOps?"),
+      ],
+      [C("What does a matrix generator do?",
+         "Combines two generators, producing one Application per pair",
+         "Runs Applications in parallel",
+         "Creates a matrix of RBAC roles",
+         "Splits one Application into many syncs",
+         x="matrix מכפיל את התוצאות של שני generators, למשל כל תיקיית שירות עם כל קלאסטר."),
+       C("What does `preserveResourcesOnDeletion: true` protect against?",
+         "Deleting the ApplicationSet also deleting the deployed workloads",
+         "Pods being evicted",
+         "Git history being rewritten",
+         "Secrets being printed in logs",
+         x="בלי ההגדרה, מחיקת ApplicationSet מוחקת את ה-Applications, ועם finalizer גם את המשאבים בקלאסטרים."),
+       C("The application-controller is overloaded across many clusters. What is the scaling approach?",
+         "Shard it: run several controller replicas with clusters split between them",
+         "Increase the reconciliation timeout to zero",
+         "Use one Application per cluster only",
+         "Disable health checks",
+         x="sharding מחלק קלאסטרים בין replicas של ה-controller, וכך כל אחד מנטר פחות משאבים."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -204,11 +266,11 @@ spec:
      ("Fewer instances to upgrade", "זה ההפך: יותר instances לשדרג."),
      ("No need for RBAC", "כל instance עדיין צריך RBAC."),
      x="instance לכל קלאסטר מבודד תקלות ופריצות. המחיר הוא יותר instances לתחזק ואין תמונה אחת של כל הסביבות."),
-   F("multicluster", "What reduces controller load from resources that change constantly but don't matter?",
-     ("`resource.exclusions` in argocd-cm", "נכון. Argo CD מפסיק לעקוב אחריהם."),
-     ("More sync waves", "waves קובעים סדר, לא עומס."),
-     ("A deny sync window", "sync window לא מפסיק מעקב."),
-     ("A larger PVC", "אחסון לא קשור לעומס ה-controller."),
-     x="משאבים כמו Events או אובייקטים שמשתנים בכל שנייה גורמים ל-reconciles מיותרים. exclusions מוציאים אותם מהמעקב."),
+   F("scale-in-practice", "Someone removed a line from an ApplicationSet's list generator, and a whole production service vanished. What would have prevented it?",
+     ("`preserveResourcesOnDeletion`, or a sync policy that doesn't delete Applications", "נכון. ה-AppSet מחק את ה-Application ואת המשאבים שלו."),
+     ("A longer reconciliation timeout", "הזמן לא משנה את התוצאה, רק מעכב אותה."),
+     ("More repo-server replicas", "repo-server מרנדר manifests ולא קשור למחיקה."),
+     ("Turning off health checks", "health לא קשור למחיקת Applications."),
+     x="ApplicationSet הוא הבעלים של ה-Applications. שורה שנעלמה מה-generator מוחקת Application, ואיתו את המשאבים. preserveResourcesOnDeletion ו-applicationsSync: create-update מונעים מחיקה כזאת."),
  ],
 }
