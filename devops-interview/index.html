@@ -9899,11 +9899,10 @@ function explainMode(){ return !sim&&!mock; }
 //
 // Never put the SECRET key here (sb_secret_… / service_role). That one bypasses RLS and would
 // expose every user's data in a public page.
-// Empty until Ship It has its own Supabase project — this copy used to point at the AWS site's,
-// which would have mixed two different question banks in one set of profiles and duels.
+// Ship It's own Supabase project (stage 8). Its SQL is supabase_all.sql.
 const SUPA={
-  url:'',
-  anonKey:''   // the Publishable key (sb_publishable_…) — never the sb_secret_ one
+  url:'https://rkebneaecaprfolafolg.supabase.co',
+  anonKey:'sb_publishable_QxP-r1m3hXoreO7x6W2zYA_PUizucIV'   // the Publishable key — never the sb_secret_ one
 };
 const CLOUD_ON=!!(SUPA.url&&SUPA.anonKey);
 // The casino, the duel and the weekly board all live on the server: without one they are hidden.

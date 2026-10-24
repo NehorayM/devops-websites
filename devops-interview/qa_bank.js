@@ -425,7 +425,7 @@ async function studyChecks(){
       ok(q.a>=0&&q.a<q.o.length,'chapter '+i+' check '+qi+' has a valid answer');
     });
   });
-  eq(titles.size,30,'every reference page is present exactly once');
+  eq(titles.size,45,'every reference page is present exactly once');   // 30 + 15 added in stage 10
   // every question sector belongs to exactly one chapter, so the shares add up to the bank
   const owned=CH.flatMap(c=>c.secs||[]);
   eq(new Set(owned).size,owned.length,'no sector is in two chapters');

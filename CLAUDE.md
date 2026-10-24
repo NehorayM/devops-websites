@@ -46,8 +46,8 @@ JSON blobs that Python scripts generate from source files.
 | Sources | **Original questions only.** Public lists (bregman-arie/devops-exercises is CC BY-NC-ND; NotHarshhaa and sayhellorob are unlicensed) are a topic map, never copied. Answers are checked against official docs (kubernetes.io, argo-cd.readthedocs.io, helm.sh, developer.hashicorp.com, docs.aws.amazon.com, docs.docker.com, docs.github.com, docs.gitlab.com, jenkins.io, man7.org) |
 | AWS scope | AWS *for DevOps* only: EKS, IAM/IRSA/Pod Identity, VPC, EC2/ASG/ELB, ECR, S3, CloudWatch, KMS/Secrets Manager, Route 53 |
 | CI scope | Docker builds, DevSecOps (SAST/SCA/Trivy/cosign/SBOM/OIDC), testing in the pipeline, pipeline design and deploy strategies |
-| Accounts | Supabase **off**. The copied keys pointed at the AWS site's project. Progress lives in `localStorage` |
-| Games | Casino, duel, tournament and leaderboard stay in the code, **hidden** (`.nocloud` CSS) until a new Supabase project exists |
+| Accounts | Supabase **on** since stage 8: Ship It's own project `rkebneaecaprfolafolg` (Tokyo, free tier). Guests still play on `localStorage`; signing in syncs |
+| Games | Casino, duel, tournament and leaderboard are **visible** (stage 8). They hide again (`.nocloud`) if `SUPA` is emptied |
 
 ### Weights and counts
 
@@ -165,9 +165,9 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (end of stage 9) |
+| Suite | File | Last green (end of stage 8, cloud on) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,664 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,969 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules; end of stage 10) |
@@ -197,7 +197,7 @@ Notes:
 | Interview mode | `IV`, `openInterview`, `ivPick`, `ivNext`, `ivReveal`, `ivMark`; progress `P.iv[id]=[mark,times,when]` |
 | Study weights | `STUDY_T.STU_CH`, `STU_SECS`, `stuWeight` |
 | Ranks / labels | `RANKS` (Intern … Neon Ascendant), `skillLabel` (Junior/Mid-level/Senior) |
-| Cloud switch | `const SUPA={url,anonKey}` (empty) → `CLOUD_ON` → `<html class="nocloud">` hides casino and leaderboard |
+| Cloud switch | `const SUPA={url,anonKey}` (publishable key) → `CLOUD_ON` → otherwise `<html class="nocloud">` hides casino and leaderboard |
 | Test surface | `window.__t` with `?test=1` |
 
 ## 9. Gotchas (each one has bitten before)
@@ -235,6 +235,7 @@ Notes:
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 | 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 15 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 15 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
+| 8 | Supabase on: own project, `supabase_all.sql`, publishable key in `SUPA`; casino, duel, tournament and leaderboard visible; duel SQL suite moved to the DevOps bank; Docker-free `sql_tests/run_local.sh`; SQL comments renamed to Ship It |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -292,19 +293,14 @@ Notes:
    (add more with `tools/add_part.py <learn_src/sNN.py> <snippet>`: `MOD(...)`, a line `#---FINAL---`, one `F(...)`), and
    every Study chapter has 1–2 extra pages (`tools/add_topic.py <study_src/cN.py> <snippet>`: topic dicts, `#---QUIZ---`, `QZ(...)`).
    A further pass can add more parts per subject the same way (builders allow up to 8 modules).
-3. **Stage 8 (NEXT): games and multiplayer.**
-   *Prep done:* SQL comments say Ship It; `sql_tests/duel_v2_suite.sql` updated from the AWS bank (1,201 q, 19 exams) to
-   the DevOps bank (1,300 q, 20 full exams); all SQL suites pass (152 PASS) via the new Docker-free `sql_tests/run_local.sh`;
-   SETUP.md lists the SQL run order. Client duel/bot/tournament pools use `paperQs` (bank order in 65s), same as the server.
-   **Waiting on Nehoray:** the project URL and publishable key (steps a–c).
-   a. Nehoray creates a new Supabase project (`SETUP.md` has the steps).
-   b. Run the SQL in this order: `supabase_setup.sql`, `supabase_add_username.sql`, `supabase_casino.sql`, `supabase_casino_v2.sql`,
-      `supabase_duel.sql`, `supabase_duel_v2.sql`, `supabase_exam_history.sql`, `supabase_leaderboard.sql`, `supabase_tournament.sql`
-      (test first with `sql_tests/run.sh`, which needs Docker).
-   c. Fill `SUPA` in index.html with the URL and **publishable** key, never `sb_secret_`.
-   d. Check that the games use the DevOps content (duel questions come from the bank; `SCENARIOS` and `SORT_SET` were rewritten in stage 7),
-      un-hide them, rerun all QA, and check badges that need games ("Arcade Regular", "Triple Threat").
-   e. Rename the "Neon Grid" branding in the SQL comments.
+3. **Stage 8: games and multiplayer — DONE.** Nehoray created the project and ran `supabase_all.sql` (all nine SQL files
+   in order; rebuilt by `tools/sql_all.sh`). `SUPA` holds the URL and the **publishable** key (never `sb_secret_`).
+   `sql_tests/duel_v2_suite.sql` moved from the AWS bank (1,201 q, 19 exams) to the DevOps bank (1,300 q, 20 exams);
+   SQL suites pass via `sql_tests/run_local.sh` (no Docker in cloud sessions). Mini-game badges ("Arcade Regular",
+   "Triple Threat") come from the local mini-games, not the cloud. **The cloud proxy blocks `*.supabase.co` and
+   cdn.jsdelivr.net**, so sign-in, duels and the leaderboard can only be tried from a normal browser.
+   **After any bank change:** `gen_duel_v2.py`, `build_duel_key.py`, `tools/sql_all.sh`, then re-run `supabase_duel_v2.sql`
+   in the Supabase SQL Editor, or duels mark against the old key.
 4. **Cleanup:** remove the Skyforge explanation fallback (`whyByOption`, `exCue`, `renderStory`, `optionLine`,
    the glossary parts of `buildExplain`; `renderExplain` still calls `buildExplain` for the header) and the empty blobs.
    Rename `saa*` to `score*`. Retire `AUDIT9`, which measured the old splitter.
