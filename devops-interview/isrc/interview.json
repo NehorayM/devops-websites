@@ -1100,6 +1100,1657 @@
    "f": "How do ephemeral-storage limits help here?",
    "w": "למחוק קבצים ידנית בלי למצוא מה ממלא את הדיסק.",
    "r": "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/"
+  },
+  {
+   "id": "5bcdb0cf",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "k",
+   "q": "What is GitOps, and how does Argo CD implement it?",
+   "p": [
+    "Git הוא מקור האמת: המצב הרצוי מתואר באופן דקלרטיבי.",
+    "pull-based: controller בתוך הקלאסטר מושך מ-Git ומיישם. ל-CI אין credentials לקלאסטר.",
+    "reconciliation רציף: Argo CD משווה כל הזמן live מול Git ומזהה drift.",
+    "היסטוריה ו-rollback דרך Git: מי שינה מה, ו-`git revert` כדי לחזור.",
+    "ב-Argo CD: משאב Application ממפה repo, path ו-revision לקלאסטר ו-namespace."
+   ],
+   "f": "From a security angle, how is pull-based GitOps different from a push pipeline running kubectl?",
+   "w": "לתאר GitOps כ\"לשים YAML ב-Git\" בלי reconciliation רציף.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/"
+  },
+  {
+   "id": "0ea2579f",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "k",
+   "q": "Describe Argo CD's main components and what each one does.",
+   "p": [
+    "argocd-server: ה-API, ה-UI וה-CLI, כולל SSO.",
+    "repo-server: משכפל repos ומרנדר manifests (Helm, Kustomize, plugins), עם cache.",
+    "application-controller: משווה live מול desired, מבצע sync ומחשב health.",
+    "Redis ל-cache; Dex אופציונלי ל-SSO.",
+    "controllers נוספים: ApplicationSet ו-Notifications."
+   ],
+   "f": "Rendering is slow for a big monorepo. Which component do you scale?",
+   "w": "לומר ש-argocd-server הוא זה שמבצע את ה-sync.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/architecture/"
+  },
+  {
+   "id": "c8bc57dc",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "k",
+   "q": "What does an Argo CD Application resource define?",
+   "p": [
+    "source: `repoURL`, `path` או `chart`, ו-`targetRevision`.",
+    "destination: הקלאסטר (`server` או `name`) וה-namespace.",
+    "project: ה-AppProject שקובע מה מותר ל-Application.",
+    "syncPolicy: `automated` (עם `prune` ו-`selfHeal`) ו-`syncOptions`.",
+    "overrides ל-Helm או Kustomize, ו-`ignoreDifferences`."
+   ],
+   "f": "Why keep the Application manifests themselves in Git?",
+   "w": "לשכוח את ה-project. הוא מגביל לאילו repos וקלאסטרים ה-Application יכול לגשת.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/"
+  },
+  {
+   "id": "b2d08986",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "t",
+   "q": "An Application shows `OutOfSync`, but nobody changed anything. Why could that be?",
+   "p": [
+    "`argocd app diff` או ה-diff ב-UI: איזה שדה שונה בדיוק.",
+    "controller או webhook משנים את המשאב: HPA משנה replicas, sidecar מוזרק, שדות ברירת מחדל.",
+    "מישהו עשה `kubectl edit` (drift).",
+    "`targetRevision` צף (branch, HEAD, טווח גרסאות של chart) והתקדם.",
+    "תיקון: `ignoreDifferences`, להוריד `replicas` מה-manifest כשיש HPA, או server-side diff."
+   ],
+   "f": "How do you stop the HPA and Argo CD fighting over replicas?",
+   "w": "להפעיל selfHeal בלי להבין מה גורם לשוני.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/"
+  },
+  {
+   "id": "c5bc3d40",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "t",
+   "q": "A sync fails with `ComparisonError: failed to generate manifest`. How do you debug it?",
+   "p": [
+    "זו שגיאת רינדור ב-repo-server: YAML שבור, שגיאת template, values file חסר, שגיאת kustomize.",
+    "לשחזר מקומית: `helm template` או `kustomize build` עם אותם values ואותה גרסת כלי.",
+    "לוגים של ה-repo-server.",
+    "גישה ל-repo: credentials, branch או path שגויים.",
+    "plugin חסר, הבדלי גרסאות, או repo-server שנגמר לו הזיכרון ב-repo גדול."
+   ],
+   "f": "How would you catch render errors before the change is merged?",
+   "w": "לנסות sync שוב ושוב בלי לשחזר את הרינדור מקומית.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/faq/"
+  },
+  {
+   "id": "df7732e4",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between Synced/OutOfSync and Healthy/Degraded in Argo CD?",
+   "p": [
+    "sync status: האם ה-live תואם ל-Git.",
+    "health status: האם המשאבים עובדים: Healthy, Progressing, Degraded, Missing, Suspended.",
+    "Synced + Degraded: פרסנו קונפיגורציה שבורה.",
+    "OutOfSync + Healthy: יש drift, אבל הכול עובד.",
+    "שווה להתריע על שניהם, ברמות דחיפות שונות."
+   ],
+   "f": "Which combination should page someone at night?",
+   "w": "לבלבל בין sync status ל-health status.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/health/"
+  },
+  {
+   "id": "20dd6c48",
+   "t": 1,
+   "s": 6,
+   "lv": 0,
+   "k": "t",
+   "q": "You pushed a change to Git, but Argo CD hasn't deployed it after several minutes. What do you check?",
+   "p": [
+    "Argo CD בודק את Git בערך כל 3 דקות (`timeout.reconciliation`). webhook מקצר את זה למיידי.",
+    "האם automated sync מופעל? בלי זה צריך sync ידני.",
+    "`targetRevision` תואם ל-branch או ל-tag שאליו דחפת, וה-path נכון.",
+    "sync window שחוסם כרגע.",
+    "שגיאות ב-repo-server או ב-credentials; refresh או hard refresh לניקוי cache."
+   ],
+   "f": "How do Git webhooks change this, and what do you need to configure?",
+   "w": "להניח ש-Argo CD מקבל כל push מיד בלי webhook.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/"
+  },
+  {
+   "id": "551a1e27",
+   "t": 1,
+   "s": 6,
+   "lv": 1,
+   "k": "k",
+   "q": "What's the app-of-apps pattern, and how does it compare to ApplicationSets?",
+   "p": [
+    "app-of-apps: Application אב שמצביע על תיקייה של Applications. ככה עושים bootstrap לקלאסטר.",
+    "מתאים לאפליקציות שונות זו מזו, וכל Application כתוב במפורש.",
+    "ApplicationSet: תבנית אחת ו-generators שמייצרים הרבה Applications דומים.",
+    "צריך לשים לב למחיקה: הסרת child מה-Git יכולה למחוק את כל ה-workloads שלו.",
+    "שילוב נפוץ: root app שפורס ApplicationSets."
+   ],
+   "f": "How do you bootstrap a brand-new cluster with Argo CD?",
+   "w": "לכתוב ידנית מאות Applications כמעט זהים במקום להשתמש ב-ApplicationSet.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/"
+  },
+  {
+   "id": "776de55c",
+   "t": 1,
+   "s": 6,
+   "lv": 1,
+   "k": "k",
+   "q": "How does Argo CD render Helm charts, and what does that mean for Helm features?",
+   "p": [
+    "ה-repo-server מריץ `helm template`. אין Helm release ואין היסטוריה ב-`helm list`.",
+    "Helm hooks מתורגמים ל-Argo CD hooks.",
+    "הפונקציה `lookup` לא עובדת, כי אין גישה לקלאסטר בזמן הרינדור.",
+    "values: `valueFiles`, `values` inline או `parameters`; multiple sources מאפשרים values מ-repo אחר.",
+    "Argo CD מזהה את המשאבים שלו לפי tracking label או annotation."
+   ],
+   "f": "Your chart uses `lookup` to reuse an existing secret. What happens under Argo CD?",
+   "w": "לחפש את ה-release ב-`helm list`.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/"
+  },
+  {
+   "id": "fb9618ca",
+   "t": 1,
+   "s": 6,
+   "lv": 1,
+   "k": "t",
+   "q": "Argo CD shows an Application as `Healthy`, but the app is actually broken. How can that happen?",
+   "p": [
+    "health מבוסס על status של המשאבים: Deployment הוא Healthy כשה-rollout הסתיים וה-pods זמינים.",
+    "readiness probe שטחי: ה-pods Ready למרות שהאפליקציה לא עובדת.",
+    "ל-CRD בלי health check אין בכלל health.",
+    "אפשר לכתוב custom health checks ב-Lua (`resource.customizations`).",
+    "אימות אמיתי: PostSync hook עם smoke test, או analysis ב-Argo Rollouts."
+   ],
+   "f": "How do you write a custom health check for a CRD?",
+   "w": "להתייחס ל-Healthy של Argo CD כאילו זו בדיקה פונקציונלית.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/health/"
+  },
+  {
+   "id": "44814634",
+   "t": 1,
+   "s": 6,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you structure Git repositories for Argo CD across multiple environments?",
+   "p": [
+    "להפריד repo קונפיגורציה מ-repo הקוד: הרשאות שונות, ובלי לולאות CI.",
+    "תיקייה לכל סביבה: Kustomize base/overlays, או values file לכל סביבה ב-Helm.",
+    "promotion הוא PR שמשנה image tag או values בסביבה הבאה.",
+    "branch לכל סביבה נוטה ל-drift ול-merge conflicts. עדיף תיקיות.",
+    "ApplicationSet שמייצר Application לכל סביבה או קלאסטר."
+   ],
+   "f": "Why is branch-per-environment usually discouraged?",
+   "w": "לשים את קוד האפליקציה ואת ה-manifests באותו repo, כך שכל commit מפעיל CI ו-sync.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/"
+  },
+  {
+   "id": "09ba2ff2",
+   "t": 1,
+   "s": 6,
+   "lv": 1,
+   "k": "k",
+   "q": "How does Argo CD know which cluster resources belong to an Application?",
+   "p": [
+    "tracking method: label `app.kubernetes.io/instance`, או annotation `argocd.argoproj.io/tracking-id`.",
+    "מגרסה 3 ברירת המחדל היא annotation, כי charts רבים כבר כותבים את ה-label בעצמם.",
+    "ה-tracking משמש ל-prune: משאב עם tracking שלא נמצא ב-Git נמחק.",
+    "שני Applications על אותו משאב: SharedResourceWarning, והם רבים עליו."
+   ],
+   "f": "Two Applications both claim the same ConfigMap. What happens?",
+   "w": "לשכוח שה-label `app.kubernetes.io/instance` מתנגש עם charts שכותבים אותו.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_tracking/"
+  },
+  {
+   "id": "8305612e",
+   "t": 1,
+   "s": 7,
+   "lv": 0,
+   "k": "k",
+   "q": "What do `prune` and `selfHeal` do in an automated sync policy?",
+   "p": [
+    "automated: sync אוטומטי כשה-Git משתנה.",
+    "`prune`: מחיקת משאבים שהוסרו מ-Git. כבוי כברירת מחדל.",
+    "`selfHeal`: החזרת שינויים ידניים בקלאסטר למצב שב-Git.",
+    "אפשר להגן על משאב עם annotation `Prune=false`.",
+    "`allowEmpty: false` מונע מחיקה של הכול כשה-source חוזר ריק בטעות."
+   ],
+   "f": "Why is prune off by default?",
+   "w": "להפעיל prune על Application שמנהל משאבים שנוצרו גם מחוץ ל-Git.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/"
+  },
+  {
+   "id": "755c8cde",
+   "t": 1,
+   "s": 7,
+   "lv": 0,
+   "k": "t",
+   "q": "A sync has been `Running` for a long time, waiting on a resource. How do you unstick it?",
+   "p": [
+    "ב-UI: איזה משאב או wave עדיין Progressing.",
+    "hook Job שעדיין רץ, או שנכשל וממשיך לנסות.",
+    "משאב שאף פעם לא נהיה Healthy (Ingress בלי כתובת LB, PVC ב-Pending) עוצר את ה-wave הבא.",
+    "לבטל את ה-operation (terminate), לתקן, ולעשות sync מחדש.",
+    "לוגים של ה-application-controller."
+   ],
+   "f": "Why might an Ingress keep a sync wave in Progressing forever?",
+   "w": "לעשות sync חוזר בלי למצוא איזה משאב תקוע.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/health/#ingress"
+  },
+  {
+   "id": "def33319",
+   "t": 1,
+   "s": 7,
+   "lv": 0,
+   "k": "t",
+   "q": "You removed a resource from Git, but it's still running in the cluster. Why?",
+   "p": [
+    "prune כבוי (ברירת המחדל). ה-Application מראה את המשאב כ-OutOfSync, \"requires pruning\".",
+    "annotation `Prune=false` על המשאב.",
+    "המשאב לא מנוהל ע\"י ה-Application (נוצר ידנית, בלי tracking).",
+    "sync ידני עם prune מסומן מוחק אותו.",
+    "finalizer שתקוע על המשאב."
+   ],
+   "f": "When would you deliberately keep prune off?",
+   "w": "למחוק ידנית עם kubectl בלי לבדוק למה Argo CD לא מחק.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automatic-pruning"
+  },
+  {
+   "id": "db43529d",
+   "t": 1,
+   "s": 7,
+   "lv": 0,
+   "k": "k",
+   "q": "What is `ignoreDifferences`, and when would you use it?",
+   "p": [
+    "אומר ל-diff להתעלם משדות: `jsonPointers`, `jqPathExpressions`, `managedFieldsManagers`.",
+    "דוגמאות: replicas שמנוהל ע\"י HPA, `caBundle` ש-cert-manager מזריק, שדות שמשתנים ע\"י webhook.",
+    "`RespectIgnoreDifferences=true` כדי שגם ה-sync לא ידרוס את השדות האלה.",
+    "אפשר להגדיר לכל המערכת ב-`argocd-cm` (`resource.customizations`)."
+   ],
+   "f": "Without `RespectIgnoreDifferences`, what does a sync still do to those fields?",
+   "w": "להתעלם משדה שבאמת צריך להיות מנוהל ב-Git, ולהסתיר drift אמיתי.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/diffing/"
+  },
+  {
+   "id": "ca1ccf35",
+   "t": 1,
+   "s": 7,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you deploy a new image version through Argo CD in a typical pipeline?",
+   "p": [
+    "CI בונה image, מתייג לפי git SHA, ודוחף ל-registry.",
+    "CI (או bot) מעדכן את ה-tag ב-repo הקונפיגורציה, ב-commit או PR.",
+    "Argo CD מזהה את השינוי ב-Git ועושה sync.",
+    "חלופה: Argo CD Image Updater שכותב את ה-tag החדש חזרה ל-Git.",
+    "לא להשתמש ב-`:latest`: אין שינוי ב-Git, ולכן אין deploy."
+   ],
+   "f": "Why does `:latest` break GitOps?",
+   "w": "לגרום ל-CI להריץ `kubectl set image` בקלאסטר שמנוהל ע\"י Argo CD.",
+   "r": "https://argocd-image-updater.readthedocs.io/en/stable/"
+  },
+  {
+   "id": "a8819d24",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain sync waves and hooks. How would you run a database migration before a deploy?",
+   "p": [
+    "phases: PreSync, Sync, PostSync, SyncFail (ו-PreDelete/PostDelete).",
+    "hook מסמנים עם annotation `argocd.argoproj.io/hook` על Job.",
+    "`argocd.argoproj.io/sync-wave` מסדר משאבים בתוך phase; Argo CD מחכה ל-health בין waves.",
+    "migration: Job כ-PreSync hook, עם `hook-delete-policy: BeforeHookCreation`.",
+    "ה-migration צריכה להיות idempotent ותואמת אחורה לגרסה הקודמת."
+   ],
+   "f": "The migration Job fails. What happens to the rest of the sync?",
+   "w": "להריץ migration שוברת תאימות לפני שהגרסה החדשה עלתה, בלי תוכנית rollback.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/"
+  },
+  {
+   "id": "02fcd3b8",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "t",
+   "q": "Someone ran `kubectl edit` in production during an incident, and selfHeal reverted it. How do you handle emergency changes in GitOps?",
+   "p": [
+    "Git נשאר מקור האמת: hotfix דרך PR במסלול מהיר עם review מזורז.",
+    "אם חייבים שינוי ידני: לכבות auto-sync ל-Application הספציפי, ולתעד.",
+    "מיד אחרי: לעשות commit לשינוי כך ש-Git תואם ל-live, ולהפעיל auto-sync מחדש.",
+    "נוהל break-glass כתוב: מי מורשה, איך, ואיך מחזירים.",
+    "תזכורת או התראה כשה-auto-sync כבוי יותר מדי זמן."
+   ],
+   "f": "How do you make sure auto-sync gets turned back on afterwards?",
+   "w": "לכבות selfHeal לצמיתות \"כדי שיהיה אפשר לתקן מהר\".",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automatic-self-healing"
+  },
+  {
+   "id": "87fd153c",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "t",
+   "q": "A sync of a large CRD fails with `metadata.annotations: Too long`. Why, and how do you fix it?",
+   "p": [
+    "client-side apply שומר את כל ה-manifest ב-annotation `last-applied-configuration`.",
+    "ל-annotations יש מגבלה של 262144 bytes, ו-CRD גדול עובר אותה.",
+    "תיקון: sync option `ServerSideApply=true`, שלא שומר את ה-annotation.",
+    "אפשר להגדיר אותו רק על המשאב הבעייתי, עם annotation `argocd.argoproj.io/sync-options`.",
+    "`Replace=true` הוא פתרון אחר, מסוכן יותר כי הוא מחליף את המשאב."
+   ],
+   "f": "What else changes when you switch to server-side apply?",
+   "w": "להשתמש ב-`Replace=true` על משאבים עם נתונים בלי להבין שהם נמחקים ונוצרים מחדש.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#server-side-apply"
+  },
+  {
+   "id": "1d7fb0e8",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "t",
+   "q": "A sync fails with `field is immutable` on a Deployment or a Job. What happened, and how do you fix it?",
+   "p": [
+    "שינית שדה שאי אפשר לעדכן: selector של Deployment, template של Job, volumeClaimTemplates של StatefulSet.",
+    "אפשרות: למחוק וליצור מחדש (`Replace=true` או Force), עם downtime.",
+    "אפשרות: שם חדש למשאב, ומחיקת הישן.",
+    "ל-Jobs: `generateName` או hook עם `BeforeHookCreation`.",
+    "StatefulSet: מחיקה עם `--cascade=orphan` ויצירה מחדש, כך שה-pods וה-PVCs נשארים."
+   ],
+   "f": "How do you change a StatefulSet's volumeClaimTemplates without losing data?",
+   "w": "לעשות Force sync בלי להבין שהמשאב נמחק.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#replace-resource-instead-of-applying-changes"
+  },
+  {
+   "id": "a4a788d0",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "k",
+   "q": "How does Argo CD decide the order in which it applies resources?",
+   "p": [
+    "קודם phase (PreSync, Sync, PostSync), ואז sync wave (מספר נמוך קודם, ברירת מחדל 0).",
+    "בתוך wave: לפי סוג (Namespace, CRD, ServiceAccount לפני Deployments), ואז לפי שם.",
+    "Argo CD מחכה שה-wave יהיה Healthy לפני שממשיך לבא.",
+    "CRD ו-CR באותו sync: ה-dry run נכשל כי ה-CRD לא קיים עדיין; `SkipDryRunOnMissingResource=true` פותר."
+   ],
+   "f": "Your CRD and its custom resource are in the same app, and the first sync fails. Why?",
+   "w": "לחשוב ש-Argo CD מיישם את המשאבים לפי הסדר בקובץ.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/"
+  },
+  {
+   "id": "c85bb6b3",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "t",
+   "q": "A PostSync smoke-test hook fails. What happens, and how do you design the rollback?",
+   "p": [
+    "ה-sync מסומן Failed, אבל המשאבים כבר הוחלו. Argo CD לא עושה rollback לבד.",
+    "SyncFail hook יכול לשלוח התראה או לנקות.",
+    "rollback מועדף: `git revert`, כך ש-Git נשאר מקור האמת.",
+    "`argocd app rollback` עובד רק כש-auto-sync כבוי.",
+    "rollback אוטומטי אמיתי: Argo Rollouts עם analysis שעוצר את ה-rollout."
+   ],
+   "f": "Why does `argocd app rollback` refuse to run when auto-sync is on?",
+   "w": "להניח ש-hook שנכשל מחזיר את הגרסה הקודמת.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
+  },
+  {
+   "id": "16b9a24b",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "t",
+   "q": "Two Applications keep overwriting the same resource back and forth. How do you find and fix it?",
+   "p": [
+    "SharedResourceWarning ב-conditions של ה-Application.",
+    "אותו משאב מופיע בשני Applications (namespace או ConfigMap משותף).",
+    "התנגשות ב-tracking label כשה-chart כותב `app.kubernetes.io/instance`. מעבר ל-annotation tracking פותר.",
+    "app-of-apps שבו ה-parent כולל גם משאבים של ה-child.",
+    "להחליט על בעלים אחד ולהסיר מהשני."
+   ],
+   "f": "Which tracking method avoids collisions with Helm's instance label?",
+   "w": "להפעיל selfHeal בשניהם ולתת להם להמשיך לריב.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_tracking/"
+  },
+  {
+   "id": "15dc78bd",
+   "t": 1,
+   "s": 7,
+   "lv": 1,
+   "k": "k",
+   "q": "What are sync windows, and when would you use them?",
+   "p": [
+    "מוגדרים ב-AppProject: allow או deny, לפי cron ומשך.",
+    "חלים על apps, namespaces או clusters.",
+    "שימוש: change freeze בחגים, חסימת deploys בשעות עומס.",
+    "deny window חוסם גם sync אוטומטי, כולל selfHeal.",
+    "`manualSync: true` מאפשר sync ידני בזמן חלון חסום, למקרי חירום."
+   ],
+   "f": "How would you implement a holiday change freeze for production only?",
+   "w": "לחשוב ש-sync window חוסם רק syncs ידניים.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync_windows/"
+  },
+  {
+   "id": "50e37aa7",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "k",
+   "q": "What is an ApplicationSet, and which generators have you used?",
+   "p": [
+    "controller שמייצר Applications מתבנית ו-generators.",
+    "list: רשימה מפורשת; cluster: כל הקלאסטרים הרשומים (לפי labels).",
+    "git: generator לפי תיקיות או קבצים ב-repo.",
+    "matrix ו-merge משלבים generators.",
+    "SCM provider ו-pull request generator לסביבות preview."
+   ],
+   "f": "How would you deploy one app to 20 clusters with per-cluster values?",
+   "w": "לחשוב ש-ApplicationSet מחליף את Application. הוא מייצר Applications.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/"
+  },
+  {
+   "id": "bd481808",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "t",
+   "q": "You added a new cluster, but the cluster-generator ApplicationSet created nothing for it. What do you check?",
+   "p": [
+    "הקלאסטר רשום: `argocd cluster list`, או secret עם label `argocd.argoproj.io/secret-type: cluster`.",
+    "ה-selector של ה-generator תואם ל-labels על ה-cluster secret.",
+    "status.conditions של ה-ApplicationSet ולוגים של ה-controller.",
+    "שגיאת template לאותו element (פרמטר חסר).",
+    "ה-AppProject מתיר את הקלאסטר כ-destination."
+   ],
+   "f": "How would you label clusters so environments get different apps?",
+   "w": "להוסיף Application ידני במקום לתקן את ה-labels.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Cluster/"
+  },
+  {
+   "id": "4b01373b",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "k",
+   "q": "What is the pull request generator used for?",
+   "p": [
+    "יוצר Application לכל PR פתוח (GitHub, GitLab ועוד). שימוש: סביבות preview.",
+    "התבנית משתמשת ב-branch, SHA ומספר PR: ל-namespace ול-image tag.",
+    "כשה-PR נסגר, ה-Application נמחק וה-preview מתנקה.",
+    "צריך token, ולשים לב ל-rate limits (`requeueAfterSeconds`).",
+    "עלות: סביבה לכל PR, ולכן צריך ניקוי ומגבלות משאבים."
+   ],
+   "f": "How do you keep preview environments from blowing up the cloud bill?",
+   "w": "לשכוח שסביבות preview צריכות ניקוי אוטומטי.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Pull-Request/"
+  },
+  {
+   "id": "fc128f45",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "t",
+   "q": "An ApplicationSet shows an error condition, and no Applications were updated. How do you debug it?",
+   "p": [
+    "`kubectl describe applicationset`: לקרוא את status.conditions (ErrorOccurred, ParametersGenerated).",
+    "לוגים של ה-ApplicationSet controller.",
+    "שגיאות template: פרמטר חסר. `goTemplateOptions: [missingkey=error]` מראה אותן מיד.",
+    "generators שמייצרים שמות Application כפולים.",
+    "git generator: path שלא תואם, או בעיית גישה ל-repo."
+   ],
+   "f": "Why is `missingkey=error` worth turning on?",
+   "w": "לערוך את ה-Applications שנוצרו ידנית. ה-controller ידרוס אותם.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Controlling-Resource-Modification/"
+  },
+  {
+   "id": "4ef422f6",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you register an external cluster with Argo CD, and what access does Argo CD get?",
+   "p": [
+    "`argocd cluster add` יוצר ServiceAccount `argocd-manager` עם cluster-admin בקלאסטר היעד.",
+    "דקלרטיבי: cluster secret עם `server` ו-`config` (token, exec, או `awsAuthConfig` עם IAM role ב-EKS).",
+    "least privilege: RBAC מצומצם, ורשימת namespaces ב-secret.",
+    "Argo CD צריך גישת רשת ל-API server של הקלאסטר."
+   ],
+   "f": "How does Argo CD authenticate to EKS without static tokens?",
+   "w": "להשאיר cluster-admin כברירת מחדל בלי לשאול אם צריך.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#clusters"
+  },
+  {
+   "id": "f8c31da8",
+   "t": 1,
+   "s": 8,
+   "lv": 0,
+   "k": "k",
+   "q": "What are Argo CD Projects (AppProjects) used for?",
+   "p": [
+    "לקבץ Applications ולהגדיר להם גבולות.",
+    "`sourceRepos`: מאילו repos מותר; `destinations`: לאילו קלאסטרים ו-namespaces.",
+    "`clusterResourceWhitelist` ו-`namespaceResourceBlacklist`: אילו סוגי משאבים מותרים.",
+    "project roles עם JWT ל-CI, ו-sync windows.",
+    "ה-project `default` מתיר הכול. עדיף להגביל."
+   ],
+   "f": "How would you stop a team from creating ClusterRoles through their apps?",
+   "w": "להשאיר את כל ה-Applications ב-project `default`.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/projects/"
+  },
+  {
+   "id": "9ee8c958",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "t",
+   "q": "You changed an ApplicationSet, and it deleted Applications and their workloads you didn't expect. What happened?",
+   "p": [
+    "generator הפסיק להחזיר element (תיקייה שהשם שלה שונה, label שהוסר מקלאסטר), וה-Application נמחק.",
+    "עם resources finalizer, מחיקת Application מוחקת את כל המשאבים שלו.",
+    "`preserveResourcesOnDeletion: true` ב-syncPolicy של ה-ApplicationSet משאיר את המשאבים.",
+    "`applicationsSync: create-only` או `create-update` חוסם מחיקות.",
+    "לבדוק שינויים לפני merge: לראות אילו Applications ייווצרו ויימחקו."
+   ],
+   "f": "How would you review an ApplicationSet change safely before merging it?",
+   "w": "לשנות שמות תיקיות ב-git generator בלי להבין שזה מוחק ויוצר Applications.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Application-Deletion/"
+  },
+  {
+   "id": "4df94c37",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you manage many clusters with Argo CD: one central instance, or one per cluster?",
+   "p": [
+    "hub-and-spoke: תמונה אחת, RBAC מרכזי. אבל credentials לכל הקלאסטרים, ו-blast radius גדול.",
+    "instance לכל קלאסטר: בידוד וסקיילינג, אבל יותר מה לתפעל ואין תמונה מרוכזת.",
+    "רשת: ה-hub צריך להגיע ל-API servers, גם פרטיים.",
+    "בסקייל: sharding של ה-controller לפי קלאסטר.",
+    "מודל hybrid או agent-based מנסה לשלב את היתרונות."
+   ],
+   "f": "What happens to the spoke clusters if the hub goes down?",
+   "w": "לבחור מודל בלי לדבר על blast radius ועל גישת רשת.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/"
+  },
+  {
+   "id": "57b5ea68",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "t",
+   "q": "The application controller is slow: syncs and status updates lag across hundreds of apps. How do you scale Argo CD?",
+   "p": [
+    "מדדים: עומק workqueue, משך reconcile, שגיאות Git.",
+    "sharding של ה-application-controller לפי קלאסטר (כמה replicas).",
+    "יותר status ו-operation processors, ויותר replicas ל-repo-server.",
+    "להפחית רעש: `resource.exclusions` למשאבים שמשתנים כל הזמן, webhooks במקום polling.",
+    "Redis HA, ופיצול Applications ענקיים."
+   ],
+   "f": "Which metric tells you the controller is falling behind?",
+   "w": "רק להגדיל CPU ל-controller בלי לבדוק מה גורם לעומס.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/"
+  },
+  {
+   "id": "70613f19",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you promote a change from staging to production in a GitOps setup?",
+   "p": [
+    "כל סביבה היא תיקייה או values file ב-repo הקונפיגורציה.",
+    "promotion הוא PR שמשנה את הגרסה ב-prod אחרי אימות ב-staging.",
+    "אוטומציה: job ב-CI או כלי כמו Kargo שפותח את ה-PR.",
+    "gates: בדיקות, אישורים, branch protection.",
+    "מקדמים את אותו artifact (אותו digest), לא בונים מחדש."
+   ],
+   "f": "Why promote the same image digest instead of rebuilding for production?",
+   "w": "לבנות image מחדש לכל סביבה.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/"
+  },
+  {
+   "id": "4518d93c",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "k",
+   "q": "What problems does Argo CD's multiple-sources feature solve?",
+   "p": [
+    "chart מ-Helm repo חיצוני, עם values מה-repo שלך (`ref: values`, ואז `$values/...`).",
+    "חוסך wrapper או umbrella chart רק כדי להוסיף values.",
+    "מאפשר לשלב כמה מקורות ב-Application אחד.",
+    "מגבלות: חלק מהיכולות ב-UI וב-rollback מוגבלות יותר."
+   ],
+   "f": "How would you deploy an upstream chart with your own values without forking it?",
+   "w": "להעתיק (fork) את כל ה-chart רק כדי לשנות values.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/multiple_sources/"
+  },
+  {
+   "id": "69afda9c",
+   "t": 1,
+   "s": 8,
+   "lv": 1,
+   "k": "t",
+   "q": "After rotating credentials on a target cluster, all its Applications show `Unknown` with connection errors. How do you recover?",
+   "p": [
+    "`argocd cluster get` ו-Settings → Clusters: סטטוס החיבור והשגיאה.",
+    "לעדכן את ה-cluster secret (token או cert), דקלרטיבית.",
+    "ב-EKS: לעבור ל-IAM role כדי לא להחזיק token סטטי.",
+    "לבדוק רשת (endpoint פרטי, security group) ו-CA שהשתנה.",
+    "לוגים של ה-controller, ואז refresh ל-Applications."
+   ],
+   "f": "How do you avoid this next time the credentials rotate?",
+   "w": "למחוק ולרשום מחדש את הקלאסטר. זה יכול למחוק את כל ה-Applications שלו.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#clusters"
+  },
+  {
+   "id": "474bc6ac",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "t",
+   "q": "A security review finds plaintext secrets in your Argo CD config repo. What do you do?",
+   "p": [
+    "לבצע רוטציה לכל הסודות שדלפו. הם נשארים בהיסטוריית Git גם אחרי מחיקה.",
+    "להעביר ל-External Secrets Operator: ב-Git רק ExternalSecret שמפנה ל-Secrets Manager או Vault.",
+    "חלופה: Sealed Secrets או SOPS, כך שב-Git יש רק טקסט מוצפן.",
+    "למנוע חזרה: סריקת סודות (gitleaks) ב-pre-commit וב-CI.",
+    "ניקוי היסטוריה עוזר, אבל לא מחליף רוטציה."
+   ],
+   "f": "Why does Argo CD recommend against injecting secrets at render time with a plugin?",
+   "w": "רק למחוק את הקובץ מה-repo בלי רוטציה.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/secret-management/"
+  },
+  {
+   "id": "3c8b583b",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "t",
+   "q": "Users log in through SSO, but they can't see any Applications. What's wrong?",
+   "p": [
+    "ה-groups claim לא ממופה (`scopes` ב-`argocd-rbac-cm`).",
+    "שמות הקבוצות ב-policy לא תואמים לפורמט מה-IdP (ב-Entra ID מגיעים object IDs).",
+    "`policy.default` ריק, כלומר אין גישה כברירת מחדל.",
+    "הגבלות ברמת ה-project.",
+    "לבדוק עם `argocd admin settings rbac can` וב-logs של ה-server."
+   ],
+   "f": "How do you test an RBAC policy change before rolling it out?",
+   "w": "לתת `role:admin` כברירת מחדל כדי שכולם יראו.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/"
+  },
+  {
+   "id": "d6318c66",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "t",
+   "q": "Your team only hears about failed syncs when users complain. What do you set up?",
+   "p": [
+    "Argo CD Notifications: triggers (`on-sync-failed`, `on-health-degraded`) ו-templates ב-`argocd-notifications-cm`.",
+    "subscriptions עם annotations על Application או Project, למשל `notifications.argoproj.io/subscribe.on-sync-failed.slack`.",
+    "ערוצים: Slack, Teams, webhook, email.",
+    "התראות Prometheus על `argocd_app_info` ל-OutOfSync או Degraded לאורך זמן.",
+    "לנתב לבעלי ה-Application, לא לערוץ כללי אחד."
+   ],
+   "f": "How do you avoid notification spam during a big rollout?",
+   "w": "לשלוח כל אירוע sync לערוץ אחד, עד שכולם משתיקים אותו.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/"
+  },
+  {
+   "id": "58b7a229",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "t",
+   "q": "A Git repo connection fails with `authentication required` or `repository not found`. How do you debug it?",
+   "p": [
+    "`argocd repo list`, ו-secret עם label `repository` או `repo-creds` (credential template לפי URL prefix).",
+    "פורמט ה-URL חייב להתאים: https מול ssh, עם או בלי `.git`.",
+    "SSH: known hosts ב-`argocd-ssh-known-hosts-cm`.",
+    "token שפג, או GitHub App בלי הרשאות ל-repo.",
+    "CA פרטי (`argocd-tls-certs-cm`) או proxy."
+   ],
+   "f": "How do credential templates save you from configuring every repo?",
+   "w": "להחליף את ה-repo ל-public כדי שיעבוד.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/"
+  },
+  {
+   "id": "5ee1c210",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "k",
+   "q": "How would you monitor Argo CD itself?",
+   "p": [
+    "Prometheus metrics: `argocd_app_info` (sync ו-health), `argocd_app_sync_total`, משך reconcile.",
+    "שגיאות Git וזמני רינדור של ה-repo-server.",
+    "התראות: Applications ב-OutOfSync או Degraded לאורך זמן, sync failures, תור של ה-controller.",
+    "dashboard ב-Grafana, ולוגים.",
+    "Notifications לבעלי ה-Applications."
+   ],
+   "f": "Which alert would you add first, and why?",
+   "w": "לנטר רק שה-pods של Argo CD רצים.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/metrics/"
+  },
+  {
+   "id": "20a0ad8c",
+   "t": 1,
+   "s": 9,
+   "lv": 0,
+   "k": "t",
+   "q": "A developer says Argo CD deployed the wrong version. How do you find out what was actually deployed, and why?",
+   "p": [
+    "היסטוריית ה-Application: איזה commit SHA הוחל, מתי, ומי התחיל את ה-sync.",
+    "`targetRevision` צף (branch או HEAD) מול tag קבוע.",
+    "image שרץ בפועל: `argocd app resources` או ה-live manifest.",
+    "`git log` ב-repo הקונפיגורציה: מי שינה את ה-tag.",
+    "tag שנדחף מחדש (mutable). digests פותרים את זה."
+   ],
+   "f": "How do you make deployed versions auditable end to end?",
+   "w": "לנחש לפי מה שכתוב ב-branch עכשיו, במקום לבדוק את ה-revision שהוחל.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_history/"
+  },
+  {
+   "id": "81535800",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you configure SSO and RBAC in Argo CD?",
+   "p": [
+    "SSO דרך Dex (GitHub, SAML, LDAP), או OIDC ישיר (Okta, Entra ID).",
+    "`argocd-rbac-cm`: שורות `p` (role, resource, action, object) ושורות `g` (group → role).",
+    "`policy.default`: `role:readonly` או ריק בלי גישה בכלל.",
+    "`scopes: '[groups]'` כדי לקבל groups מה-IdP.",
+    "לכבות את המשתמש `admin` אחרי שה-SSO עובד."
+   ],
+   "f": "How would you give one team sync rights only on their own project?",
+   "w": "להשאיר את משתמש ה-admin פעיל עם סיסמה משותפת.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/"
+  },
+  {
+   "id": "06ebc98f",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you let a CI pipeline trigger syncs without giving it admin?",
+   "p": [
+    "project role עם policy מוגבל: `get` ו-`sync` רק ל-Applications של ה-project.",
+    "JWT token ל-role (`argocd proj role create-token`) עם תפוגה.",
+    "או local account עם `apiKey` ו-RBAC מצומצם.",
+    "עדיף: CI רק עושה commit ל-Git, ו-Argo CD עושה sync לבד. אין credentials של Argo ב-CI.",
+    "token ב-secrets של ה-CI, עם רוטציה."
+   ],
+   "f": "Why might you avoid having CI call Argo CD at all?",
+   "w": "לתת ל-CI את סיסמת ה-admin.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/projects/#project-roles"
+  },
+  {
+   "id": "be70cf48",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "t",
+   "q": "Argo CD's repo-server keeps getting OOMKilled, and syncs fail intermittently. What's going on?",
+   "p": [
+    "ה-repo-server מרנדר manifests: monorepo גדול, הרבה charts, הרבה רינדורים במקביל.",
+    "להגדיל memory limit ומספר replicas.",
+    "`reposerver.parallelism.limit` מגביל רינדורים מקבילים.",
+    "plugins שמושכים כלים כבדים מגדילים צריכה.",
+    "לפצל repos, ולבדוק את ה-cache."
+   ],
+   "f": "How would you see which apps take the longest to render?",
+   "w": "להגדיל רק את ה-limit בלי להגביל parallelism.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/#argocd-repo-server"
+  },
+  {
+   "id": "b8c7b3b8",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you upgrade Argo CD itself safely, and how do you manage its own config?",
+   "p": [
+    "לנהל את Argo CD דקלרטיבית (Helm chart או Kustomize). Argo CD יכול לנהל את עצמו.",
+    "לקרוא את ה-upgrade notes בין גרסאות (למשל שינויי ברירות מחדל ב-v3).",
+    "לעלות minor אחת בכל פעם, ב-instance של staging קודם.",
+    "גיבוי (`argocd admin export`) ועדכון CRDs.",
+    "HA mode לפרודקשן."
+   ],
+   "f": "What changed in Argo CD 3 that could surprise you on upgrade?",
+   "w": "לקפוץ כמה גרסאות בבת אחת בלי לקרוא release notes.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/upgrading/overview/"
+  },
+  {
+   "id": "ba59f366",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "t",
+   "q": "Someone deleted an Application, and all of its workloads were deleted too. Why, and how do you prevent it?",
+   "p": [
+    "finalizer `resources-finalizer.argocd.argoproj.io` על ה-Application = cascade delete.",
+    "בלי finalizer, מחיקת ה-Application משאירה את המשאבים (orphan).",
+    "`argocd app delete --cascade=false` כשרוצים למחוק רק את ה-Application.",
+    "מניעה: RBAC שמגביל `delete`, ו-`preserveResourcesOnDeletion` ב-ApplicationSets.",
+    "השחזור קל יחסית: ה-desired state עדיין ב-Git, ו-sync מחזיר אותו. נתונים ב-PVs הם הסיכון."
+   ],
+   "f": "What isn't restored by simply re-syncing from Git?",
+   "w": "להניח שמחיקת Application אף פעם לא נוגעת במשאבים.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/app_deletion/"
+  },
+  {
+   "id": "8f7ed85e",
+   "t": 1,
+   "s": 9,
+   "lv": 1,
+   "k": "t",
+   "q": "After a cluster upgrade, an app shows `ComparisonError: the server could not find the requested resource`. What happened?",
+   "p": [
+    "ה-apiVersion שב-manifest הוסר בגרסה החדשה (למשל `policy/v1beta1` של PDB).",
+    "לבדוק עם `kubectl api-resources` מה קיים, ולעדכן את ה-manifests.",
+    "או שה-CRD לא מותקן בקלאסטר הזה: להתקין קודם, עם sync wave נמוך.",
+    "מניעה: לסרוק APIs deprecated (pluto, kubent) לפני כל שדרוג.",
+    "לעדכן גם charts חיצוניים לגרסה שתומכת."
+   ],
+   "f": "How do you make API deprecations part of your upgrade checklist?",
+   "w": "לשדרג את הקלאסטר לפני שבודקים אילו APIs הוסרו.",
+   "r": "https://argo-cd.readthedocs.io/en/stable/faq/"
+  },
+  {
+   "id": "825a29cf",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you write an efficient, small and secure Dockerfile?",
+   "p": [
+    "multi-stage: כלי build בשלב ה-builder, ורק התוצר עובר ל-runtime מינימלי (distroless או slim).",
+    "סדר שכבות ל-cache: להעתיק קודם את קובץ התלויות ולהתקין, ורק אחר כך את הקוד.",
+    "`.dockerignore` כדי לא לשלוח `.git`, `node_modules` וסודות ל-build context.",
+    "`USER` שאינו root.",
+    "pin ל-base image (גרסה או digest), וניקוי cache של package manager באותו `RUN`."
+   ],
+   "f": "Why does the order of COPY instructions matter for build speed?",
+   "w": "להעתיק את כל הקוד לפני התקנת התלויות, כך שכל שינוי שובר את ה-cache.",
+   "r": "https://docs.docker.com/build/building/best-practices/"
+  },
+  {
+   "id": "05e03d57",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "t",
+   "q": "Docker builds in CI take 15 minutes because nothing is cached. How do you speed them up?",
+   "p": [
+    "runners זמניים מאבדים את ה-cache המקומי בין ריצות.",
+    "BuildKit עם cache חיצוני: `--cache-to` ו-`--cache-from` מסוג registry או gha.",
+    "סדר שכבות נכון ו-`.dockerignore` כדי שקבצים לא רלוונטיים לא ישברו את ה-cache.",
+    "`RUN --mount=type=cache` לתיקיית ה-cache של ה-package manager.",
+    "build context קטן, ושלבים שרצים במקביל ב-multi-stage."
+   ],
+   "f": "What's the difference between `mode=min` and `mode=max` for cache export?",
+   "w": "להוסיף runners חזקים יותר בלי לטפל ב-cache שהולך לאיבוד.",
+   "r": "https://docs.docker.com/build/cache/backends/"
+  },
+  {
+   "id": "ee9b1ebe",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "k",
+   "q": "What's the difference between CMD and ENTRYPOINT, and why does the exec form matter?",
+   "p": [
+    "ENTRYPOINT הוא קובץ ההרצה; CMD הוא ארגומנטים ברירת מחדל (או פקודה ברירת מחדל).",
+    "ארגומנטים ל-`docker run` מחליפים את CMD.",
+    "exec form (מערך JSON) מריץ את התהליך כ-PID 1 ישירות, והוא מקבל signals.",
+    "shell form עוטף ב-`/bin/sh -c`, ו-SIGTERM לא מגיע לאפליקציה.",
+    "ב-Kubernetes, `command` מחליף את ENTRYPOINT ו-`args` את CMD."
+   ],
+   "f": "Why might a container ignore SIGTERM and get killed after 30 seconds?",
+   "w": "להשתמש ב-shell form ולהתפלא שה-shutdown לא graceful.",
+   "r": "https://docs.docker.com/reference/dockerfile/#entrypoint"
+  },
+  {
+   "id": "cd85a336",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "t",
+   "q": "A build needs a private package token. How do you pass it without leaking it into the image?",
+   "p": [
+    "`ARG` ו-`ENV` נשארים ב-image ונראים ב-`docker history`.",
+    "BuildKit secret mount: `RUN --mount=type=secret,id=npmrc ...`, עם `--secret` בפקודת ה-build.",
+    "ל-Git פרטי: `--mount=type=ssh` עם SSH agent forwarding.",
+    "הסוד זמין רק בזמן ה-`RUN`, ולא נכתב לשום שכבה.",
+    "סריקת סודות על ה-image כרשת ביטחון."
+   ],
+   "f": "Is a multi-stage build alone enough to keep the token out?",
+   "w": "להעביר את ה-token כ-`--build-arg`.",
+   "r": "https://docs.docker.com/build/building/secrets/"
+  },
+  {
+   "id": "e20c2ff8",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "k",
+   "q": "How do Docker layers and the build cache work?",
+   "p": [
+    "כל הוראה ב-Dockerfile יוצרת שכבה.",
+    "שכבה נלקחת מה-cache אם ההוראה והקלטים שלה לא השתנו (ב-COPY: checksum של הקבצים).",
+    "ברגע ששכבה משתנה, כל השכבות אחריה נבנות מחדש.",
+    "לכן שמים את מה שמשתנה לעתים רחוקות למעלה.",
+    "`apt-get update` לבד בשכבה נפרדת נשאר ב-cache ומיושן. משלבים אותו עם ה-install."
+   ],
+   "f": "Why combine `apt-get update` and `apt-get install` in one RUN?",
+   "w": "לחשוב ש-Docker בודק אם משהו השתנה באינטרנט כשהוא משתמש ב-cache של `RUN`.",
+   "r": "https://docs.docker.com/build/cache/"
+  },
+  {
+   "id": "97961857",
+   "t": 2,
+   "s": 10,
+   "lv": 0,
+   "k": "t",
+   "q": "The CI build passes on one runner, but the same Dockerfile fails on another with a missing package. Why?",
+   "p": [
+    "base image עם tag צף (`node:20`) התעדכן, עם OS או חבילות שונות.",
+    "גרסאות חבילות לא נעולות, ו-repository חיצוני השתנה.",
+    "runner אחד משתמש בשכבה מה-cache שמסתירה את הבעיה.",
+    "תיקון: pin ל-digest, lock files, ו-build עם `--no-cache` מדי פעם.",
+    "עדכונים מבוקרים של ה-base image עם Renovate או Dependabot."
+   ],
+   "f": "How do you get base-image security updates if you pin by digest?",
+   "w": "לנקות את ה-cache ולהמשיך הלאה בלי לנעול גרסאות.",
+   "r": "https://docs.docker.com/build/building/best-practices/#pin-base-image-versions"
+  },
+  {
+   "id": "ca7b8b18",
+   "t": 2,
+   "s": 10,
+   "lv": 1,
+   "k": "k",
+   "q": "Explain image tags versus digests, and how you tag images in CI.",
+   "p": [
+    "tag הוא מצביע שאפשר להזיז; digest (`sha256:...`) מזהה תוכן ולא משתנה.",
+    "ב-CI: tag לפי git SHA (ייחודי וניתן למעקב), ו-semver לגרסאות release.",
+    "לא לפרוס `:latest`: לא ברור מה רץ, ו-rollback לא אמין.",
+    "פריסה לפי digest מבטיחה שרץ בדיוק מה שנבדק.",
+    "immutable tags ב-registry (למשל ב-ECR) מונעים דריסה."
+   ],
+   "f": "How do you map a running pod back to the commit that built it?",
+   "w": "לדחוף שוב לאותו tag ולהניח שכל ה-nodes ימשכו את הגרסה החדשה.",
+   "r": "https://docs.docker.com/reference/cli/docker/image/pull/#pull-an-image-by-digest-immutable-identifier"
+  },
+  {
+   "id": "2311e960",
+   "t": 2,
+   "s": 10,
+   "lv": 1,
+   "k": "t",
+   "q": "An image works on a developer's Mac but fails in the cluster with `exec format error`. Why?",
+   "p": [
+    "אי-התאמת ארכיטקטורה: נבנה על arm64 (Apple Silicon) ורץ על nodes של amd64, או הפוך (Graviton).",
+    "`docker buildx build --platform linux/amd64,linux/arm64` בונה multi-arch manifest.",
+    "לבדוק עם `docker manifest inspect` או `docker image inspect` איזו ארכיטקטורה יש.",
+    "סיבה נוספת: script בלי shebang, או עם סיומות שורה CRLF.",
+    "emulation עם QEMU איטי. runners נייטיב לכל ארכיטקטורה מהירים יותר."
+   ],
+   "f": "How do you build multi-arch images in CI without slow emulation?",
+   "w": "לבנות מחדש באותה מכונה בלי להבין שהבעיה בארכיטקטורה.",
+   "r": "https://docs.docker.com/build/building/multi-platform/"
+  },
+  {
+   "id": "2c333403",
+   "t": 2,
+   "s": 10,
+   "lv": 1,
+   "k": "t",
+   "q": "Your image is 2 GB. How do you shrink it?",
+   "p": [
+    "`docker history` או `dive` כדי לראות איזו שכבה גדולה.",
+    "multi-stage: להשאיר מאחור קומפיילרים ו-dev dependencies.",
+    "base image קטן: slim, alpine או distroless.",
+    "לנקות cache באותו `RUN`. מחיקה בשכבה מאוחרת לא מקטינה את ה-image.",
+    "`.dockerignore`, ותלויות production בלבד (`npm ci --omit=dev`)."
+   ],
+   "f": "Why doesn't `RUN rm -rf /tmp/build` in a later layer make the image smaller?",
+   "w": "למחוק קבצים בשכבה נפרדת ולצפות שה-image יקטן.",
+   "r": "https://docs.docker.com/build/building/multi-stage/"
+  },
+  {
+   "id": "8ad8018f",
+   "t": 2,
+   "s": 10,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you build container images in Kubernetes-based CI runners without Docker-in-Docker privileges?",
+   "p": [
+    "Docker-in-Docker דורש `privileged`: סיכון אבטחה.",
+    "mount של `docker.sock` שקול ל-root על ה-node.",
+    "חלופות: BuildKit במצב rootless, Buildah, או Kaniko.",
+    "remote builder: שירות BuildKit נפרד, או builder מנוהל בענן.",
+    "builders נפרדים לפי רמת אמון (PRs מ-forks מול main)."
+   ],
+   "f": "What does mounting the Docker socket into a CI job actually give that job?",
+   "w": "לפתור את זה עם `privileged: true` בלי לציין את הסיכון.",
+   "r": "https://docs.docker.com/build/builders/drivers/kubernetes/"
+  },
+  {
+   "id": "0d8595cc",
+   "t": 2,
+   "s": 10,
+   "lv": 1,
+   "k": "t",
+   "q": "A container runs fine locally but fails in Kubernetes with `permission denied` when writing to a directory. Why?",
+   "p": [
+    "ב-Kubernetes ה-securityContext מריץ עם UID אחר (`runAsUser`, `runAsNonRoot`) מזה שב-image.",
+    "`readOnlyRootFilesystem: true` חוסם כתיבה לכל מערכת הקבצים.",
+    "התיקייה שייכת ל-root ב-image. `COPY --chown`, או `fsGroup` ל-volumes.",
+    "בפלטפורמות עם UID אקראי (OpenShift): הרשאות לקבוצה 0.",
+    "emptyDir לנתיבים שצריך לכתוב אליהם."
+   ],
+   "f": "How do you make an image that works under any non-root UID?",
+   "w": "להריץ את הקונטיינר כ-root כדי לעקוף את הבעיה.",
+   "r": "https://docs.docker.com/reference/dockerfile/#user"
+  },
+  {
+   "id": "42dc49a5",
+   "t": 2,
+   "s": 11,
+   "lv": 0,
+   "k": "k",
+   "q": "What does 'shift left' mean in DevSecOps, and which security checks go into a pipeline?",
+   "p": [
+    "למצוא בעיות מוקדם, כשהתיקון זול יותר.",
+    "SAST על הקוד (Semgrep, CodeQL).",
+    "SCA: תלויות עם CVEs ידועים (Dependabot, Trivy).",
+    "secret scanning ב-pre-commit וב-CI (gitleaks).",
+    "IaC scanning (Checkov), סריקת images, ו-DAST (ZAP) על סביבה רצה."
+   ],
+   "f": "Which of these would you make blocking, and which only report?",
+   "w": "להוסיף את כל הסורקים כ-blocking מהיום הראשון, עד שכולם מתעלמים מהם.",
+   "r": "https://owasp.org/www-project-devsecops-guideline/"
+  },
+  {
+   "id": "9abcd213",
+   "t": 2,
+   "s": 11,
+   "lv": 0,
+   "k": "t",
+   "q": "A developer accidentally committed an AWS access key to a public repo. What do you do, in order?",
+   "p": [
+    "להשבית את ה-key מיד ולהנפיק חדש. להניח שהוא נוצל, כי בוטים סורקים repos תוך דקות.",
+    "CloudTrail: מה נעשה עם ה-key מאז ה-commit.",
+    "להסיר מהקוד ומההיסטוריה, אבל זה לא מחליף את ההשבתה.",
+    "push protection ו-secret scanning, ו-pre-commit hook.",
+    "לעבור ל-credentials קצרי חיים (OIDC roles), כך שאין keys סטטיים בכלל."
+   ],
+   "f": "Why is deleting the commit not enough?",
+   "w": "למחוק את ה-commit ולחשוב שהבעיה נפתרה.",
+   "r": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+  },
+  {
+   "id": "5886bf36",
+   "t": 2,
+   "s": 11,
+   "lv": 0,
+   "k": "k",
+   "q": "How should a CI pipeline authenticate to AWS without long-lived keys?",
+   "p": [
+    "OIDC federation: ה-CI מנפיק JWT לכל job.",
+    "IAM role עם trust policy ל-provider של ה-CI, ותנאים על `sub` (repo, branch, environment) ו-`aud`.",
+    "`AssumeRoleWithWebIdentity` מחזיר credentials קצרי חיים.",
+    "role נפרד לכל pipeline וסביבה, עם least privilege.",
+    "אין secret לרוטציה ואין key שיכול לדלוף."
+   ],
+   "f": "What happens if the trust policy doesn't restrict the `sub` claim?",
+   "w": "לשמור access keys של IAM user כ-secrets ב-CI.",
+   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services"
+  },
+  {
+   "id": "49982e34",
+   "t": 2,
+   "s": 11,
+   "lv": 0,
+   "k": "t",
+   "q": "A workflow uses a third-party GitHub Action pinned to `@v3`. What's the risk, and how do you reduce it?",
+   "p": [
+    "tag אפשר להזיז: maintainer או תוקף יכולים להפנות אותו לקוד אחר (כמו האירוע של tj-actions ב-2025).",
+    "pin ל-commit SHA מלא.",
+    "Dependabot מעדכן את ה-SHAs בצורה מבוקרת.",
+    "`permissions` מינימליות ל-`GITHUB_TOKEN`.",
+    "רשימת actions מאושרים ברמת הארגון."
+   ],
+   "f": "Why isn't pinning to a SHA enough on its own?",
+   "w": "לסמוך על tag של action חיצוני כאילו הוא קבוע.",
+   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions"
+  },
+  {
+   "id": "a1644e35",
+   "t": 2,
+   "s": 11,
+   "lv": 0,
+   "k": "k",
+   "q": "What is an SBOM, and how would you use one?",
+   "p": [
+    "רשימה של כל הרכיבים והגרסאות ב-artifact, בפורמט SPDX או CycloneDX.",
+    "נוצר ב-CI (syft, Trivy, `docker buildx --sbom`).",
+    "מצורף ל-image כ-attestation.",
+    "כשיוצא CVE (כמו Log4Shell): לשאול אילו images מושפעים, תוך דקות.",
+    "גם לבדיקת רישיונות ולדרישות רגולציה."
+   ],
+   "f": "When Log4Shell came out, how would SBOMs have helped your team?",
+   "w": "ליצור SBOM ולא לשמור או להשתמש בו.",
+   "r": "https://www.cisa.gov/sbom"
+  },
+  {
+   "id": "63d18d59",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "k",
+   "q": "What is a software supply chain attack, and how do SLSA, SBOMs and signing help?",
+   "p": [
+    "תקיפה דרך תלויות, מערכת ה-build או ה-artifacts (SolarWinds, codecov, xz).",
+    "SBOM (SPDX או CycloneDX): רשימת רכיבים, כדי לדעת מה לתקן כשיוצא CVE.",
+    "חתימה (cosign/Sigstore): שלמות ה-artifact וזהות מי שבנה אותו.",
+    "provenance לפי SLSA: attestation שמתאר איך ואיפה נבנה, על builder מבודד.",
+    "אימות בזמן deploy (admission), לא רק יצירה."
+   ],
+   "f": "What does SLSA level 3 require of your build platform?",
+   "w": "לדבר רק על סריקת CVEs, בלי שלמות ה-build וה-artifacts.",
+   "r": "https://slsa.dev/spec/v1.0/levels"
+  },
+  {
+   "id": "0572a545",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "t",
+   "q": "The image scanner fails the pipeline with 200 vulnerabilities, most in the base image. How do you deal with it practically?",
+   "p": [
+    "triage: חומרה, האם יש fix, והאם החולשה נגישה או מנוצלת בפועל (EPSS, CISA KEV).",
+    "לעדכן או להחליף base image (distroless). זה מוריד את רוב הממצאים.",
+    "לחסום רק critical/high עם fix זמין.",
+    "חריגים עם תפוגה והצדקה (`.trivyignore`, VEX).",
+    "עדכון אוטומטי של base images (Renovate) ו-rebuild קבוע, עם SLA לתיקון."
+   ],
+   "f": "How would you explain to management which vulnerabilities actually matter?",
+   "w": "לכבות את הסריקה או להתעלם מכל הממצאים כי יש יותר מדי.",
+   "r": "https://trivy.dev/latest/docs/configuration/filtering/"
+  },
+  {
+   "id": "d7a35c21",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "k",
+   "q": "What's the difference between SAST, DAST, SCA and IaC scanning, and where does each one run?",
+   "p": [
+    "SAST: ניתוח קוד המקור, על כל PR. מהיר, עם false positives.",
+    "SCA: תלויות עם CVEs ורישיונות, על PR וגם באופן רציף.",
+    "DAST: בדיקה של אפליקציה רצה מבחוץ (ZAP), בסביבת staging. מוצא בעיות runtime וקונפיגורציה.",
+    "IaC scanning: misconfigurations ב-Terraform וב-manifests (Checkov), על PR.",
+    "צריך לכוונן כל אחד, אחרת הרעש מכריע."
+   ],
+   "f": "Which one finds a missing security header, and which finds SQL injection in code?",
+   "w": "לחשוב שכלי אחד מכסה את הכול.",
+   "r": "https://www.zaproxy.org/getting-started/"
+  },
+  {
+   "id": "bbf11c03",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "t",
+   "q": "Your team ignores the security scanner because it's always red. How do you fix the process?",
+   "p": [
+    "baseline לממצאים הקיימים, וחסימה רק על ממצאים חדשים ברמה גבוהה.",
+    "לכוונן חוקים ולסמן false positives עם הסבר.",
+    "בעלות ו-SLA לפי חומרה.",
+    "להציג ממצאים בתוך ה-PR, איפה שהמפתחים כבר נמצאים.",
+    "PRs אוטומטיים לתיקון (Dependabot), ומדידה של זמן תיקון."
+   ],
+   "f": "How do you measure whether the security program is improving?",
+   "w": "לכבות את הסורק כי \"הוא תמיד אדום\".",
+   "r": "https://semgrep.dev/docs/"
+  },
+  {
+   "id": "fd403383",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you sign container images, and enforce that only signed images run?",
+   "p": [
+    "cosign: keyless (זהות OIDC דרך Fulcio, רישום ב-Rekor) או key ב-KMS.",
+    "לחתום על digest, לא על tag.",
+    "לצרף attestations: SBOM ו-provenance.",
+    "אכיפה בקלאסטר: Kyverno `verifyImages` או Sigstore policy-controller.",
+    "לדרוש זהות ספציפית: issuer ו-subject של ה-workflow ב-CI."
+   ],
+   "f": "What does keyless signing actually prove about an image?",
+   "w": "לאמת רק שיש חתימה, בלי לבדוק מי חתם.",
+   "r": "https://docs.sigstore.dev/cosign/signing/signing_with_containers/"
+  },
+  {
+   "id": "f78b5e74",
+   "t": 2,
+   "s": 11,
+   "lv": 1,
+   "k": "t",
+   "q": "A pull request from a fork tries to exfiltrate secrets through CI. How do you design the pipeline to prevent this?",
+   "p": [
+    "ב-GitHub, `pull_request` מ-fork לא מקבל secrets כברירת מחדל.",
+    "הסכנה: `pull_request_target` עם checkout של קוד ה-PR מריץ קוד לא אמין עם secrets.",
+    "אישור ידני להרצה לתורמים חדשים.",
+    "להפריד build לא אמין (בלי secrets) משלבים מורשים; artifacts מה-PR הם קלט לא אמין.",
+    "token מינימלי, ו-environments עם protection rules."
+   ],
+   "f": "What's the 'pwn request' pattern, exactly?",
+   "w": "להשתמש ב-`pull_request_target` עם checkout של ה-head של ה-PR.",
+   "r": "https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/"
+  },
+  {
+   "id": "cea3dbb1",
+   "t": 2,
+   "s": 12,
+   "lv": 0,
+   "k": "k",
+   "q": "What does the test pyramid look like in a CI pipeline, and where does each kind of test run?",
+   "p": [
+    "הרבה unit tests: מהירים, על כל commit.",
+    "פחות integration tests, עם תלויות אמיתיות (Testcontainers).",
+    "מעט E2E: איטיים ושבירים, ב-staging.",
+    "contract tests בין שירותים.",
+    "fail fast: lint ו-unit בשלבים הראשונים, והרצה במקביל."
+   ],
+   "f": "What goes wrong when the pyramid is upside down?",
+   "w": "להסתמך בעיקר על E2E. הם איטיים, שבירים, וקשה לדבג אותם.",
+   "r": "https://martinfowler.com/articles/practical-test-pyramid.html"
+  },
+  {
+   "id": "0d7620c0",
+   "t": 2,
+   "s": 12,
+   "lv": 0,
+   "k": "t",
+   "q": "The CI pipeline takes 45 minutes, and developers are frustrated. How do you make it faster?",
+   "p": [
+    "למדוד כמה זמן לוקח כל שלב, ולהתחיל מהאיטי ביותר.",
+    "הרצה במקביל ו-sharding של טסטים.",
+    "cache לתלויות ולשכבות Docker.",
+    "להריץ רק את מה שהושפע: path filters, או כלי monorepo (Nx, Bazel).",
+    "להעביר E2E איטיים ל-post-merge או ל-nightly, ולהשאיר smoke ב-PR."
+   ],
+   "f": "What's a reasonable target time for PR feedback, and why?",
+   "w": "לקנות runners חזקים בלי למדוד איפה הזמן הולך.",
+   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows"
+  },
+  {
+   "id": "dc4cff93",
+   "t": 2,
+   "s": 12,
+   "lv": 0,
+   "k": "k",
+   "q": "How do you run integration tests that need a real database in CI?",
+   "p": [
+    "Testcontainers מרים DB אמיתי בקונטיינר לכל ריצה.",
+    "או service containers של ה-CI (services ב-GitHub Actions או ב-GitLab).",
+    "migrations רצות בתחילת הריצה.",
+    "נתונים מבודדים לכל טסט: transaction שעושה rollback, או schema נפרד.",
+    "DB in-memory או fake מתנהג אחרת מה-DB האמיתי."
+   ],
+   "f": "Why not share one long-lived test database across pipelines?",
+   "w": "להשתמש ב-DB משותף לכל הריצות, עם state שזולג בין טסטים.",
+   "r": "https://testcontainers.com/"
+  },
+  {
+   "id": "5e9a672d",
+   "t": 2,
+   "s": 12,
+   "lv": 0,
+   "k": "k",
+   "q": "What quality gates would you put in a pipeline before merging to main?",
+   "p": [
+    "lint, format, build ו-unit tests.",
+    "coverage על קוד חדש, לא יעד של 100% על הכול.",
+    "סריקות אבטחה: SAST, תלויות, סודות.",
+    "review חובה ו-branch protection עם required status checks.",
+    "ל-IaC: plan שמישהו בדק."
+   ],
+   "f": "Why is a coverage threshold on new code better than on the whole codebase?",
+   "w": "להפוך כל בדיקה לחוסמת בלי לחשוב על זמן ורעש.",
+   "r": "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+  },
+  {
+   "id": "0723e828",
+   "t": 2,
+   "s": 12,
+   "lv": 0,
+   "k": "t",
+   "q": "A test fails only in CI, never on developers' machines. How do you track it down?",
+   "p": [
+    "לשחזר עם אותו image או קונטיינר שה-CI משתמש בו.",
+    "הבדלים: env vars, timezone ו-locale, מספר CPUs ומקביליות, סדר קבצים, case-sensitivity.",
+    "לוגים ו-artifacts מה-CI, ו-debug logging.",
+    "להריץ את ה-job מקומית, או להתחבר ל-runner.",
+    "סדר טסטים ו-state משותף כשהם רצים במקביל."
+   ],
+   "f": "How do you enable debug logging for a GitHub Actions run?",
+   "w": "לסמן את הטסט כ-skip ב-CI.",
+   "r": "https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging"
+  },
+  {
+   "id": "cf7972a8",
+   "t": 2,
+   "s": 12,
+   "lv": 1,
+   "k": "t",
+   "q": "Your test suite is flaky: about 5% of runs fail randomly. How do you deal with it?",
+   "p": [
+    "למדוד: אחוז flakiness לכל טסט, לפי ריצות חוזרות על אותו commit.",
+    "סיבות נפוצות: sleep ותזמון, state משותף ותלות בסדר, שירותים חיצוניים, אזורי זמן, concurrency.",
+    "quarantine לטסט flaky עם בעלים ודדליין: ממשיך לרוץ, לא חוסם.",
+    "לתקן את השורש: המתנה דטרמיניסטית, נתונים מבודדים, Testcontainers.",
+    "retry אוטומטי מסתיר בעיות. מותר רק עם מעקב."
+   ],
+   "f": "How do you stop new flaky tests from getting in?",
+   "w": "להוסיף retry לכל ה-suite ולהכריז שהבעיה נפתרה.",
+   "r": "https://testing.googleblog.com/2016/05/flaky-tests-at-google-and-how-we.html"
+  },
+  {
+   "id": "409647ad",
+   "t": 2,
+   "s": 12,
+   "lv": 1,
+   "k": "k",
+   "q": "What is contract testing, and when is it better than end-to-end tests?",
+   "p": [
+    "consumer-driven contracts (Pact): ה-consumer מגדיר ציפיות, וה-provider מאמת אותן ב-CI שלו.",
+    "תופס שינויים שוברים ב-API בלי לפרוס את כל המערכת.",
+    "מהיר, ומאפשר לכל שירות לפרוס בנפרד.",
+    "broker ובדיקת `can-i-deploy` לפני deploy.",
+    "E2E עדיין נחוצים לכמה תהליכים קריטיים."
+   ],
+   "f": "What does `can-i-deploy` check?",
+   "w": "לחשוב ש-contract tests בודקים לוגיקה עסקית של ה-provider.",
+   "r": "https://docs.pact.io/"
+  },
+  {
+   "id": "cc818d95",
+   "t": 2,
+   "s": 12,
+   "lv": 1,
+   "k": "t",
+   "q": "Tests pass in CI, but releases still break production. How do you close the gap?",
+   "p": [
+    "parity בין סביבות: קונפיגורציה, גרסאות, נפחי נתונים.",
+    "CI עם יותר מדי mocks: להוסיף integration ו-contract tests.",
+    "staging דומה לפרודקשן, ו-smoke tests אחרי כל deploy.",
+    "progressive delivery: canary עם מדדים ו-rollback אוטומטי; feature flags.",
+    "מכל תקלה: postmortem וטסט שמכסה את המקרה."
+   ],
+   "f": "Which production signals would you use to automatically stop a rollout?",
+   "w": "להוסיף עוד ועוד E2E tests במקום לשפר את ה-feedback מפרודקשן.",
+   "r": "https://12factor.net/dev-prod-parity"
+  },
+  {
+   "id": "dbb735d3",
+   "t": 2,
+   "s": 12,
+   "lv": 1,
+   "k": "k",
+   "q": "How would you test infrastructure code like Terraform modules or Helm charts?",
+   "p": [
+    "סטטי: `terraform fmt` ו-`validate`, tflint, `helm lint`, kubeconform.",
+    "policy: Checkov, או OPA עם conftest.",
+    "unit: `terraform test` (כולל mocks), ו-helm unittest.",
+    "integration: apply לחשבון זמני או ל-kind, בדיקה, ו-destroy (Terratest).",
+    "diff של plan כחלק מה-review."
+   ],
+   "f": "What would you check in a Terraform plan before approving it?",
+   "w": "לבדוק IaC רק ב-apply לפרודקשן.",
+   "r": "https://developer.hashicorp.com/terraform/language/tests"
+  },
+  {
+   "id": "91d054d0",
+   "t": 2,
+   "s": 12,
+   "lv": 1,
+   "k": "k",
+   "q": "What are load and performance tests for in CI/CD, and how do you run them without slowing every build?",
+   "p": [
+    "כלים: k6, JMeter, Gatling, מול סביבה דומה לפרודקשן.",
+    "ספים כ-pass/fail: p95 latency, אחוז שגיאות.",
+    "nightly או לפני release, לא על כל commit. smoke קצר ב-PR.",
+    "להשוות לריצה הקודמת כדי לזהות regressions.",
+    "לשים לב לעלות הסביבה ולנתוני הבדיקה."
+   ],
+   "f": "What would you put in a k6 threshold for a checkout API?",
+   "w": "להריץ load test מלא בכל PR.",
+   "r": "https://grafana.com/docs/k6/latest/"
+  },
+  {
+   "id": "4fc83c02",
+   "t": 2,
+   "s": 13,
+   "lv": 0,
+   "k": "k",
+   "q": "Compare rolling, blue-green and canary deployments.",
+   "p": [
+    "rolling: מחליף בהדרגה, בלי סביבה נוספת. שתי גרסאות חיות לזמן קצר.",
+    "blue-green: סביבה מלאה במקביל, ומעבר תנועה בבת אחת. rollback מיידי, אבל עלות כפולה.",
+    "canary: אחוז קטן מהתנועה לגרסה החדשה, מדידה, ואז הגדלה. צריך traffic splitting ומדדים.",
+    "בכולם: ה-DB צריך להיות תואם לשתי הגרסאות.",
+    "feature flags מפרידים deploy מ-release."
+   ],
+   "f": "Which one would you choose for a payment service, and why?",
+   "w": "לשכוח שגם ב-blue-green שתי הגרסאות משתמשות באותו DB.",
+   "r": "https://martinfowler.com/bliki/BlueGreenDeployment.html"
+  },
+  {
+   "id": "cb17ecd5",
+   "t": 2,
+   "s": 13,
+   "lv": 0,
+   "k": "t",
+   "q": "A deploy went out, and errors spiked. Walk me through your response.",
+   "p": [
+    "לזהות: alert או dashboard, ולקשר בזמן ל-deploy.",
+    "קודם לעצור את הנזק: rollback (revert, או פריסת ה-artifact הקודם) או כיבוי feature flag.",
+    "תקשורת: ערוץ incident ועדכון סטטוס.",
+    "לחקור אחרי שהמצב יציב: לוגים, diff בין הגרסאות.",
+    "postmortem בלי האשמות, עם action items (טסט, canary)."
+   ],
+   "f": "When would you roll forward instead of rolling back?",
+   "w": "לדבג בפרודקשן בזמן שהמשתמשים חווים שגיאות.",
+   "r": "https://sre.google/sre-book/managing-incidents/"
+  },
+  {
+   "id": "6e823efe",
+   "t": 2,
+   "s": 13,
+   "lv": 0,
+   "k": "k",
+   "q": "What are feature flags, and how do they change the way you deploy?",
+   "p": [
+    "מפרידים deploy (הקוד בפרודקשן) מ-release (המשתמשים רואים).",
+    "הפעלה לאחוז או לקבוצת משתמשים.",
+    "kill switch לכיבוי מיידי בלי deploy.",
+    "מאפשרים trunk-based development: merge של עבודה לא גמורה מאחורי flag.",
+    "flag debt: צריך להסיר flags ישנים."
+   ],
+   "f": "What problems do old feature flags cause?",
+   "w": "להשאיר flags לנצח בקוד.",
+   "r": "https://martinfowler.com/articles/feature-toggles.html"
+  },
+  {
+   "id": "212ba9a7",
+   "t": 2,
+   "s": 13,
+   "lv": 0,
+   "k": "k",
+   "q": "What are the DORA metrics, and how would you use them?",
+   "p": [
+    "deployment frequency: כמה פעמים פורסים.",
+    "lead time for changes: מ-commit ועד פרודקשן.",
+    "change failure rate: אחוז ה-deploys שגורמים לתקלה.",
+    "זמן התאוששות מ-deploy כושל.",
+    "לשיפור הצוות לאורך זמן, לא להשוואה בין צוותים."
+   ],
+   "f": "Which practices move these metrics in the right direction?",
+   "w": "להשתמש במדדים לדירוג צוותים, עד שמתחילים לשחק איתם.",
+   "r": "https://dora.dev/guides/dora-metrics-four-keys/"
+  },
+  {
+   "id": "8e5edb52",
+   "t": 2,
+   "s": 13,
+   "lv": 0,
+   "k": "t",
+   "q": "A deployment pipeline sometimes deploys an older version over a newer one. How can that happen, and how do you prevent it?",
+   "p": [
+    "שתי ריצות במקביל, והישנה מסתיימת אחרונה.",
+    "הרצה ידנית מחדש של pipeline ישן.",
+    "tags שאפשר לדרוס.",
+    "מניעה: concurrency group או resource group, כך שרק deploy אחד רץ בכל פעם.",
+    "deploy לפי SHA או digest, ובדיקה שהגרסה לא ישנה מזו שרצה."
+   ],
+   "f": "What does `cancel-in-progress` do, and when wouldn't you want it?",
+   "w": "להוסיף sleep ל-pipeline כדי \"לסדר\" את התזמון.",
+   "r": "https://docs.gitlab.com/ci/resource_groups/"
+  },
+  {
+   "id": "1e5a2dc3",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "k",
+   "q": "How do you deploy a database schema change without downtime?",
+   "p": [
+    "expand/contract: להוסיף עמודה או טבלה חדשה בצורה תואמת אחורה.",
+    "קוד שכותב לשני המבנים, backfill, ואז קריאה מהחדש.",
+    "הסרת הישן רק ב-release מאוחר יותר.",
+    "migrations שלא נועלות טבלאות: online DDL, `CREATE INDEX CONCURRENTLY`.",
+    "migrations עם גרסאות (Flyway, Liquibase), idempotent, כשלב נפרד."
+   ],
+   "f": "How do you rename a column that a live service is reading?",
+   "w": "לשנות שם עמודה באותו deploy שמשנה את הקוד.",
+   "r": "https://martinfowler.com/bliki/ParallelChange.html"
+  },
+  {
+   "id": "2d51705a",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "k",
+   "q": "What does a good end-to-end CI/CD pipeline look like for a microservice on Kubernetes?",
+   "p": [
+    "PR: lint, unit, SAST, סריקת תלויות, build.",
+    "merge: build פעם אחת, tag לפי SHA, סריקה, חתימה, SBOM ו-push.",
+    "deploy: עדכון ה-GitOps repo ל-dev, ו-sync אוטומטי.",
+    "promotion ל-staging, בדיקות, ואז prod דרך PR או אישור.",
+    "progressive delivery עם rollback אוטומטי, ומדידה עם DORA metrics."
+   ],
+   "f": "Where in this pipeline would you put the manual approval, if any?",
+   "w": "לבנות image מחדש לכל סביבה.",
+   "r": "https://dora.dev/"
+  },
+  {
+   "id": "c1039038",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "t",
+   "q": "A canary release looked fine, but after the full rollout some users hit errors. What did the canary miss?",
+   "p": [
+    "תנועת ה-canary לא הייתה מייצגת: רק משתמשים פנימיים, אזור אחד, אחוז קטן מדי.",
+    "מדדים גסים מדי: אחוז שגיאות כולל מסתיר endpoint או סגמנט אחד.",
+    "משך קצר מדי: בעיות שמופיעות תחת עומס או עם הזמן (memory leak, cache expiry, cron).",
+    "בעיות state: migration או sessions.",
+    "תיקון: analysis לכל endpoint חשוב, bake ארוך יותר, שלבים הדרגתיים."
+   ],
+   "f": "Which metrics would you put in the canary analysis for an API?",
+   "w": "להסתכל רק על אחוז השגיאות הכולל.",
+   "r": "https://argoproj.github.io/argo-rollouts/features/analysis/"
+  },
+  {
+   "id": "58849306",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "t",
+   "q": "Two teams' deploys keep conflicting because they share one staging environment. How would you fix that?",
+   "p": [
+    "סביבות preview זמניות לכל PR: namespace לכל PR, ApplicationSet עם PR generator.",
+    "תור או נעילת סביבה: `concurrency` ב-GitHub, `resource_group` ב-GitLab.",
+    "contract tests מקטינים את הצורך בסביבה משולבת משותפת.",
+    "service virtualization לתלויות כבדות.",
+    "TTL וניקוי אוטומטי כדי לשלוט בעלות."
+   ],
+   "f": "How do you keep the cost of per-PR environments under control?",
+   "w": "לקבוע לוח זמנים ידני מי משתמש ב-staging מתי.",
+   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs"
+  },
+  {
+   "id": "8c91d718",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "k",
+   "q": "What is trunk-based development, and what does the pipeline need to support it?",
+   "p": [
+    "branches קצרים (יום-יומיים) שמתמזגים ל-main לעתים קרובות.",
+    "main תמיד במצב שאפשר לשחרר.",
+    "דורש CI מהיר ואמין, טסטים טובים ו-review מהיר.",
+    "feature flags לעבודה לא גמורה.",
+    "לעומת GitFlow עם branches ארוכים ו-merges כואבים."
+   ],
+   "f": "How do you release from trunk if a feature isn't ready?",
+   "w": "לחשוב ש-trunk-based אומר לדחוף ישר ל-main בלי review.",
+   "r": "https://trunkbaseddevelopment.com/"
+  },
+  {
+   "id": "921bd61c",
+   "t": 2,
+   "s": 13,
+   "lv": 1,
+   "k": "t",
+   "q": "A production rollback fails because the previous version can't read data the new one wrote. What went wrong?",
+   "p": [
+    "שינוי בפורמט הנתונים או ב-schema שלא תואם קדימה.",
+    "rollback מניח שגרסה N-1 יודעת לקרוא מה ש-N כתבה.",
+    "תכנון: expand/contract, ותאימות בין N ל-N-1.",
+    "לכתוב בפורמט הישן עד שכל ה-instances עברו, ולהפעיל את החדש עם flag.",
+    "לבדוק rollback ב-staging, ולהחזיק תוכנית roll forward."
+   ],
+   "f": "How do you test that a release can be rolled back?",
+   "w": "להניח שאפשר תמיד לחזור לגרסה הקודמת בלי לחשוב על הנתונים.",
+   "r": "https://martinfowler.com/bliki/ParallelChange.html"
   }
  ]
 }
