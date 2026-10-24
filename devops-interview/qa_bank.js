@@ -167,7 +167,7 @@ async function runPaper(n,{answerAll=true,rightRatio=0.6,flagEvery=7}={}){
   $('simRevSubmit').click(); await sleep(60);
 
   eq(t.route,'simDoneScreen','result screen after submitting');
-  // the headline is the SAA scaled score; the raw count and the weighted % sit beneath it
+  // the headline is the Ship It scaled score; the raw count and the weighted % sit beneath it
   const scaled=parseInt($('simScore').textContent,10);
   ok(scaled>=100&&scaled<=1000,'the score is on the exam\u2019s 100\u20131000 scale ('+scaled+')');
   const meta=$('simMeta').textContent;
@@ -1005,14 +1005,14 @@ async function continueChecks(){
   eq(g.simLog[0].ct,1,'and that survives the load door');
   delete t.P.lastPaper; t.simClearSave();
 }
-// Scored like SAA-C03 (official exam guide): 100–1000, pass at 720, four domains weighted
+// Ship It score, with the arithmetic Skyforge took from the SAA-C03 guide: 100–1000, pass at 720, four domains weighted
 // 30/26/24/20, blanks wrong. Questions are filed by what they ask, not by their service.
-async function saaChecks(){
+async function scoreChecks(){
   const t=T(), $=id=>document.getElementById(id);
-  eq(t.saaScaled(0),100,'0% is 100, the bottom of the scale');
-  eq(t.saaScaled(0.72),720,'72% is 720, the pass mark');
-  eq(t.saaScaled(1),1000,'100% is 1000');
-  ok(t.saaScaled(0.5)<t.saaScaled(0.6)&&t.saaScaled(0.6)<t.saaScaled(0.72),'and it only goes up');
+  eq(t.scoreScaled(0),100,'0% is 100, the bottom of the scale');
+  eq(t.scoreScaled(0.72),720,'72% is 720, the pass mark');
+  eq(t.scoreScaled(1),1000,'100% is 1000');
+  ok(t.scoreScaled(0.5)<t.scoreScaled(0.6)&&t.scoreScaled(0.6)<t.scoreScaled(0.72),'and it only goes up');
   // the domain a question tests comes from what it asks
   const ask=(txt,s)=>t.examDomainOf({q:txt,s:s||7});
   eq(ask('A company stores logs in S3. Which solution meets these requirements MOST cost-effectively?'),3,
@@ -1027,26 +1027,26 @@ async function saaChecks(){
   // weighting: the exam's mix, not the paper's
   const byDom=[[],[],[],[]]; t.QS.forEach((q,i)=>byDom[t.qDom(i)].push(i));
   const all=(ok)=>[0,1,2,3].flatMap(d=>byDom[d].slice(0,10).map(qi=>({qi,ok})));
-  eq(t.saaScore(all(true)).scaled,1000,'everything right is 1000');
-  eq(t.saaScore(all(false)).scaled,100,'everything wrong is 100');
+  eq(t.scoreOf(all(true)).scaled,1000,'everything right is 1000');
+  eq(t.scoreOf(all(false)).scaled,100,'everything wrong is 100');
   // perfect on 40 Performing questions, wrong on 10 each of the rest: raw 57%, but Performing
   // is 24% of the exam, not 57%
   const skew=[...byDom[2].slice(0,40).map(qi=>({qi,ok:true})),
               ...[0,1,3].flatMap(d=>byDom[d].slice(0,10).map(qi=>({qi,ok:false})))];
-  const S=t.saaScore(skew);
+  const S=t.scoreOf(skew);
   eq(S.raw,57,'a paper heavy in one strong domain reads 57% raw');
   ok(S.pct<45,'but weighted by the exam\u2019s mix it is far lower ('+S.pct+'%)');
   // two questions cannot swing a 20%-weight domain by a hundred points
   const base=[0,1,2].flatMap(d=>byDom[d].slice(0,20).map(qi=>({qi,ok:true})));
-  const a=t.saaScore([...base,...byDom[3].slice(0,2).map(qi=>({qi,ok:true}))]).scaled;
-  const b=t.saaScore([...base,...byDom[3].slice(0,2).map(qi=>({qi,ok:false}))]).scaled;
+  const a=t.scoreOf([...base,...byDom[3].slice(0,2).map(qi=>({qi,ok:true}))]).scaled;
+  const b=t.scoreOf([...base,...byDom[3].slice(0,2).map(qi=>({qi,ok:false}))]).scaled;
   ok(a-b<70,'two Cost questions move the score by '+(a-b)+', not by a hundred or more');
   // live on a teaching paper, hidden on an exam-conditions one
   delete t.P.lastPaper; t.simClearSave(); t.startPaper(5,'exam'); await sleep(30);
   ok(!$('simLive').classList.contains('hidden'),'a teaching paper shows the score so far');
   for(let k=0;k<4;k++){ t.simJump(k); await sleep(2); t.QS[t.sim.qs[k]].a.forEach(l=>t.simPick(l)); }
   const live=parseInt($('simLiveVal').textContent,10);
-  eq(live,t.saaScore(t.sim.qs.slice(0,4).map(qi=>({qi,ok:true}))).scaled,'and it is the SAA score of what has been answered');
+  eq(live,t.scoreOf(t.sim.qs.slice(0,4).map(qi=>({qi,ok:true}))).scaled,'and it is the Ship It score of what has been answered');
   t.simAbandon(); await sleep(20); t.simClearSave();
   t.startPaper(12,'exam'); await sleep(30);
   ok(!$('simLive').classList.contains('hidden'),'every paper gives feedback now, so every paper shows it');
@@ -3570,8 +3570,9 @@ async function feedbackChecks(){
   ok(withNote.length>150,'the review notes shipped, got '+withNote.length);
   withNote.slice(0,40).forEach(q=>ok(q.x.length>30,'a note is a real sentence'));
   const qi=t.QS.findIndex(q=>q.x);
-  const e=t.buildExplain(t.QS[qi],new Set(t.QS[qi].a),true);
-  eq(e.note,t.QS[qi].x,'the panel is handed the note');
+  ok(t.authoredExplain(t.QS[qi],new Set(t.QS[qi].a)).indexOf(t.mdInline(t.QS[qi].x))>=0,'the panel shows the note');
+  const k=t.QS[qi].o.findIndex(o=>t.QS[qi].a.includes(o[0]));
+  eq(t.duelWhy(t.QS[qi]),t.QS[qi].y[k],'a duel explains the answer with its own Hebrew line');
 }
 
 // ---------- the line that knows where you are ----------
@@ -3738,9 +3739,9 @@ function authoredChecks(){
   eq(badR,0,'and an https documentation link');
   const enC=Object.keys(t.CODEX).filter(k=>!HEB.test(t.CODEX[k]));
   eq(enC.join(', '),'','every glossary definition is Hebrew');
-  ['explaindata','subjectdata','coursedata'].forEach(id=>{
-    const el=$(id); ok(!el||el.textContent.trim().length<40,'the retired '+id+' blob is empty');
-  });
+  ['explaindata','subjectdata','coursedata'].forEach(id=>ok(!$(id),'the retired '+id+' blob is gone'));
+  ['buildExplain','whyByOption','optionLine','renderStory','exCue','blueprintHTML','COURSES'].forEach(n=>
+    ok(!(n in t),'the retired '+n+' is gone'));
 
   // and the panel renders it: one row per option, marked, Hebrew right to left, options left to right
   const q=t.QS.find(x=>x.o.length===4&&/`/.test(x.o.map(o=>o[1]).join(' ')))||t.QS[0];
@@ -3920,7 +3921,7 @@ window.QA_BANK=async function(opts){
   await step('authoredChecks',authoredChecks);
   if(opts.app!==false) await step('appChecks',appChecks);
   if(opts.study!==false){ await step('studyChecks',studyChecks); await step('retiredDrillChecks',retiredDrillChecks); }
-  if(opts.extras!==false){ await step('sriChecks',sriChecks); await step('arithmeticChecks',arithmeticChecks); await step('gameLifetimeChecks',gameLifetimeChecks); await step('refreshChecks',refreshChecks); await step('breakChecks',breakChecks); await step('modeChecks',modeChecks); await step('dialogChecks',dialogChecks); await step('saveFlushChecks',saveFlushChecks); await step('pickCapChecks',pickCapChecks); await step('oneClockChecks',oneClockChecks); await step('continueChecks',continueChecks); await step('saaChecks',saaChecks); await step('multiDeviceChecks',multiDeviceChecks); await step('hunt9Checks',hunt9Checks); await step('readTaperChecks',readTaperChecks); await step('histChecks',histChecks); await step('histSyncChecks',histSyncChecks); await step('pauseBarChecks',pauseBarChecks); await step('redoSyncChecks',redoSyncChecks); await step('hunt10Checks',hunt10Checks); await step('exReadChecks',exReadChecks); await step('redoCsvChecks',redoCsvChecks); await step('mistakesChecks',mistakesChecks); await step('mistakesReviewChecks',mistakesReviewChecks); await step('leaderboardChecks',leaderboardChecks); await step('leaderboardReviewChecks',leaderboardReviewChecks); await step('studyReadChecks',studyReadChecks); await step('studyReadReviewChecks',studyReadReviewChecks); await step('tournamentChecks',tournamentChecks); await step('tournamentReviewChecks',tournamentReviewChecks); await step('mergeLossChecks',mergeLossChecks); await step('duelChecks',duelChecks); await step('xssChecks',xssChecks); await step('paperRowChecks',paperRowChecks); await step('voiceChecks',voiceChecks); await step('hardeningChecks',hardeningChecks); await step('deviceChecks',deviceChecks); await step('qClockChecks',qClockChecks); await step('resumeChecks',resumeChecks); await step('ttsChecks',ttsChecks); await step('briefChecks',briefChecks);
+  if(opts.extras!==false){ await step('sriChecks',sriChecks); await step('arithmeticChecks',arithmeticChecks); await step('gameLifetimeChecks',gameLifetimeChecks); await step('refreshChecks',refreshChecks); await step('breakChecks',breakChecks); await step('modeChecks',modeChecks); await step('dialogChecks',dialogChecks); await step('saveFlushChecks',saveFlushChecks); await step('pickCapChecks',pickCapChecks); await step('oneClockChecks',oneClockChecks); await step('continueChecks',continueChecks); await step('scoreChecks',scoreChecks); await step('multiDeviceChecks',multiDeviceChecks); await step('hunt9Checks',hunt9Checks); await step('readTaperChecks',readTaperChecks); await step('histChecks',histChecks); await step('histSyncChecks',histSyncChecks); await step('pauseBarChecks',pauseBarChecks); await step('redoSyncChecks',redoSyncChecks); await step('hunt10Checks',hunt10Checks); await step('exReadChecks',exReadChecks); await step('redoCsvChecks',redoCsvChecks); await step('mistakesChecks',mistakesChecks); await step('mistakesReviewChecks',mistakesReviewChecks); await step('leaderboardChecks',leaderboardChecks); await step('leaderboardReviewChecks',leaderboardReviewChecks); await step('studyReadChecks',studyReadChecks); await step('studyReadReviewChecks',studyReadReviewChecks); await step('tournamentChecks',tournamentChecks); await step('tournamentReviewChecks',tournamentReviewChecks); await step('mergeLossChecks',mergeLossChecks); await step('duelChecks',duelChecks); await step('xssChecks',xssChecks); await step('paperRowChecks',paperRowChecks); await step('voiceChecks',voiceChecks); await step('hardeningChecks',hardeningChecks); await step('deviceChecks',deviceChecks); await step('qClockChecks',qClockChecks); await step('resumeChecks',resumeChecks); await step('ttsChecks',ttsChecks); await step('briefChecks',briefChecks);
     await step('freeChecks',freeChecks); await step('feedbackChecks',feedbackChecks); await step('cheerChecks',cheerChecks); await step('qToolChecks',qToolChecks);
     await step('statsChecks',statsChecks); await step('weightChecks',weightChecks); }
   if(opts.quick!==true){

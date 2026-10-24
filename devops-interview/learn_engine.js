@@ -427,12 +427,6 @@ function learnRecapHTML(){
   out.push('<div class="mdxtable"><table><thead><tr><th>חלק</th><th>מה קיבלת ממנו</th></tr></thead><tbody>'+
     d.modules.map((m,i)=>'<tr><td><b>'+(i+1)+'. '+esc(m.nm)+'</b></td><td>'+esc(m.goal)+'</td></tr>').join('')+
     '</tbody></table></div>');
-  if(false&&typeof blueprintHTML==='function'){   // the AWS reference material; Ship It has none yet
-    out.push('<details class="fullwrite"><summary>The reference material for this subject — services, decision matrix, trade-offs</summary>'+
-             '<div class="mdx">'+blueprintHTML(L.sec)+'</div></details>');
-    out.push('<details class="fullwrite"><summary>Traps, hard limits and the long write-up from the study guide</summary>'+
-             '<div class="mdx">'+deepDiveHTML(L.sec)+'</div></details>');
-  }
   return out.join('');
 }
 function learnRecap(){

@@ -76,9 +76,9 @@ Slugs and counts: `SECTIONS` in `qsrc/qlib.py`. The section index is stored in u
 
 ```
 CLAUDE.md                 this file
+index.html .nojekyll      Pages root: redirects to devops-interview/ (the site URL 404'd without it)
 devops-interview/
   index.html              the site. Blobs: #data (bank), #ivdata (interview), #learndata, #studydata
-                          (#explaindata, #subjectdata, #coursedata are empty leftovers)
   PLAN.md STATE.md SETUP.md
   qsrc/qlib.py            Q(), O(), TOPICS, SECTIONS, COUNTS, IV_COUNTS, REF_HOSTS, levels JM/MS, kinds T/K
   qsrc/<sub>.py           MCQ sources (k8s_pods, argo_sync, ci_sec, aws_eks, helm_ops, tf_state, linux, net, cicd_tools …)
@@ -90,8 +90,8 @@ devops-interview/
   study_engine.js study_screens.html study_styles.css   Study engine, injected between STUDY: markers
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
-  qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
-  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
+  qa_bank.js qa_learn.js audit_runtime.js audit2..8.js fuzz_exam.js audit_static.py   tests
+  tools/                  sql_all.sh (→ supabase_all.sql), qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
                           add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz)
   supabase_*.sql sql_tests/          backend for stage 8 (sql_tests/run.sh needs Docker; run_local.sh needs local Postgres)
 ```
@@ -161,17 +161,17 @@ No Playwright (local desktop sessions): serve the folder, open `index.html?test=
 the suites from the page's console. Load a harness with an *indirect* eval so its functions become globals:
 ```js
 const load=async f=>{ (0,eval)(await (await fetch(f+'?'+Date.now())).text()); };
-await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runtime.js, audit2..9.js, fuzz_exam.js
+await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runtime.js, audit2..8.js, fuzz_exam.js
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (end of stage 8, cloud on) |
+| Suite | File | Last green (after the cleanup) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,969 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,977 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules; end of stage 10) |
-| `AUDIT()`, `AUDIT2()`…`AUDIT9()` | audit_runtime.js, audit2..9.js | no HIGH or MED findings |
+| `AUDIT()`, `AUDIT2()`…`AUDIT8()` | audit_runtime.js, audit2..8.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
 
@@ -189,11 +189,11 @@ Notes:
 
 | What | Where |
 |---|---|
-| Answer panel | `renderExplain` → `authoredExplain(q,picked)` (Hebrew per option, tip, doc link, 🔊 Read) |
+| Answer panel | `renderExplain` → `authoredExplain(q,picked)` (Hebrew per option, tip, doc link, 🔊 Read); duels: `duelWhy` (the right option's Hebrew line) |
 | Read aloud | `ttsSpeak` (splits Hebrew and English chunks, `he-IL` via `ttsVoiceHe()`), `exReadText` |
 | Briefing (papers 1–10) | `buildBriefing`, `CODEX` (102 Hebrew terms; also the flashcards), `learnCallouts(sec,kind)` |
 | Papers / exam | `startPaper`, `paperQs`, `PAPER_LEN=65`, `SIM_QSEC=90`, `simBudget` |
-| Score | `DOMAINS`, `domainOf`, `examDomainOf`, `saaScore`, `saaScaled`, `SAA_PASS=720` (the names say saa; the UI says Ship It) |
+| Score | `DOMAINS`, `domainOf`, `examDomainOf`, `scoreOf`, `scoreScaled`, `SCORE_PASS=720`, `SCORE_SHRINK` (renamed from `saa*` in the cleanup) |
 | Interview mode | `IV`, `openInterview`, `ivPick`, `ivNext`, `ivReveal`, `ivMark`; progress `P.iv[id]=[mark,times,when]` |
 | Study weights | `STUDY_T.STU_CH`, `STU_SECS`, `stuWeight` |
 | Ranks / labels | `RANKS` (Intern … Neon Ascendant), `skillLabel` (Junior/Mid-level/Senior) |
@@ -236,6 +236,7 @@ Notes:
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 | 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 15 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 15 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
 | 8 | Supabase on: own project, `supabase_all.sql`, publishable key in `SUPA`; casino, duel, tournament and leaderboard visible; duel SQL suite moved to the DevOps bank; Docker-free `sql_tests/run_local.sh`; SQL comments renamed to Ship It |
+| Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -301,8 +302,13 @@ Notes:
    cdn.jsdelivr.net**, so sign-in, duels and the leaderboard can only be tried from a normal browser.
    **After any bank change:** `gen_duel_v2.py`, `build_duel_key.py`, `tools/sql_all.sh`, then re-run `supabase_duel_v2.sql`
    in the Supabase SQL Editor, or duels mark against the old key.
-4. **Cleanup:** remove the Skyforge explanation fallback (`whyByOption`, `exCue`, `renderStory`, `optionLine`,
-   the glossary parts of `buildExplain`; `renderExplain` still calls `buildExplain` for the header) and the empty blobs.
-   Rename `saa*` to `score*`. Retire `AUDIT9`, which measured the old splitter.
+4. **Cleanup — DONE.** Removed the Skyforge explanation fallback (`buildExplain`, `whyByOption`, `exCue`, `renderStory`,
+   `optionLine`, `noLine`, the glossary, `EXPLAIN`), the dead course mode (`blueprintHTML`, `deepDiveHTML`, AWS `TRIGGERS`/`PILLARS`,
+   `mdRender`), the three empty blobs, 55 CSS rules only those parts used, and `audit9.js`; `saa*` → `score*`.
+   About 850 lines fewer; pixel compare of all 37 screens unchanged. `exFallback(sec)` (Learn key callouts) stays: the briefing uses it.
+   **STATE.md predates this**: its notes on the explanation fallback, `saa*` names and `AUDIT9` are out of date (Nehoray asked
+   for progress notes in this file only).
 5. **Verify doc links** (`r` and `ref`) from a normal browser and fix any 404s.
-6. **Deploy:** the site isn't on GitHub Pages yet. Pages from `main` would serve it at `/devops-interview/`.
+6. **Deploy — live.** GitHub Pages builds from branch `ccr-19c6e368-wdrow7` (also the repo's default branch), repo root:
+   https://nehoraym.github.io/devops-websites/ redirects to `/devops-interview/`. Push to that branch to deploy. In Supabase,
+   set Authentication → URL Configuration → Site URL to that address so sign-up emails link back to the site.

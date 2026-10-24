@@ -65,7 +65,7 @@ window.FUZZ_EXAM=async function(steps,seed){
       if(t.sim&&t.sim.running&&t.isRedo()&&t.route==='quizScreen'){
         const live=parseInt($('simLiveVal').textContent,10);
         const pairs=t.sim.qs.map((qi,k)=>{ const q=t.QS[qi], set=new Set(t.sim.ans[k]||[]); return {qi, ok:q.a.length===set.size&&q.a.every(a=>set.has(a))}; });
-        const real=t.saaScore(pairs).scaled;
+        const real=t.scoreOf(pairs).scaled;
         if(live!==real) bad('redo live score '+live+' but the answers score '+real,ctx);
       }
       // the review screen counts what is really there
