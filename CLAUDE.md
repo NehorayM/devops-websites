@@ -164,7 +164,7 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (stage 9, after CI) |
+| Suite | File | Last green (stage 9, after AWS) |
 |---|---|---|
 | `QA_BANK()` | qa_bank.js | 22,663 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
@@ -178,7 +178,7 @@ Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
 - `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b) and caps
-  questions whose right option is the longest at `<=734` (was 1,096). Lower both caps as files are rewritten.
+  questions whose right option is the longest at `<=642` (was 1,096). Lower both caps as files are rewritten.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -232,7 +232,7 @@ Notes:
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
-| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes, Argo CD and CI done (663 q; right-is-longest ~80% → ~25%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count (≤ 734) |
+| 9 *(in progress)* | Hard distractors + full explanations: Kubernetes, Argo CD, CI and AWS done (822 q; right-is-longest ~80% → ~27%, shortest kept ≤ 40%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count (≤ 642) |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -250,11 +250,11 @@ Notes:
    every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% **and the shortest
    in ≤ 40%** of questions. (Fixing the first tell created the second: after the first pass the right answer was the
    shortest in up to 56% of a file. Aim for both near 25%: the right answer should sit mid-pack by length.)
-   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **734**) — lower it after each topic.
+   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **642**) — lower it after each topic.
    **Done (HARD = True):** Kubernetes (`k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug`, 265 q) and
-   Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q), CI (`ci_docker`, `ci_sec`, `ci_test`, `ci_deploy`, 186 q).
-   Across these 663: right-is-longest ~25%, shortest ~25%.
-   **Left, in this order:** AWS (`aws_eks`, `aws_net`, `aws_ops`), Helm (`helm_charts`, `helm_ops`), Terraform (`tf_core`, `tf_state`),
+   Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q), CI (`ci_docker`, `ci_sec`, `ci_test`, `ci_deploy`, 186 q),
+   AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q). Across these 822: right-is-longest ~27%, shortest ~25%.
+   **Left, in this order:** Helm (`helm_charts`, `helm_ops`), Terraform (`tf_core`, `tf_state`),
    `linux`, `cicd_tools`, `net`. Then stage 10 (below).
    **Workflow per file** (from `devops-interview/`; tools in `tools/`):
    - `python3 tools/brief.py <file>.py` — stems and options, compact; `python3 tools/qtool.py dump <file>.py` — full JSON.
