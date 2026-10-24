@@ -91,6 +91,7 @@ devops-interview/
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
+  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, repl.py, stubs.py
   supabase_*.sql sql_tests/          backend for stage 8
 ```
 
@@ -163,9 +164,9 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (stage 7b, after `tf_core`) |
+| Suite | File | Last green (stage 9, after Kubernetes) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,662 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,663 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 5,710 / 0 (24 subjects) |
@@ -176,7 +177,8 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
-- `authoredChecks` enforces the explanation rules and caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b). Lower the cap as they get fixed.
+- `authoredChecks` enforces the explanation rules, caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b) and caps
+  questions whose right option is the longest at `<=969` (was 1,096). Lower both caps as files are rewritten.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -214,7 +216,8 @@ Notes:
   at its exact position (`ast` gives `lineno`/`col_offset` of each `Q(...)` option tuple; `col_offset` is in UTF-8 bytes),
   key each line by question index and option index within its file, and re-parse the file before writing.
 - Changing a question's stem, options or answer changes `BANKV` and resets everyone's seen/wrong/marks. Explanation
-  lines (`y`) and tips don't. Ask before touching an option's text.
+  lines (`y`) and tips don't. Ask before touching an option's text (stage 9 has that approval).
+- In Bash heredocs, quote the delimiter (`<<'EOF'`): backticks in Hebrew content otherwise run as command substitution.
 - The cloud proxy blocks the docs hosts, so `ref` links can't be fetched there. Verify them from a normal browser.
 
 ## 10. History
@@ -228,21 +231,52 @@ Notes:
 | 5 | Learn: 24 Hebrew subjects (72 parts, 216 checks, 240 finals) |
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
-| 7b *(partial)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
+| 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
+| 9 *(in progress)* | Hard distractors + full explanations: all Kubernetes files done (265 q, right-is-longest 78% → 27%); validator rules for `HARD = True` files; QA ratchet on the bank-wide count |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
-1. **Stage 7b: expand terse explanations (in progress).** Started with 1,558 wrong-option Hebrew lines that were a word or two
-   ("לא." ×722, "לא קשור." ×115 …) across 789 questions. Done: K8s, Argo CD, CI, AWS, Helm, `tf_core` (930 lines).
-   Left: 628 lines in `tf_state` (146), `linux` (185), `net` (117), `cicd_tools` (180); every right-answer line is already full. Work topic by topic in
-   `qsrc/`. Each line should say what the option actually does and why it doesn't fit, in one sentence.
-   Then rebuild the bank, regenerate the duel key, lower the cap in `authoredChecks`, run QA, and commit per topic.
-   List the stubs with a quick script over `#data` (`len(y) < 15` on a wrong option), or import each `qsrc/*.py` and
-   read `QS[i].opts[1:]` (the right answer is always `opts[0]`). See the gotcha on replacing by position.
-   **Open content bug (needs Nehoray's OK, it resets progress):** `qsrc/tf_core.py`, the `user_data` question (~line 804).
-   Its right answer says changing `user_data` forces a new instance by default. Per the AWS provider docs it stops and
-   starts the instance by default, and replaces it only with `user_data_replace_on_change = true`. Fixing the option text changes `BANKV`.
-2. **Stage 8: games and multiplayer.**
+1. **Stage 9: hard distractors and full explanations (IN PROGRESS; replaces what was left of 7b).**
+   **The bug (found by Nehoray):** the right answer was the longest option in 84% of questions (1,096/1,300), on average 1.56× the
+   wrong ones, so it could be picked without knowing the material. Some distractors were throwaways ("Build only on Mondays").
+   And many explanations were too thin. Nehoray asked for answers that are hard to tell apart, and for much more depth,
+   based on the official documentation of each tool.
+   **What every rewritten question gets:** 3 plausible distractors about as long and specific as the right answer (real-sounding
+   flags, common misconceptions, half-truths; never jokes), a Hebrew explanation of 1–3 sentences for **every** option (what
+   it actually does and why it does or doesn't answer), and a fuller interview tip. Stems, levels, kinds, refs and the
+   right answer's meaning stay. **Option text changes `BANKV`, so users' seen/wrong/marks reset; Nehoray approved this rewrite.**
+   **Enforced by `build_bank.py`** for any `qsrc` file that declares `HARD = True` (put it above `S = ...`):
+   the right option at most 15% longer than the longest distractor; no distractor under 55% of the right one's length;
+   every explanation ≥ 70 chars; tip ≥ 80 chars; and per file the right option is the longest in ≤ 40% of questions.
+   `qa_bank.js` `authoredChecks` also ratchets the bank-wide count (`ok(longest<=N`, now **969**) — lower it after each topic.
+   **Done (HARD = True):** `k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug` — all Kubernetes, 265 questions,
+   right-is-longest 27%.
+   **Left, in this order:** Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`), CI (`ci_docker`, `ci_sec`, `ci_test`,
+   `ci_deploy`), AWS (`aws_eks`, `aws_net`, `aws_ops`), Helm (`helm_charts`, `helm_ops`), Terraform (`tf_core`, `tf_state`),
+   `linux`, `cicd_tools`, `net`. Then stage 10 (below).
+   **Workflow per file** (from `devops-interview/`; tools in `tools/`):
+   - `python3 tools/brief.py <file>.py` — stems and options, compact; `python3 tools/qtool.py dump <file>.py` — full JSON.
+   - Write the new content as JSON `[{"i":N,"r":[text,why],"w":[[text,why]×3],"tip":"..."}]` (split into 2 files of ~22).
+     **Write the right answer short and the distractors full** — the habit is the other way round.
+   - `tools/merge_apply.sh <file>.py part_a.json part_b.json` — checks every index is covered, rewrites the `Q(...)` calls
+     in place (comments survive), adds `HARD = True`, runs the validator.
+   - Fix what it reports: `tools/short.py <file>.py` lists explanations < 70; `tools/longest.py <file>.py` lists questions where
+     the right one is longest; `tools/repl.py <file>.py fixes.json` replaces exact string literals (`[[old,new],...]`, each
+     must occur once). Aim explanations at ≥ 90 chars so the 70 floor is never hit.
+   - Per topic: `build_bank.py`, `inject_bank.py`, `gen_duel_v2.py`, `build_duel_key.py`, lower the caps in `authoredChecks`,
+     run QA_BANK / QA_INTEG / QA_UI, commit `Questions: <topic> hard distractors and full explanations`, push to the branch and `main`.
+   **Documentation:** the docs sites are blocked by the cloud proxy, but `raw.githubusercontent.com` works, and most tools keep
+   their docs there as Markdown: `kubernetes/website/main/content/en/docs/...`, `argoproj/argo-cd/master/docs/...`,
+   `hashicorp/web-unified-docs/main/content/terraform/...`, `awsdocs/amazon-eks-user-guide/mainline/latest/ug/...`,
+   `docker/docs/main/content/manuals/...`, `github/docs/main/content/actions/...`, `jenkinsci/jenkins.io/master/content/doc/...`.
+   Use them to check any fact you aren't sure of; when unsure and unverifiable, leave the claim out rather than guess.
+   **Known content bug to fix during the Terraform pass:** `qsrc/tf_core.py`, the `user_data` question. Its right answer says
+   changing `user_data` forces a new instance by default. Per the AWS provider docs it stops and starts the instance, and
+   replaces it only with `user_data_replace_on_change = true`.
+2. **Stage 10: deeper Learn and Study content** (Nehoray: "more expansion for all topics... not enough material"). After stage 9:
+   go subject by subject through `learn_src/s00..s23` and `study_src/c1..c9`, add depth from the official docs (more parts or
+   longer parts, more tables, real commands and outputs, edge cases interviewers ask about), keep the builders' rules, run QA_LEARN.
+3. **Stage 8: games and multiplayer.**
    a. Nehoray creates a new Supabase project (`SETUP.md` has the steps).
    b. Run the SQL in this order: `supabase_setup.sql`, `supabase_add_username.sql`, `supabase_casino.sql`, `supabase_casino_v2.sql`,
       `supabase_duel.sql`, `supabase_duel_v2.sql`, `supabase_exam_history.sql`, `supabase_leaderboard.sql`, `supabase_tournament.sql`
@@ -251,8 +285,8 @@ Notes:
    d. Check that the games use the DevOps content (duel questions come from the bank; `SCENARIOS` and `SORT_SET` were rewritten in stage 7),
       un-hide them, rerun all QA, and check badges that need games ("Arcade Regular", "Triple Threat").
    e. Rename the "Neon Grid" branding in the SQL comments.
-3. **Cleanup:** remove the Skyforge explanation fallback (`whyByOption`, `exCue`, `renderStory`, `optionLine`,
+4. **Cleanup:** remove the Skyforge explanation fallback (`whyByOption`, `exCue`, `renderStory`, `optionLine`,
    the glossary parts of `buildExplain`; `renderExplain` still calls `buildExplain` for the header) and the empty blobs.
    Rename `saa*` to `score*`. Retire `AUDIT9`, which measured the old splitter.
-4. **Verify doc links** (`r` and `ref`) from a normal browser and fix any 404s.
-5. **Deploy:** the site isn't on GitHub Pages yet. Pages from `main` would serve it at `/devops-interview/`.
+5. **Verify doc links** (`r` and `ref`) from a normal browser and fix any 404s.
+6. **Deploy:** the site isn't on GitHub Pages yet. Pages from `main` would serve it at `/devops-interview/`.

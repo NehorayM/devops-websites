@@ -3725,6 +3725,11 @@ function authoredChecks(){
   // A wrong option is often answered with a word ("לא.", "לא קשור."). It is honest but teaches
   // little; the count can only go down.
   ok(stub<=628,'terse lines under wrong options do not grow ('+stub+')');
+  // The right answer used to be the longest option in 84% of questions, so it could be found
+  // without reading. Stage 9 rebalances the distractors file by file; the count only goes down.
+  const longest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
+    return L[a]>Math.max(...L.filter((_,j)=>j!==a)); }).length;
+  ok(longest<=969,'the right option is the longest in at most 969 questions ('+longest+')');
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');

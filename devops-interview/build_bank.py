@@ -35,6 +35,9 @@ HEB = re.compile(r"[֐-׿]")
 SEED = 20261024
 
 
+HARD_FILES = set()      # files that declare HARD = True: distractors balanced, every option fully explained
+
+
 def load():
     qs = []
     for f in sorted(QSRC.glob("*.py")):
@@ -46,6 +49,8 @@ def load():
         got = getattr(mod, "QS", None)
         if not isinstance(got, list):
             sys.exit(f"{f.name}: defines no QS list")
+        if getattr(mod, "HARD", False):
+            HARD_FILES.add(f.name)
         qs.extend(got)
     return qs
 
@@ -98,6 +103,27 @@ def validate(qs, partial):
         lens = [len(o[0]) for o in q.opts]
         if lens[0] > 1.9 * max(lens[1:]) and lens[0] > 60:
             errs.append(f"{where}: the correct option is far longer than every distractor")
+        if q.src.split(":")[0] in HARD_FILES:
+            # the answer must not be findable by its length, and nothing may be a throwaway
+            if lens[0] > 1.15 * max(lens[1:]):
+                errs.append(f"{where}: the right option ({lens[0]} ch) is >15% longer than every distractor {lens[1:]}")
+            if min(lens[1:]) < 0.55 * lens[0]:
+                errs.append(f"{where}: a distractor is under 55% of the right option's length {lens}")
+            for k, (_t, why) in enumerate(q.opts):
+                if len(why) < 70:
+                    errs.append(f"{where}: option {k} explanation is {len(why)} ch, want >= 70")
+            if len(q.tip or "") < 80:
+                errs.append(f"{where}: tip is {len(q.tip or '')} ch, want >= 80")
+
+    # across a migrated file, the right answer may be the longest about as often as chance
+    by_file = defaultdict(list)
+    for q in qs:
+        by_file[q.src.split(":")[0]].append(q)
+    for fname in sorted(HARD_FILES):
+        fq = by_file[fname]
+        lg = sum(1 for q in fq if len(q.opts[0][0]) > max(len(o[0]) for o in q.opts[1:]))
+        if lg > 0.4 * len(fq):
+            errs.append(f"{fname}: the right option is the longest in {lg}/{len(fq)} questions, want <= 40%")
 
     by_topic = defaultdict(list)
     by_sec = Counter(q.sec for q in qs)
