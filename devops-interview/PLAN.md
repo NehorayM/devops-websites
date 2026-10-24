@@ -74,14 +74,18 @@ docs.gitlab.com/ee/ci · jenkins.io/doc · man7.org. Every question carries a `r
 
 ## Implementation stages (a commit and push after each one)
 
-0. **Base:** rename the folder, rebrand to Ship It, turn Supabase off, hide the games, set the timer to 90s.
-1. **New question pipeline:** `qsrc/devops/<topic>.py` holds the questions, with the fields
+0. *(done)* **Base:** rename the folder, rebrand to Ship It, turn Supabase off, hide the games, set the timer to 90s.
+1. *(done)* **New question pipeline:** `qsrc/devops/<topic>.py` holds the questions, with the fields
    `q, o, a, why, interview, level, kind, sub, ref`. `build_bank.py` reads them instead of the CSV, and a validator
    refuses to build if the counts, the 50/50 split, the levels, or the spread of correct-answer positions are wrong.
-2. **Writing the questions in batches**, in weight order: K8s → ArgoCD → CI → AWS → Helm → Terraform → Linux →
+2. *(done)* **Writing the questions in batches**, in weight order: K8s → ArgoCD → CI → AWS → Helm → Terraform → Linux →
    CI tools → Networking. Every batch is validated and committed.
-3. **Building the 20 papers** by topic weight and level.
+3. *(done)* **Building the 20 papers** by topic weight and level.
 4. **Interview mode:** a new screen for the 300 open questions, with a model answer and self-marking.
+   *Done.* Authored in `isrc/<topic>.py` as `O()` calls (see `qsrc/qlib.py`): an English question, 3–6 Hebrew
+   points a strong answer covers, a likely follow-up, the mistake that loses the point, and a documentation link.
+   `python3 build_interview.py` validates counts, splits and Hebrew, writes `isrc/interview.json`;
+   `python3 inject_interview.py` puts it into `index.html` as `#ivdata`. Progress is `P.iv[id] = [mark, times, when]`.
 5. **Learn:** 24 files in `learn_src/`, with lessons, check questions and an exam for each subject.
 6. **Study:** reading chapters for each topic.
 7. **Hebrew explanations, QA** (`QA_BANK`, `QA_UI`, and the rest) run in a real browser, then update `STATE.md`.

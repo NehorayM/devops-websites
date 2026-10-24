@@ -235,7 +235,7 @@ O("tf-state", MS, T,
    "מניעה: versioning, locking וגישה מוגבלת."],
   follow="What does the `serial` in the state file protect against?",
   trap="להריץ apply על state חסר, ש-Terraform ינסה ליצור הכול מחדש.",
-  ref=D+"cli/state/recover"),
+  ref=D+"cli/state"),
 
 O("tf-state", JM, K,
   "Why split Terraform into multiple states, and how do they share data?",
