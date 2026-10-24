@@ -117,6 +117,76 @@ SUBJECT = {
          "The state is locked",
          x="יש שדות שה-API לא מאפשר לשנות. Terraform מסמן אותם ומתכנן מחיקה ויצירה."),
       ]),
+
+  MOD("tf-in-practice", "בפועל: לקרוא plan, import, moved ו-removed",
+      "לקרוא את הסימנים ב-plan ולזהות replacement מסוכן, לייבא משאב קיים עם import block, ולשנות מבנה קוד בלי להרוס משאבים.",
+      [P("המיומנות הכי חשובה ב-Terraform היא לקרוא plan לפני apply. בראיון מעשי מראים plan ושואלים 'מה יקרה פה?'."),
+       CODE("""  # aws_db_instance.main must be replaced
+-/+ resource "aws_db_instance" "main" {
+      ~ identifier = "shop-db" -> "shop-db-prod" # forces replacement
+        ...
+    }
+
+  # aws_instance.web will be updated in-place
+  ~ resource "aws_instance" "web" {
+      ~ tags = { "Env" = "stg" -> "prod" }
+    }
+
+Plan: 1 to add, 1 to change, 1 to destroy.""", cap="-/+ על DB: מחיקה ויצירה, כלומר אובדן נתונים"),
+       TABLE(["סימן", "פירוש", "סיכון"],
+             ["`+`", "create", "נמוך"],
+             ["`~`", "update in-place", "תלוי בשדה"],
+             ["`-/+`", "destroy ואז create (replace)", "גבוה: downtime, אובדן נתונים"],
+             ["`+/-`", "create ואז destroy (`create_before_destroy`)", "בינוני"],
+             ["`-`", "destroy", "גבוה"],
+             ["`<=`", "read של data source", "אין"]),
+       KEY("כל שורה עם `# forces replacement` היא סיבה לעצור. על משאבים עם נתונים (DB, bucket, volume) מוסיפים `lifecycle { prevent_destroy = true }`, ו-CI יכול לחסום plan שיש בו destroy."),
+       H("Import, moved, removed"),
+       CODE("""import {
+  to = aws_s3_bucket.logs
+  id = "acme-logs-prod"
+}
+# terraform plan -generate-config-out=generated.tf
+
+moved {
+  from = aws_instance.web
+  to   = module.web.aws_instance.this
+}
+
+removed {
+  from = aws_instance.legacy
+  lifecycle { destroy = false }
+}""", cap="שינויי state דרך הקוד, עם plan ו-review, במקום פקודות CLI ידניות"),
+       TABLE(["Block", "מאיזו גרסה", "מה עושה"],
+             ["`moved`", "1.1", "משנה כתובת של משאב ב-state בלי replace"],
+             ["`import`", "1.5", "מכניס משאב קיים ל-state כחלק מ-plan; יכול לייצר קוד"],
+             ["`removed`", "1.7", "מוציא משאב מה-state בלי להרוס אותו"]),
+       TRAP("שינוי שם של resource או העברה ל-module בלי `moved` נראה ל-Terraform כמשאב שנמחק ומשאב חדש. ב-plan זה `-` ו-`+`, וב-DB זה אסון."),
+       ASK("What does `-/+` mean in a Terraform plan and why is it dangerous?",
+           "How do you bring an existing resource under Terraform?",
+           "How do you rename a resource without recreating it?",
+           "How do you stop managing a resource without deleting it?"),
+      ],
+      [C("What does `-/+` next to a resource in a plan mean?",
+         "The resource will be destroyed and then created again",
+         "The resource will be updated in place",
+         "The resource is read from a data source",
+         "The resource will be imported",
+         x="-/+ הוא replace: קודם מחיקה ואז יצירה. על משאב עם נתונים זה אומר אובדן נתונים."),
+       C("Which block renames a resource address in state without recreating it?",
+         "`moved`",
+         "`removed`",
+         "`import`",
+         "`lifecycle`",
+         x="moved מעדכן את הכתובת ב-state כחלק מ-plan, כך שאין destroy ו-create."),
+       C("What does `terraform plan -generate-config-out=generated.tf` do with an import block?",
+         "Writes HCL for the imported resource so you can review and keep it",
+         "Exports the whole state as HCL",
+         "Generates a module from the provider schema",
+         "Creates a new backend config",
+         x="עם import block, Terraform יכול לכתוב קוד התחלתי למשאב המיובא. בודקים ומנקים אותו לפני commit."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -196,11 +266,11 @@ SUBJECT = {
      ("To speed up plans", "ignore_changes לא מאיץ."),
      ("To protect resources from deletion", "לזה יש prevent_destroy."),
      x="אם autoscaler או כלי אחר משנה שדה בכוונה, ignore_changes מונע מ-Terraform להחזיר אותו. על שדות אחרים, הבדל הוא drift שצריך לטפל בו."),
-   F("lifecycle", "An apply fails halfway with an API error. What state is the infrastructure in?",
-     ("Resources created before the error are recorded; a partial one may be tainted", "נכון. אין rollback."),
-     ("Terraform rolled everything back", "Terraform לא עושה rollback."),
-     ("The state file was deleted", "ה-state נשמר ומתעדכן תוך כדי."),
-     ("Nothing was created", "מה שנוצר לפני השגיאה קיים."),
-     x="Terraform מעדכן את ה-state תוך כדי. מתקנים את הסיבה, מריצים plan, ו-Terraform ממשיך מהמקום שבו נעצר."),
+   F("tf-in-practice", "You moved `aws_db_instance.main` into a module. The plan now shows one destroy and one create. What prevents data loss?",
+     ("Add a `moved` block from the old address to the new module address", "נכון. moved מעדכן את הכתובת ב-state, וה-plan לא יציג destroy."),
+     ("Run `terraform apply -refresh-only` first", "refresh-only מסנכרן state מול המציאות, ולא מקשר בין הכתובת הישנה לחדשה."),
+     ("Add `ignore_changes = all` to the database", "ignore_changes משפיע על עדכוני שדות, לא על מחיקה של כתובת שנעלמה מהקוד."),
+     ("Import the database again under the new address", "import בלי להוציא את הכתובת הישנה ישאיר אותה ב-state, וה-plan עדיין ינסה למחוק אותה."),
+     x="Terraform מזהה משאבים לפי כתובת. `moved { from = aws_db_instance.main  to = module.db.aws_db_instance.main }` אומר לו שזה אותו משאב, וה-plan יראה רק העברה."),
  ],
 }

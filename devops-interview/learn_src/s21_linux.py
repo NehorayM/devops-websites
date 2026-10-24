@@ -131,6 +131,66 @@ SUBJECT = {
          "`chmod`",
          x="ss -tulpn מציג sockets שמאזינים, עם הפורט וה-PID והשם של התהליך."),
       ]),
+
+  MOD("linux-in-practice", "בפועל: דיסק מלא, OOM ותהליך תקוע",
+      "לפתור 'No space left on device' כולל קבצים שנמחקו ועדיין פתוחים ו-inodes, למצוא OOM kill בלוגים, ולבדוק מה תהליך תקוע עושה.",
+      [P("שלושה תרחישים חוזרים בראיונות Linux: הדיסק מלא, תהליך נהרג בלי הסבר, ושירות שלא מגיב. בכל אחד יש סדר פקודות שמראה שעשית את זה באמת."),
+       CODE("""$ df -h /var
+Filesystem  Size  Used Avail Use% Mounted on
+/dev/nvme0n1p1  50G   50G     0 100% /
+
+$ du -xh /var --max-depth=1 | sort -h | tail -3
+1.2G  /var/cache
+2.1G  /var/lib
+3.4G  /var/log
+# du מראה 7GB, df מראה 50GB: משהו תופס מקום ולא נראה בקבצים
+
+$ lsof +L1 | head -3
+COMMAND  PID  USER  FD  TYPE  SIZE/OFF    NLINK NAME
+java    2211  app   7w  REG   41234567890 0     /var/log/app/app.log (deleted)""", cap="קובץ לוג נמחק, אבל התהליך עדיין כותב אליו"),
+       TABLE(["תסמין", "סיבה", "פתרון"],
+             ["df מלא, du לא מסביר", "קובץ שנמחק ועדיין פתוח", "restart לתהליך, או `: > /proc/PID/fd/N`"],
+             ["No space, אבל df מראה מקום", "נגמרו ה-inodes (`df -i`)", "למחוק הרבה קבצים קטנים (cache, sessions)"],
+             ["`/var/log` גדל בלי סוף", "אין logrotate, או rotate בלי `copytruncate` או signal", "logrotate עם postrotate שמודיע לתהליך"]),
+       KEY("מחיקת קובץ ב-Linux מסירה רק את השם. הנתונים משתחררים רק כשאין עוד file descriptor פתוח אליו. לכן `rm` ללוג של תהליך רץ לא מפנה מקום."),
+       H("OOM ותהליך תקוע"),
+       CODE("""$ dmesg -T | grep -i -E 'killed process|out of memory'
+[Fri Oct 24 09:31:02 2026] Out of memory: Killed process 2211 (java) total-vm:8123456kB, anon-rss:3900123kB
+
+$ journalctl -u api --since "30 min ago" -p err
+$ cat /proc/2211/status | grep State      # D = מחכה ל-IO, לא ניתן להרוג
+$ strace -p 2211 -f -e trace=network      # באיזו קריאת מערכת הוא תקוע""", cap="מי הרג, ומה התהליך עושה כרגע"),
+       TABLE(["State ב-ps", "פירוש"],
+             ["R", "רץ או ממתין ל-CPU"],
+             ["S", "שינה שניתן להפריע לה (מחכה לאירוע)"],
+             ["D", "שינה שלא ניתן להפריע לה, לרוב IO (דיסק, NFS)"],
+             ["Z", "zombie: הסתיים, וההורה לא קרא wait"]),
+       TRAP("`kill -9` לא עוזר לתהליך במצב D: הוא לא יקבל את האות עד שקריאת ה-IO תחזור. הבעיה בדיסק או ב-NFS, לא בתהליך. גם zombie לא נהרג; מטפלים בהורה."),
+       ASK("The disk is full but du doesn't add up. What's going on?",
+           "How do you find out the kernel killed your process?",
+           "A process is in D state and won't die. Why?",
+           "What's the difference between running out of space and running out of inodes?"),
+      ],
+      [C("`df` says the disk is full but `du` finds much less. What is a common cause?",
+         "A deleted file that a running process still holds open",
+         "A corrupted partition table",
+         "Too many users logged in",
+         "A full swap partition",
+         x="הנתונים של קובץ שנמחק משתחררים רק כשה-file descriptor נסגר. `lsof +L1` מראה קבצים כאלה."),
+       C("`touch` fails with 'No space left on device' but `df -h` shows free space. What do you check?",
+         "Inode usage with `df -i`",
+         "The swap size with `free`",
+         "The CPU load with `uptime`",
+         "Open ports with `ss`",
+         x="כל קובץ צורך inode. מיליוני קבצים קטנים יכולים לגמור את ה-inodes כשיש עוד מקום בבלוקים."),
+       C("Why doesn't `kill -9` stop a process in D state?",
+         "It is in uninterruptible sleep waiting for IO and won't handle the signal until that returns",
+         "D state processes ignore all users except root",
+         "SIGKILL is disabled for daemons",
+         "D means the process is already dead",
+         x="מצב D הוא המתנה ל-IO בקרנל. האות יטופל רק כשהקריאה תחזור, ולכן מחפשים את בעיית הדיסק או ה-NFS."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -214,11 +274,11 @@ SUBJECT = {
      ("The disk usage", "דיסק לא קשור ל-DNS."),
      ("The CPU load", "load לא מונע DNS."),
      x="ping ל-IP מוכיח שהרשת עובדת. נשאר DNS: אילו nameservers מוגדרים, systemd-resolved, ו-firewall על פורט 53."),
-   F("files-net", "Why is `chmod 777` a bad fix for a permission error?",
-     ("It gives every user full access to the file", "נכון. פותח הרבה יותר ממה שצריך."),
-     ("It deletes the file", "chmod משנה הרשאות ולא מוחק קבצים."),
-     ("It only works for root", "כל בעלים יכול להריץ chmod."),
-     ("It changes the file's owner", "chmod לא משנה בעלים."),
-     x="הפתרון הנכון הוא לתת את ההרשאה המינימלית לבעלים או לקבוצה הנכונים, עם chown או chgrp, ולא לפתוח לכולם."),
+   F("linux-in-practice", "You deleted a 40 GB log file but `df` still shows the disk full. What is the quickest correct fix?",
+     ("Restart or signal the process holding it open, or truncate it through /proc/PID/fd", "נכון. המקום משתחרר רק כשה-descriptor נסגר או כשהקובץ מקוצר."),
+     ("Run `sync` and wait", "sync כותב buffers לדיסק; הוא לא משחרר קובץ שעדיין פתוח."),
+     ("Reboot is the only way", "reboot עובד אבל הוא מיותר; סגירת ה-descriptor מספיקה."),
+     ("Run `fsck` on the mounted filesystem", "fsck על filesystem מחובר מסוכן, ואין כאן השחתה לתקן."),
+     x="התהליך עדיין מחזיק את הקובץ. `lsof +L1` מוצא אותו, ואז restart, `kill -HUP` לפתיחה מחדש של הלוג, או `: > /proc/PID/fd/N` משחררים את המקום."),
  ],
 }

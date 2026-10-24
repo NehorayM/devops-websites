@@ -118,6 +118,64 @@ SUBJECT = {
          "Delete old resources from the state by hand",
          x="state קטן יותר = פחות משאבים לרענן, blast radius קטן ובעלות ברורה. -target הוא עזרה רגעית בלבד."),
       ]),
+
+  MOD("state-in-practice", "בפועל: lock תקוע, פקודות state ו-backend",
+      "לשחרר lock שנתקע בבטחה, לבחור בין פקודות `terraform state`, להגדיר backend של S3 עם locking, ולהגן על סודות שב-state.",
+      [P("שאלות state בראיון הן כמעט תמיד תרחיש: 'ה-pipeline נתקע עם lock', 'מישהו שינה ידנית', 'צריך לפצל state'. צריך לדעת את הפקודה וגם מתי לא להשתמש בה."),
+       CODE("""$ terraform plan
+Error: Error acquiring the state lock
+
+Lock Info:
+  ID:        6f2b1c3e-...
+  Path:      acme-tfstate/prod/network.tfstate
+  Operation: OperationTypeApply
+  Who:       runner@ci-7f9
+  Created:   2026-10-24 09:12:44 UTC""", cap="lock של apply מ-runner: לבדוק שהוא באמת מת לפני שמשחררים"),
+       KEY("`terraform force-unlock LOCK_ID` משחרר lock, אבל רק אחרי שווידאת שאף תהליך לא רץ (ה-job בוטל, ה-runner לא קיים). שחרור בזמן apply פעיל מאפשר שני writers על אותו state."),
+       TABLE(["פקודה", "מה עושה", "מתי"],
+             ["`terraform state list`", "כל הכתובות ב-state", "חקירה"],
+             ["`terraform state show ADDR`", "התכונות של משאב אחד", "חקירה"],
+             ["`terraform state mv`", "שינוי כתובת", "עדיף `moved` block"],
+             ["`terraform state rm`", "הוצאה מה-state בלי מחיקה", "עדיף `removed` block"],
+             ["`terraform plan -refresh-only`", "מראה drift בלי לשנות תשתית", "אחרי שינוי ידני"],
+             ["`terraform apply -replace=ADDR`", "מכריח replace של משאב", "במקום `taint` הישן"]),
+       H("Backend של S3"),
+       CODE("""terraform {
+  backend "s3" {
+    bucket       = "acme-tfstate"
+    key          = "prod/network.tfstate"
+    region       = "eu-west-1"
+    encrypt      = true
+    use_lockfile = true   # locking ב-S3 עצמו, בלי DynamoDB
+  }
+}""", cap="בגרסאות 1.10 ומעלה ה-S3 backend תומך ב-locking דרך קובץ lock ב-bucket"),
+       P("בגרסאות ישנות יותר ה-locking דרש טבלת DynamoDB (`dynamodb_table`), והאפשרות הזאת מסומנת כ-deprecated בגרסאות החדשות. ב-bucket עצמו מפעילים versioning, כדי שאפשר יהיה לשחזר state קודם אחרי טעות."),
+       TRAP("ה-state מכיל ערכים רגישים בטקסט גלוי, למשל סיסמת DB שנוצרה ב-`random_password`. `sensitive = true` רק מסתיר אותם בפלט. לכן ה-bucket מוצפן, הגישה אליו מוגבלת ל-roles של ה-pipeline, ולא מעלים state ל-Git."),
+       ASK("The pipeline fails with 'Error acquiring the state lock'. What do you do?",
+           "How do you see drift without changing anything?",
+           "How do you configure a remote backend with locking on AWS?",
+           "Is it safe to keep secrets in Terraform state?"),
+      ],
+      [C("When is it safe to run `terraform force-unlock`?",
+         "Only after confirming no Terraform process is still running against that state",
+         "Whenever a plan is slow",
+         "Before every apply in CI",
+         "Only when the backend is local",
+         x="force-unlock עוקף את ההגנה. אם apply עדיין רץ, שני תהליכים יכתבו לאותו state ויכולים להשחית אותו."),
+       C("What does `terraform plan -refresh-only` show?",
+         "Differences between the state and real infrastructure, without proposing changes to it",
+         "Only resources that will be destroyed",
+         "The provider versions in the lock file",
+         "The plan of a single module",
+         x="refresh-only מראה drift: מה השתנה בתשתית מחוץ ל-Terraform. apply שלו רק מעדכן את ה-state."),
+       C("What does `use_lockfile = true` in the S3 backend do?",
+         "Uses a lock file in the S3 bucket for state locking, without DynamoDB",
+         "Encrypts the state with KMS",
+         "Stores the state locally as a backup",
+         "Locks provider versions",
+         x="בגרסאות 1.10 ומעלה ה-S3 backend יכול לנעול עם קובץ ב-bucket, וטבלת DynamoDB כבר לא נחוצה."),
+      ], min=10),
+
  ],
 
  "recap": [
@@ -199,11 +257,11 @@ SUBJECT = {
      ("To speed up all plans", "זה לא פתרון למהירות."),
      ("To skip code review", "target לא קשור ל-review."),
      x="target מיישם חלק מהשינויים בלבד. בחירום זה לגיטימי, ואחריו מריצים plan מלא. שימוש קבוע אומר שה-state גדול מדי."),
-   F("teams", "What is OpenTofu?",
-     ("An open-source fork of Terraform under the MPL, created after the license change", "נכון. ברובו תואם."),
-     ("A Terraform plugin for Kubernetes", "OpenTofu הוא כלי שלם, לא plugin."),
-     ("A state backend", "OpenTofu הוא לא backend ל-state."),
-     ("A replacement for HCL", "OpenTofu ממשיך להשתמש ב-HCL."),
-     x="אחרי ש-HashiCorp העבירה את Terraform לרישיון BSL ב-2023, נוצר OpenTofu תחת Linux Foundation. השיקולים: רישוי, פיצ'רים שמתפצלים ועלות מעבר."),
+   F("state-in-practice", "A CI job was killed during `terraform apply`. The next run fails with a state lock error. What is the right sequence?",
+     ("Confirm the old job is really gone, run `terraform force-unlock`, then plan to see what was applied", "נכון. מוודאים שאין writer, משחררים, וה-plan מראה איפה ה-apply נעצר."),
+     ("Delete the state file and run apply again", "מחיקת state גורמת ל-Terraform לשכוח את כל המשאבים ולנסות ליצור אותם מחדש."),
+     ("Wait 24 hours for the lock to expire", "lock של Terraform לא פג מעצמו; הוא נשאר עד שחרור."),
+     ("Switch to a local backend for one run", "state מקומי לא מכיל את המצב האמיתי, והריצה תיצור משאבים כפולים."),
+     x="lock נשאר כשתהליך נהרג. משחררים אותו רק אחרי וידוא שאין apply חי, ואז plan מראה מה כבר נוצר ומה חסר."),
  ],
 }

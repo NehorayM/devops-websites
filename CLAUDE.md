@@ -91,7 +91,8 @@ devops-interview/
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..9.js fuzz_exam.js audit_static.py   tests
-  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py
+  tools/                  qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
+                          add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz)
   supabase_*.sql sql_tests/          backend for stage 8
 ```
 
@@ -169,7 +170,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 | `QA_BANK()` | qa_bank.js | 22,664 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
-| `QA_LEARN()` | qa_learn.js | 5,710 / 0 (24 subjects) |
+| `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules; end of stage 10) |
 | `AUDIT()`, `AUDIT2()`…`AUDIT9()` | audit_runtime.js, audit2..9.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
@@ -233,6 +234,7 @@ Notes:
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
 | 7b *(superseded by 9)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
+| 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 14 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 14 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -286,10 +288,11 @@ Notes:
    Use them to check any fact you aren't sure of; when unsure and unverifiable, leave the claim out rather than guess.
    (Fixed in the Terraform pass: the tf_core `user_data` question now says a change stops and starts the instance by default,
    and replaces it only with `user_data_replace_on_change = true`.)
-2. **Stage 10 (NEXT): deeper Learn and Study content** (Nehoray: "more expansion for all topics... not enough material"):
-   go subject by subject through `learn_src/s00..s23` and `study_src/c1..c9`, add depth from the official docs (more parts or
-   longer parts, more tables, real commands and outputs, edge cases interviewers ask about), keep the builders' rules, run QA_LEARN.
-3. **Stage 8: games and multiplayer.**
+2. **Stage 10: deeper Learn and Study content — DONE (first pass).** Every Learn subject has a 4th module `*-in-practice`
+   (add more with `tools/add_part.py <learn_src/sNN.py> <snippet>`: `MOD(...)`, a line `#---FINAL---`, one `F(...)`), and
+   every Study chapter has 1–2 extra pages (`tools/add_topic.py <study_src/cN.py> <snippet>`: topic dicts, `#---QUIZ---`, `QZ(...)`).
+   A further pass can add more parts per subject the same way (builders allow up to 8 modules).
+3. **Stage 8 (NEXT): games and multiplayer.**
    a. Nehoray creates a new Supabase project (`SETUP.md` has the steps).
    b. Run the SQL in this order: `supabase_setup.sql`, `supabase_add_username.sql`, `supabase_casino.sql`, `supabase_casino_v2.sql`,
       `supabase_duel.sql`, `supabase_duel_v2.sql`, `supabase_exam_history.sql`, `supabase_leaderboard.sql`, `supabase_tournament.sql`

@@ -63,6 +63,26 @@ curl -v https://api.example.com/healthz
         "L4 vs L7 load balancing?",
         "curl fails with a certificate error but browsers work. Why?"),
   ]},
+  {"nm": "Network debugging ladder", "blocks": [
+    P("כשמשהו 'לא עובד ברשת', עולים בסולם משכבה לשכבה. כל שלב מוכיח משהו לפני שעוברים לבא."),
+    FLOW("DNS: dig", "TCP: nc -zv", "TLS: openssl s_client", "HTTP: curl -v", "packets: tcpdump", cap="מלמטה למעלה, הוכחה בכל שלב"),
+    TABLE(["מה רואים", "פירוש"],
+          ["`NXDOMAIN`", "השם לא קיים באזור"],
+          ["`SERVFAIL`", "השרת לא הצליח לפתור (DNSSEC, שרת סמכותי לא זמין)"],
+          ["Connection refused", "הגעת, אף אחד לא מאזין (או RST)"],
+          ["Connection timed out", "חבילות נבלעות: firewall, SG, route"],
+          ["`certificate has expired` / `unable to get local issuer`", "תעודה פגה / שרשרת חסרה"],
+          ["502 / 503 / 504", "backend שבור / אין backend בריא / backend איטי"]),
+    CODE("""dig +short api.acme.com @8.8.8.8      # מה DNS ציבורי אומר
+nc -zv 10.0.2.40 5432                  # האם הפורט פתוח
+openssl s_client -connect api.acme.com:443 -servername api.acme.com </dev/null | openssl x509 -noout -dates
+curl -sv -o /dev/null https://api.acme.com/health
+tcpdump -i any -nn host 10.0.2.40 and port 5432""", cap="פקודה אחת לכל שכבה"),
+    KEY("תשובה חזקה בראיון אומרת מה כל תוצאה מוציאה מהחשבון: אם `nc` מצליח, הבעיה מעל TCP; אם `dig` מחזיר כתובת שגויה, אין טעם לבדוק firewall."),
+    ASK("Walk me through debugging 'the site is down'.",
+        "What's the difference between NXDOMAIN and SERVFAIL?",
+        "How do you check when a server's certificate expires?"),
+  ]},
  ],
  "quiz": [
    QZ("A client gets connection refused. What does it mean?",
@@ -74,5 +94,8 @@ curl -v https://api.example.com/healthz
    QZ("What does HTTP 504 from a proxy mean?",
       "The backend didn't respond in time", "The client sent a bad request", "The page moved", "The user isn't authenticated",
       x="504 הוא timeout מול ה-upstream. 502 הוא תשובה לא תקינה או חיבור שנסגר."),
+  QZ("`dig` returns SERVFAIL for a name. What does that mean?",
+      "The resolver couldn't complete the lookup, for example a DNSSEC failure or an unreachable authoritative server", "The name does not exist", "The record has a TTL of zero", "The client has no network",
+      x="NXDOMAIN אומר שהשם לא קיים. SERVFAIL אומר שהפתרון נכשל בדרך, למשל בגלל DNSSEC או שרת סמכותי שלא עונה."),
  ],
 }

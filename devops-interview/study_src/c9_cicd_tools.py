@@ -93,6 +93,34 @@ pipeline {
         "How do you secure Jenkins?",
         "Jenkins vs GitLab CI vs GitHub Actions: when each?"),
   ]},
+  {"nm": "Same pipeline, three tools", "blocks": [
+    P("שאלה נפוצה: 'עבדת עם Jenkins, איך זה נראה ב-GitHub Actions?'. אותו pipeline בשלושת הכלים מראה שהמושגים זהים, ורק התחביר שונה."),
+    TABLE(["מושג", "GitHub Actions", "GitLab CI", "Jenkins"],
+          ["קובץ", "`.github/workflows/*.yml`", "`.gitlab-ci.yml`", "`Jenkinsfile`"],
+          ["יחידת עבודה", "job → steps", "job בתוך stage", "stage → steps"],
+          ["איפה רץ", "`runs-on:`", "`tags:` של runner, `image:`", "`agent { ... }`"],
+          ["סודות", "`secrets.X`, environments", "CI/CD variables (masked, protected)", "Credentials + `withCredentials`"],
+          ["cache", "`actions/cache`", "`cache:` עם key", "plugin או volume ב-agent"],
+          ["artifacts", "`upload-artifact`", "`artifacts:`", "`archiveArtifacts`"],
+          ["ענף מוגבל", "`if: github.ref == 'refs/heads/main'`", "`rules: - if: $CI_COMMIT_BRANCH == \"main\"`", "`when { branch 'main' }`"]),
+    CODE("""pipeline {
+  agent { kubernetes { yamlFile 'ci/pod.yaml' } }
+  options { disableConcurrentBuilds(); timeout(time: 30, unit: 'MINUTES') }
+  stages {
+    stage('Test')  { steps { sh 'make test' } }
+    stage('Build') { steps { sh 'make image' } }
+    stage('Deploy') {
+      when { branch 'main' }
+      steps { input 'Deploy to prod?'; sh 'make deploy' }
+    }
+  }
+}""", cap="Jenkins declarative: agent ב-Kubernetes, timeout, אישור ידני"),
+    KEY("המושגים שעוברים בין כלים: triggers, jobs ו-DAG, runners, cache מול artifacts, סודות מוגנים לפי ענף או סביבה, ואישור ידני ל-deploy. מי שמבין אותם לומד כלי חדש בשבוע."),
+    TRAP("ב-GitLab, משתנה שמוגדר protected זמין רק ל-pipelines על branches או tags מוגנים. deploy מ-branch רגיל ייכשל עם משתנה ריק, בלי שגיאה ברורה."),
+    ASK("How would you migrate a Jenkins pipeline to GitHub Actions?",
+        "Cache vs artifacts: what's the difference?",
+        "How do you restrict a deploy job to the main branch in each tool?"),
+  ]},
  ],
  "quiz": [
    QZ("What replaced `only`/`except` in GitLab CI?",
@@ -104,5 +132,8 @@ pipeline {
    QZ("Why set Jenkins controller executors to zero?",
       "So builds never run on the controller", "To speed up the UI", "To disable plugins", "To allow anonymous access",
       x="build על ה-controller יכול לגשת לכל ה-credentials וה-config. agents נפרדים מבודדים אותו."),
+  QZ("A GitLab deploy job on a feature branch sees an empty value for a CI/CD variable. Why?",
+      "The variable is protected, so it is only exposed to protected branches and tags", "Variables are only available in the test stage", "The runner cache is stale", "The job has no `image:`",
+      x="משתנה protected נחשף רק ל-pipelines שרצים על refs מוגנים. זו הגנה מכוונת על סודות פרודקשן."),
  ],
 }
