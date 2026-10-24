@@ -312,7 +312,7 @@ function learnQuizPaint(){
   $('lrnQuizCount').textContent=(Q.i+1)+' / '+Q.items.length;
   $('lrnQuizNeed').textContent='need '+learnQuizNeed(Q.items.length)+' right';
   $('lrnQuizProg').style.width=Math.round(Q.i/Q.items.length*100)+'%';
-  $('lrnQuizQ').textContent=q.q;
+  $('lrnQuizQ').innerHTML=qtx(q.q);
   $('lrnQuizResult').classList.add('hidden');
   $('lrnQuizLive').classList.remove('hidden');
   const multi=q.a.length>1;
@@ -467,7 +467,7 @@ function learnSimPaint(){
   const m=d.modules.find(x=>x.id===q.m);
   $('lrnSimCount').textContent=(S.i+1)+' / '+S.qs.length;
   $('lrnSimPart').textContent=m?'part '+(d.modules.indexOf(m)+1):'';
-  $('lrnSimQ').textContent=q.q;
+  $('lrnSimQ').innerHTML=qtx(q.q);
   const picked=S.ans[S.i]||[];
   const box=$('lrnSimOpts'); box.innerHTML='';
   it.order.forEach((oi,shown)=>{
@@ -525,7 +525,7 @@ function learnSimSubmit(auto){
 // ---------- result ----------
 function learnReviewCard(q,picked,n){
   const bits=[];
-  bits.push('<div class="rcq"><b style="color:var(--dim);font-family:var(--mono);font-size:11px">Q'+n+'  </b>'+esc(q.q)+'</div>');
+  bits.push('<div class="rcq"><b style="color:var(--dim);font-family:var(--mono);font-size:11px">Q'+n+'  </b>'+qtx(q.q)+'</div>');
   q.o.forEach((o,oi)=>{
     const right=q.a.includes(oi), chose=picked.includes(oi);
     const pillar=pillarFor(o.t);

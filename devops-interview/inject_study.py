@@ -217,7 +217,7 @@ function stuRenderQuiz(c){
   c.quiz.forEach((q,qi)=>{
     const card=document.createElement('div'); card.className='stuq';
     const opts=q.o.map((o,oi)=>'<button class="stuo" data-i="'+oi+'">'+esc(o)+'</button>').join('');
-    card.innerHTML='<div class="qq">'+esc(q.q)+'</div>'+opts+'<div class="stufeed"></div>';
+    card.innerHTML='<div class="qq">'+qtx(q.q)+'</div>'+opts+'<div class="stufeed"></div>';
     const feed=card.querySelector('.stufeed');
     [...card.querySelectorAll('.stuo')].forEach(btn=>{
       btn.onclick=()=>{

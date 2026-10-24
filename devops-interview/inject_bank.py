@@ -26,14 +26,15 @@ RESET = """  // the question bank is index-keyed; a new bank invalidates anythin
 def main():
     bank = json.loads(BANK.read_text(encoding="utf-8"))
     qs = bank["questions"]
-    assert len(bank["sections"]) == len(bank["short"]) == 23, "23 sections expected"
+    n = len(bank["sections"])
+    assert len(bank["short"]) == n, "every section needs a short name"
     seen = set()
     for i, q in enumerate(qs):
-        assert set(q) <= {"s", "q", "o", "a", "v", "x"}, f"q{i} has odd fields {set(q)}"
-        assert {"s", "q", "o", "a", "v"} <= set(q), f"q{i} is missing a field"
-        assert 0 <= q["s"] < 23, f"q{i} section out of range"
+        assert set(q) <= {"s", "q", "o", "a", "y", "x", "lv", "k", "r"}, f"q{i} has odd fields {set(q)}"
+        assert {"s", "q", "o", "a", "y", "x", "lv", "k"} <= set(q), f"q{i} is missing a field"
+        assert 0 <= q["s"] < n, f"q{i} section out of range"
         assert q["a"] and all(a in {l for l, _ in q["o"]} for a in q["a"]), f"q{i} bad answer"
-        assert len(q["o"]) >= 3, f"q{i} has too few options"
+        assert len(q["o"]) == len(q["y"]) == 4, f"q{i} needs four options, each explained"
         k = re.sub(r"\W+", "", q["q"].lower())[:400]
         assert k not in seen, f"q{i} duplicates an earlier question"
         seen.add(k)
