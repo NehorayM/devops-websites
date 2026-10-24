@@ -155,7 +155,15 @@ const {chromium}=require('playwright');
 // node runqa.js qa_bank.js QA_BANK   |  qa_learn.js QA_LEARN  |  audit_runtime.js AUDIT  |  fuzz_exam.js FUZZ_EXAM '[3000,7]'
 ```
 
-| Suite | File | Last green (stage 7) |
+No Playwright (local desktop sessions): serve the folder, open `index.html?test=1` in the app's built-in browser and run
+the suites from the page's console. Load a harness with an *indirect* eval so its functions become globals:
+```js
+const load=async f=>{ (0,eval)(await (await fetch(f+'?'+Date.now())).text()); };
+await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runtime.js, audit2..9.js, fuzz_exam.js
+```
+After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
+
+| Suite | File | Last green (stage 7b, after `tf_core`) |
 |---|---|---|
 | `QA_BANK()` | qa_bank.js | 22,662 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
@@ -169,6 +177,8 @@ Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
 - `authoredChecks` enforces the explanation rules and caps terse wrong-option lines at `<=628` (was 1,558 before stage 7b). Lower the cap as they get fixed.
+- Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
+  "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
   Fix the bug, or update the assumption and explain why in the commit.
 
@@ -200,6 +210,11 @@ Notes:
 - `overflow:hidden` on a direct child of `.screen` needs `flex:none`, or it collapses.
 - Builders `sys.exit` on the first bad file. A chapter-level `continue` once skipped validating later chapters; validate each one.
 - Cloud sessions: shell `cd` resets. Use absolute paths, and never `rm` a path built from a variable that might be unset.
+- Terse-line rewrites: "לא." appears hundreds of times, so never search-and-replace the text. Replace the string literal
+  at its exact position (`ast` gives `lineno`/`col_offset` of each `Q(...)` option tuple; `col_offset` is in UTF-8 bytes),
+  key each line by question index and option index within its file, and re-parse the file before writing.
+- Changing a question's stem, options or answer changes `BANKV` and resets everyone's seen/wrong/marks. Explanation
+  lines (`y`) and tips don't. Ask before touching an option's text.
 - The cloud proxy blocks the docs hosts, so `ref` links can't be fetched there. Verify them from a normal browser.
 
 ## 10. History
@@ -213,6 +228,7 @@ Notes:
 | 5 | Learn: 24 Hebrew subjects (72 parts, 216 checks, 240 finals) |
 | 6 | Study: 9 chapters, 30 pages; Study engine moved into source files |
 | 7 | AWS remnants removed from the UI; Hebrew TTS and Read on explanations; old explanation QA replaced by `authoredChecks`; mock no longer shows a paper's briefing; duel key regenerated; STATE.md rewritten; merged to `main` |
+| 7b *(partial)* | Terse wrong-option lines expanded for K8s (30), Argo CD (99), CI (168), AWS (230), Helm (253), `tf_core` (150): 930 of 1,558. One commit per topic, cap lowered each time to `<=628`. Full QA green; pushed to `main` |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -221,7 +237,11 @@ Notes:
    Left: 628 lines in `tf_state` (146), `linux` (185), `net` (117), `cicd_tools` (180); every right-answer line is already full. Work topic by topic in
    `qsrc/`. Each line should say what the option actually does and why it doesn't fit, in one sentence.
    Then rebuild the bank, regenerate the duel key, lower the cap in `authoredChecks`, run QA, and commit per topic.
-   List the stubs with a quick script over `#data` (`len(y) < 15` on a wrong option).
+   List the stubs with a quick script over `#data` (`len(y) < 15` on a wrong option), or import each `qsrc/*.py` and
+   read `QS[i].opts[1:]` (the right answer is always `opts[0]`). See the gotcha on replacing by position.
+   **Open content bug (needs Nehoray's OK, it resets progress):** `qsrc/tf_core.py`, the `user_data` question (~line 804).
+   Its right answer says changing `user_data` forces a new instance by default. Per the AWS provider docs it stops and
+   starts the instance by default, and replaces it only with `user_data_replace_on_change = true`. Fixing the option text changes `BANKV`.
 2. **Stage 8: games and multiplayer.**
    a. Nehoray creates a new Supabase project (`SETUP.md` has the steps).
    b. Run the SQL in this order: `supabase_setup.sql`, `supabase_add_username.sql`, `supabase_casino.sql`, `supabase_casino_v2.sql`,
