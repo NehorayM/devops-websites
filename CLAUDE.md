@@ -92,7 +92,7 @@ devops-interview/
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..8.js fuzz_exam.js audit_static.py   tests
   tools/                  sql_all.sh (→ supabase_all.sql), qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
-                          add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz),
+                          add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz), deepstats.py (depth of a Learn subject),
                           linkcheck.py + reffix.py (doc-link check against docs source repos, and the fixer)
   supabase_*.sql sql_tests/          backend for stage 8 (sql_tests/run.sh needs Docker; run_local.sh needs local Postgres)
 ```
@@ -117,7 +117,9 @@ The id is the first 8 characters of the sha1 of the normalised question, so edit
 
 **Learn subject**: `SUBJECT = {sec, nm, tag, modules:[MOD(id, nm_he, goal_he, blocks, checks)], recap, final:[F(...)]}`.
 Each subject has 3 modules, 3 checks each `C(q, right, *wrong, x=Hebrew)`, a recap (≥1,400 characters, two or more tables)
-and 10 finals `F(module_id, q, (text, why_he), …, x=…)`.
+and 10 finals `F(module_id, q, (text, why_he), …, x=…)`. A check option may be `(text, why_he)`; the check feedback then lists
+every option with its note. A subject with `"deep": True` must have parts of **≥ 3,000 chars** and a note of **≥ 60 chars on
+every option of every check and final** (`build_learn.py` enforces it; `tools/deepstats.py learn_src/sNN.py` shows the numbers).
 
 **Study chapter**: `CHAPTER = {nm, em, sub(he), dom 0–3, secs:[sector ids], topics:[{nm, blocks}], quiz:[QZ(q, right, *wrong, x=he)]}`.
 Every sector must belong to exactly one chapter.
@@ -237,6 +239,7 @@ Notes:
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 | 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 15 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 15 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
 | 8 | Supabase on: own project, `supabase_all.sql`, publishable key in `SUPA`; casino, duel, tournament and leaderboard visible; duel SQL suite moved to the DevOps bank; Docker-free `sql_tests/run_local.sh`; SQL comments renamed to Ship It |
+| 11 (partial) | Deep Learn pass: check options explain themselves (`C()` with `(text, why)`), `deep` subjects enforced by the builder; Argo CD s06–s09 rewritten in depth |
 | Links | 822 doc pages checked against source repos; 154 refs fixed (moved pages, dead anchors, wrong paths); `LINKS.md` lists what needs a browser. Ship It rocket icon replaces the AWS badge |
 | Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
 
@@ -296,6 +299,13 @@ Notes:
    (add more with `tools/add_part.py <learn_src/sNN.py> <snippet>`: `MOD(...)`, a line `#---FINAL---`, one `F(...)`), and
    every Study chapter has 1–2 extra pages (`tools/add_topic.py <study_src/cN.py> <snippet>`: topic dicts, `#---QUIZ---`, `QZ(...)`).
    A further pass can add more parts per subject the same way (builders allow up to 8 modules).
+2b. **Stage 11 (IN PROGRESS): deep Learn pass** (Nehoray: "one sentence about something isn't enough", and explain why every
+   answer is right or wrong). Per subject: rewrite each part as real explanation (how it works, why, examples, real commands),
+   give every check option a `(text, why)` note, lengthen every final note, add `"deep": True`, check facts against the
+   docs source (`/tmp/docsrc` clones; see `tools/linkcheck.py`). **Done:** Argo CD s06–s09 (each ~23K → ~46K chars).
+   Corrections found on the way: polling is 120 s + up to 60 s jitter (not 180 s); with no hook-delete-policy Argo CD assumes
+   BeforeHookCreation; `create-only`/`create-update` don't protect Applications when the ApplicationSet itself is deleted;
+   progressive syncs are Beta since 3.3. **Next:** Kubernetes s00–s05, then CI, AWS, Helm, Terraform, Linux, Networking, CI tools.
 3. **Stage 8: games and multiplayer — DONE.** Nehoray created the project and ran `supabase_all.sql` (all nine SQL files
    in order; rebuilt by `tools/sql_all.sh`). `SUPA` holds the URL and the **publishable** key (never `sb_secret_`).
    `sql_tests/duel_v2_suite.sql` moved from the AWS bank (1,201 q, 19 exams) to the DevOps bank (1,300 q, 20 exams);

@@ -334,7 +334,7 @@ def normalize(s):
         return out
 
     return {
-        "sec": s["sec"], "nm": s["nm"], "tag": s.get("tag", ""),
+        "sec": s["sec"], "nm": s["nm"], "tag": s.get("tag", ""), "deep": bool(s.get("deep")),
         "modules": [{"id": m["id"], "nm": m["nm"], "goal": m["goal"], "min": m.get("min", 8),
                      "blocks": m["blocks"], "checks": [q(x) for x in m["checks"]]}
                     for m in s["modules"]],

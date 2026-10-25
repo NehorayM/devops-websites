@@ -149,6 +149,7 @@ spec:
           "**ערכי ברירת מחדל ונרמול**: Git כותב `cpu: 1000m`, וה-API מחזיר `cpu: '1'`; Git לא כותב שדה, וה-API מוסיף לו ברירת מחדל.",
           "**מישהו הריץ `kubectl edit` או `kubectl scale`**.",
           "**revision צף** שהתקדם: ה-Application מסומן OutOfSync כי ב-Git יש commit חדש, וזה בדיוק מה שצריך לקרות."),
+       P("כדאי לזכור שגם Application שלם יכול להיות OutOfSync בלי שאף משאב השתנה: אם ב-Git נוסף קובץ, יש משאב חדש שמוגדר ואינו קיים (Missing), ואם קובץ נמחק ו-prune כבוי, יש משאב יתום שמסומן למחיקה."),
        P("סדר העבודה: `argocd app diff shop-api` (או לשונית Diff ב-UI) מראה בדיוק אילו שדות שונים. אחר כך מחליטים: אם השדה לא שייך ל-Git (replicas תחת HPA), מוחקים אותו מה-manifest. אם הוא נכתב בלגיטימיות על ידי controller (sidecar), מגדירים `ignoreDifferences`. אם זה שינוי ידני, מחזירים עם sync או עם selfHeal."),
        KEY("`ignoreDifferences` משפיע רק על ההשוואה. בלי sync option `RespectIgnoreDifferences=true`, sync עדיין מחיל את כל ה-manifest ודורס את השדה. דוגמה קלאסית: replicas תחת HPA, שם עדיף פשוט להוריד את השדה מה-manifest."),
        TRAP("Healthy של Argo CD מבוסס על סטטוס של משאבים, לא על בדיקה פונקציונלית. readiness probe שטחי שמחזיר 200 תמיד ייתן Healthy גם כשהאפליקציה לא מתחברת ל-DB. בדיקה אמיתית מוסיפים כ-PostSync hook עם smoke test, או כ-AnalysisTemplate ב-Argo Rollouts."),
