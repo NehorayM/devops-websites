@@ -363,7 +363,8 @@ function learnQuizSubmit(){
   const feed=$('lrnQuizFeed');
   feed.className='lrnfeed '+(ok?'ok':'no');
   feed.innerHTML='<b>'+(ok?'✓ נכון':'✗ לא בדיוק')+'</b>'+qtx(q.x)+
-    (ok?'':'<span class="ans"><b style="display:inline;color:var(--lime)">התשובה הנכונה: </b><bdi>'+esc(correctText)+'</bdi></span>');
+    (ok?'':'<span class="ans"><b style="display:inline;color:var(--lime)">התשובה הנכונה: </b><bdi>'+esc(correctText)+'</bdi></span>')+
+    learnWhyEach(q,it);
   const sub=$('lrnQuizSubmit');
   sub.disabled=false;
   sub.textContent=(Q.i+1<Q.items.length)?'Next question ▸':'See how you did ▸';
@@ -372,6 +373,18 @@ function learnQuizSubmit(){
     else learnQuizResult();
   };
   learnSave();
+}
+// After a check: every option in the order it was shown, with why it is right or wrong.
+// Only questions written with per-option notes (the deep subjects) have them.
+function learnWhyEach(q,it){
+  if(!q.o.some(o=>o.w)) return '';
+  return '<div class="lrnwhy">'+it.order.map((oi,shown)=>{
+    const o=q.o[oi], right=q.a.includes(oi), mine=it.picked.includes(oi);
+    return '<div class="lwi '+(right?'good':'bad')+(mine?' mine':'')+'">'+
+      '<span class="k">'+String.fromCharCode(65+shown)+(right?' ✓':' ✗')+'</span>'+
+      '<span><b dir="ltr">'+qtx(o.t)+'</b>'+(mine?'<em>הבחירה שלך</em>':'')+
+      '<i dir="rtl" lang="he">'+qtx(o.w||'')+'</i></span></div>';
+  }).join('')+'</div>';
 }
 function learnQuizResult(){
   const Q=L.quiz, d=learnData(L.sec), m=d.modules.find(x=>x.id===Q.mid);

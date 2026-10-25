@@ -106,3 +106,15 @@
 /* three-column tables wrap on a phone instead of scrolling sideways */
 #lrnReadBody table.wide,#lrnRecapBody table.wide{min-width:0}
 #lrnReadBody table.wide th,#lrnRecapBody table.wide th{white-space:normal}
+
+/* per-option notes after a check (deep subjects) */
+.lrnwhy{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:7px}
+.lrnwhy .lwi{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.lrnwhy .lwi.mine{border-color:color-mix(in srgb, var(--gold) 55%, transparent)}
+.lrnwhy .lwi .k{flex:none;font-family:var(--mono);font-size:11px;padding:2px 6px;border-radius:6px;direction:ltr}
+.lrnwhy .lwi.good .k{color:var(--lime);border:1px solid color-mix(in srgb, var(--lime) 40%, transparent)}
+.lrnwhy .lwi.bad .k{color:var(--red);border:1px solid color-mix(in srgb, var(--red) 40%, transparent)}
+.lrnwhy .lwi>span:last-child{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lrnwhy .lwi b{display:block;font-family:inherit;font-size:12.5px;letter-spacing:0;text-transform:none;color:#e6e6e6;direction:ltr;text-align:left;unicode-bidi:isolate}
+.lrnwhy .lwi em{align-self:flex-end;font-style:normal;font-size:10.5px;color:var(--gold)}
+.lrnwhy .lwi i{font-style:normal;font-size:12.8px;line-height:1.6;color:#d3d9e2;direction:rtl;text-align:right;unicode-bidi:isolate}

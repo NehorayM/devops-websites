@@ -56,8 +56,12 @@ def MOD(id, nm, goal, blocks, checks, min=8):
 
 
 def C(q, right, *wrong, x):
-    """A check question after a module: options are plain strings, the right one first."""
-    return {"q": q, "o": [right] + list(wrong), "a": [0], "x": x}
+    """A check question after a module, the right option first. An option is a plain string, or
+    (text, why in Hebrew) to explain it after answering; a "deep" subject explains every option."""
+    opts = [right] + list(wrong)
+    if any(isinstance(o, tuple) for o in opts):
+        opts = [{"t": o[0], "w": o[1]} if isinstance(o, tuple) else {"t": o, "w": ""} for o in opts]
+    return {"q": q, "o": opts, "a": [0], "x": x}
 
 
 def F(m, q, right, *wrong, x):

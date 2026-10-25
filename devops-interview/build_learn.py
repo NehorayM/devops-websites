@@ -169,7 +169,14 @@ def validate_question(where, q, errs, *, need_w, min_x):
         errs.append(f"{where}: two correct answers but the stem does not say 'choose two'")
 
 
+# A subject marked "deep": True (the second Learn pass) is held to more: every part reads like a
+# chapter, not a cheat sheet, and every option of every check and final question says why it is
+# right or wrong in a sentence or two.
+DEEP_BODY, DEEP_W = 3000, 60
+
+
 def validate(s, sections, shorts, errs):
+    deep = bool(s.get("deep"))
     sec = s["sec"]
     pre = f"sec{sec}"
     if not 0 <= sec < len(sections):
@@ -229,6 +236,8 @@ def validate(s, sections, shorts, errs):
         if not (set(kinds) & CALLOUT):
             errs.append(f"{mp}: no key/trap callout")
         body = " ".join(text_of(b) for b in blocks)
+        if deep and len(body) < DEEP_BODY:
+            errs.append(f"{mp}: body is {len(body)} chars, a deep subject wants >= {DEEP_BODY}")
         if len(body) < 900:
             errs.append(f"{mp}: body is {len(body)} chars, want >= 900 — too thin to learn from")
 
@@ -239,7 +248,11 @@ def validate(s, sections, shorts, errs):
         for j, q in enumerate(checks):
             total_checks += 1
             where = f"{mp} check{j}"
-            validate_question(where, q, errs, need_w=False, min_x=40)
+            validate_question(where, q, errs, need_w=deep, min_x=40)
+            if deep:
+                for i, o in enumerate(q["o"]):
+                    if len(o["w"].strip()) < DEEP_W:
+                        errs.append(f"{where} opt{i}: why is {len(o['w'].strip())} chars, a deep subject wants >= {DEEP_W}")
             qtexts[re.sub(r"\W+", "", q["q"].lower())] += 1
             for a in q["a"]:
                 answer_pos[a] += 1
@@ -280,6 +293,10 @@ def validate(s, sections, shorts, errs):
     for j, q in enumerate(final):
         where = f"{pre} final{j}"
         validate_question(where, q, errs, need_w=True, min_x=80)
+        if deep:
+            for i, o in enumerate(q["o"]):
+                if len(o["w"].strip()) < DEEP_W:
+                    errs.append(f"{where} opt{i}: why is {len(o['w'].strip())} chars, a deep subject wants >= {DEEP_W}")
         qtexts[re.sub(r"\W+", "", q["q"].lower())] += 1
         for a in q["a"]:
             answer_pos[a] += 1
