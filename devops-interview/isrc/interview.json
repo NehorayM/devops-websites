@@ -634,7 +634,7 @@
    ],
    "f": "Why might the autoscaler refuse to remove an almost-empty node?",
    "w": "לחשוב שה-autoscaler מוסיף nodes כשה-CPU גבוה. הוא מוסיף כשיש pods שלא נכנסו.",
-   "r": "https://kubernetes.io/docs/concepts/cluster-administration/cluster-autoscaling/"
+   "r": "https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/"
   },
   {
    "id": "4e44deba",
@@ -704,7 +704,7 @@
    ],
    "f": "Your HPA keeps flapping between 3 and 10 replicas. What do you tune?",
    "w": "לשכוח שאחוז ה-CPU מחושב ביחס ל-requests.",
-   "r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+   "r": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/"
   },
   {
    "id": "e812f8f3",
@@ -2210,7 +2210,7 @@
    ],
    "f": "Why is deleting the commit not enough?",
    "w": "למחוק את ה-commit ולחשוב שהבעיה נפתרה.",
-   "r": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+   "r": "https://docs.github.com/en/code-security/concepts/secret-security/secret-scanning"
   },
   {
    "id": "5886bf36",
@@ -2228,7 +2228,7 @@
    ],
    "f": "What happens if the trust policy doesn't restrict the `sub` claim?",
    "w": "לשמור access keys של IAM user כ-secrets ב-CI.",
-   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services"
+   "r": "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws"
   },
   {
    "id": "49982e34",
@@ -2246,7 +2246,7 @@
    ],
    "f": "Why isn't pinning to a SHA enough on its own?",
    "w": "לסמוך על tag של action חיצוני כאילו הוא קבוע.",
-   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions"
+   "r": "https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions"
   },
   {
    "id": "a1644e35",
@@ -2300,7 +2300,7 @@
    ],
    "f": "How would you explain to management which vulnerabilities actually matter?",
    "w": "לכבות את הסריקה או להתעלם מכל הממצאים כי יש יותר מדי.",
-   "r": "https://trivy.dev/latest/docs/configuration/filtering/"
+   "r": "https://trivy.dev/latest/guide/configuration/filtering/"
   },
   {
    "id": "d7a35c21",
@@ -2408,7 +2408,7 @@
    ],
    "f": "What's a reasonable target time for PR feedback, and why?",
    "w": "לקנות runners חזקים בלי למדוד איפה הזמן הולך.",
-   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows"
+   "r": "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching"
   },
   {
    "id": "dc4cff93",
@@ -2462,7 +2462,7 @@
    ],
    "f": "How do you enable debug logging for a GitHub Actions run?",
    "w": "לסמן את הטסט כ-skip ב-CI.",
-   "r": "https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging"
+   "r": "https://docs.github.com/en/actions/how-tos/monitor-workflows/enable-debug-logging"
   },
   {
    "id": "cf7972a8",
@@ -2714,7 +2714,7 @@
    ],
    "f": "How do you keep the cost of per-PR environments under control?",
    "w": "לקבוע לוח זמנים ידני מי משתמש ב-staging מתי.",
-   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs"
+   "r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency"
   },
   {
    "id": "8c91d718",
@@ -3839,7 +3839,7 @@
    ],
    "f": "What does `--force` change about this behaviour?",
    "w": "לחשוב ש-Helm תמיד דורס את כל המשאב.",
-   "r": "https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
+   "r": "https://helm.sh/docs/v3/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
   },
   {
    "id": "94e2d49b",
@@ -4091,7 +4091,7 @@
    ],
    "f": "Who in your organisation can read the state bucket today?",
    "w": "לחשוב ש-`sensitive = true` מצפין את הערך ב-state.",
-   "r": "https://developer.hashicorp.com/terraform/language/state/sensitive-data"
+   "r": "https://developer.hashicorp.com/terraform/language/manage-sensitive-data"
   },
   {
    "id": "b988ebb0",
@@ -4234,7 +4234,7 @@
    ],
    "f": "What's the difference between a postcondition and a check block?",
    "w": "לגלות קלט שגוי רק אחרי apply שנכשל.",
-   "r": "https://developer.hashicorp.com/terraform/language/expressions/custom-conditions"
+   "r": "https://developer.hashicorp.com/terraform/language/validate"
   },
   {
    "id": "225b747e",
@@ -4466,7 +4466,7 @@
    ],
    "f": "How do you pass an aliased provider into a module?",
    "w": "credentials נפרדים ידניים לכל חשבון במקום assume_role.",
-   "r": "https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations"
+   "r": "https://developer.hashicorp.com/terraform/language/block/provider"
   },
   {
    "id": "36278f6f",
@@ -4877,7 +4877,7 @@
    ],
    "f": "How do you pass an output from one job to another?",
    "w": "לחשוב ש-jobs רצים אחד אחרי השני כברירת מחדל.",
-   "r": "https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions"
+   "r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
   },
   {
    "id": "65831526",
@@ -4913,7 +4913,7 @@
    ],
    "f": "Why set permissions per job rather than for the whole workflow?",
    "w": "להחליף את ה-token ב-PAT אישי עם הרשאות מלאות.",
-   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication"
+   "r": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token"
   },
   {
    "id": "81a3a6de",
@@ -4966,7 +4966,7 @@
    ],
    "f": "How would you audit where a secret was used?",
    "w": "לסמוך על masking כהגנה מלאה.",
-   "r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+   "r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets"
   },
   {
    "id": "8e798fd1",
@@ -5002,7 +5002,7 @@
    ],
    "f": "Why doesn't a commit pushed by GITHUB_TOKEN trigger another workflow?",
    "w": "לשנות את הקוד שוב ושוב בלי לבדוק את ה-triggers.",
-   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow"
+   "r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow"
   },
   {
    "id": "ba3a5c91",
@@ -5073,7 +5073,7 @@
    ],
    "f": "How do you roll out a breaking change to a shared workflow?",
    "w": "להפנות ל-`main` של התבנית, כך שכל שינוי שובר מיד את כולם.",
-   "r": "https://docs.github.com/en/actions/sharing-automations/reusing-workflows"
+   "r": "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows"
   },
   {
    "id": "c0d0e253",
@@ -5091,7 +5091,7 @@
    ],
    "f": "What would you still run on every PR, and why?",
    "w": "להוריד בדיקות בלי להחליט מה רץ מתי.",
-   "r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow"
+   "r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations"
   },
   {
    "id": "97012777",
@@ -5109,7 +5109,7 @@
    ],
    "f": "Why are self-hosted runners on public repos dangerous?",
    "w": "runner קבוע אחד לכל ה-repos, כולל PRs מבחוץ.",
-   "r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners"
+   "r": "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners"
   },
   {
    "id": "1535014b",

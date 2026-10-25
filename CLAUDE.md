@@ -92,7 +92,8 @@ devops-interview/
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
   qa_bank.js qa_learn.js audit_runtime.js audit2..8.js fuzz_exam.js audit_static.py   tests
   tools/                  sql_all.sh (→ supabase_all.sql), qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
-                          add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz)
+                          add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz),
+                          linkcheck.py + reffix.py (doc-link check against docs source repos, and the fixer)
   supabase_*.sql sql_tests/          backend for stage 8 (sql_tests/run.sh needs Docker; run_local.sh needs local Postgres)
 ```
 
@@ -236,6 +237,7 @@ Notes:
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 | 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 15 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 15 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
 | 8 | Supabase on: own project, `supabase_all.sql`, publishable key in `SUPA`; casino, duel, tournament and leaderboard visible; duel SQL suite moved to the DevOps bank; Docker-free `sql_tests/run_local.sh`; SQL comments renamed to Ship It |
+| Links | 822 doc pages checked against source repos; 154 refs fixed (moved pages, dead anchors, wrong paths); `LINKS.md` lists what needs a browser. Ship It rocket icon replaces the AWS badge |
 | Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
@@ -308,7 +310,14 @@ Notes:
    About 850 lines fewer; pixel compare of all 37 screens unchanged. `exFallback(sec)` (Learn key callouts) stays: the briefing uses it.
    **STATE.md predates this**: its notes on the explanation fallback, `saa*` names and `AUDIT9` are out of date (Nehoray asked
    for progress notes in this file only).
-5. **Verify doc links** (`r` and `ref`) from a normal browser and fix any 404s.
+5. **Doc links — first pass DONE.** `tools/linkcheck.py <docsrc>` checks all 1,600 refs (822 pages) against each docs site's
+   source repo and its redirect rules (k8s `_redirects`, Terraform `redirects.jsonc`, Helm `netlify.toml`, GitHub
+   `redirect_from`, Docker aliases, MDN `_redirects.txt`), plus #anchors against headings; AWS guides against their 2023
+   GitHub archives. `tools/reffix.py fixes.json` rewrites refs through ast (handles `D+"path"`). 154 refs fixed: moved pages
+   (GitHub Actions docs reorganised, Terraform `language/*` → `block/*`, MDN `HTTP/Reference`, k8s probes/HPA/autoscaling,
+   Helm 2→3 FAQ under `/docs/v3/`, Trivy `docs/` → `guide/`), dead anchors dropped, wrong paths (PrivateLink, EKS add-ons).
+   Refs aren't in `BANKV`, so progress is untouched. **Left:** `devops-interview/LINKS.md` lists the 254 pages with no source
+   (man7, most AWS outside the 12 archived guides, RFCs, blogs) and 2 AWS pages newer than the archive: check in a browser.
 6. **Deploy — live.** GitHub Pages builds from branch `ccr-19c6e368-wdrow7` (also the repo's default branch), repo root:
    https://nehoraym.github.io/devops-websites/ redirects to `/devops-interview/`. Push to that branch to deploy. In Supabase,
    set Authentication → URL Configuration → Site URL to that address so sign-up emails link back to the site.

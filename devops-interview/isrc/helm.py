@@ -203,7 +203,7 @@ O("helm-ops", MS, T,
    "המסקנה: לא לערוך ידנית משאבים שמנוהלים ע\"י Helm."],
   follow="What does `--force` change about this behaviour?",
   trap="לחשוב ש-Helm תמיד דורס את כל המשאב.",
-  ref=D+"faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"),
+  ref="https://helm.sh/docs/v3/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"),
 
 O("helm-ops", JM, T,
   "`helm install` fails with `rendered manifests contain a resource that already exists`. What do you do?",

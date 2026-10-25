@@ -279,7 +279,7 @@
 "x": "תזכיר את הסכנה: אפליקציה שסומכת על הערך הראשון ב-XFF לצורכי rate limit או allowlist ניתנת לעקיפה. ב-Nginx זה set_real_ip_from ו-real_ip_header.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For"
 },
 {
 "s": 21,
@@ -489,7 +489,7 @@
 "x": "בדיקה מהירה: `kubectl describe pod` ולחפש ב-Events את `Readiness probe failed`, ואז `kubectl get endpointslices -l kubernetes.io/service-name=<svc>`. תזכיר שגם selector שגוי נותן Service בלי endpoints, אבל אז הפודים מראים 1/1.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/#readiness-probe"
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/probes/#readiness-probe"
 },
 {
 "s": 18,
@@ -1014,7 +1014,7 @@
 "x": "תזכיר fail-fast: false כשרוצים לראות את כל התוצאות, ו-matrix דינמי מ-JSON (fromJSON) שנוצר ב-job קודם. זה שימושי ב-monorepo.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/running-variations-of-jobs-in-a-workflow"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/run-job-variations"
 },
 {
 "s": 15,
@@ -1364,7 +1364,7 @@
 "x": "תזכיר `scopes: '[groups, email]'` ב-`argocd-rbac-cm`, שקובע מאיזה claim לקרוא. ובחלק מה-IdPs צריך להגדיר במפורש שה-groups יישלחו ב-ID token.",
 "lv": 0,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/#tying-it-all-together"
+"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/"
 },
 {
 "s": 6,
@@ -1539,7 +1539,7 @@
 "x": "תזכיר שאפשר להגדיר אישור ידני לריצת workflows של contributors חדשים, ושבארגונים פרטיים יש הגדרה נפרדת ל-forks. ושוב, `pull_request_target` עוקף את ההגנה הזו.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets"
 },
 {
 "s": 12,
@@ -1714,7 +1714,7 @@
 "x": "תזכיר שב-Kubernetes עם volume, `fsGroup` הוא החלופה. ו-`COPY --chmod` קיים ב-BuildKit לקביעת הרשאות בלי RUN נוסף.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.docker.com/reference/dockerfile/#copy---chown---chmod"
+"r": "https://docs.docker.com/reference/dockerfile/"
 },
 {
 "s": 23,
@@ -3709,7 +3709,7 @@
 "x": "השילוב הנפוץ: `BeforeHookCreation` (מוחק לפני הבא, משאיר את האחרון לחקירה) או `HookSucceeded` (מוחק מיד אחרי הצלחה). ב-Helm hooks, Argo CD מתרגם גם את `helm.sh/hook-delete-policy`.",
 "lv": 0,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/#hook-deletion-policies"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
 },
 {
 "s": 6,
@@ -3779,7 +3779,7 @@
 "x": "תזכיר שאתה משתמש בזה בזהירות: step שנכשל ונבלע יכול להסתיר בעיה. עדיף לדווח במפורש, למשל בהערה ל-PR או ב-job summary.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 14,
@@ -3849,7 +3849,7 @@
 "x": "תזכיר ש-OpenTofu תומך בהצפנה של ה-state בצד הלקוח, ושב-Terraform עדיף לצמצם סודות ב-state: manage_master_user_password ו-ephemeral values.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/state/sensitive-data"
+"r": "https://developer.hashicorp.com/terraform/language/manage-sensitive-data"
 },
 {
 "s": 6,
@@ -4024,7 +4024,7 @@
 "x": "תוסיף שמה שלא תלוי זה בזה רץ במקביל: lint ו-unit יחד, ואז build. ב-GitHub Actions זה needs, וב-GitLab זה stages או needs ליצירת DAG.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-jobs-in-a-workflow"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-jobs"
 },
 {
 "s": 21,
@@ -4199,7 +4199,7 @@
 "x": "תזכיר ש-SyncFail hook צריך להיות פשוט ואמין, כי הוא רץ דווקא כשמשהו כבר שבור. ושהוא לא רץ אם ה-sync בוטל עם terminate-op.",
 "lv": 0,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/#usage"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
 },
 {
 "s": 1,
@@ -5354,7 +5354,7 @@
 "x": "תן דוגמה לכל שלב: PreSync ל-migration, Sync ל-resources רגילים, PostSync ל-smoke test או notification, SyncFail ל-cleanup או התראה. מראיינים אוהבים שאלה כזו.",
 "lv": 0,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/#usage"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
 },
 {
 "s": 23,
@@ -5389,7 +5389,7 @@
 "x": "תזכיר שב-v4 של upload-artifact שמות artifacts חייבים להיות ייחודיים לכל ריצה, ושעם matrix צריך שם לכל שילוב. שינוי שבר הרבה workflows.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow"
+"r": "https://docs.github.com/en/actions/tutorials/store-and-share-data"
 },
 {
 "s": 19,
@@ -5774,7 +5774,7 @@
 "x": "תזכיר `schedule: weekly`, groups לפי ecosystem, ו-labels. Renovate גמיש יותר: automerge לפי סוג עדכון, ו-dashboard אחד לכל העדכונים.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/optimizing-pr-creation-version-updates"
+"r": "https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/optimizing-pr-creation-version-updates"
 },
 {
 "s": 9,
@@ -5914,7 +5914,7 @@
 "x": "תזכיר שאם לא מגדירים policy, ה-hook נשאר עד שמוחקים אותו ידנית, וזה מה שגורם לשגיאת `already exists`. Helm משתמש בשמות שונים (`before-hook-creation`) ו-Argo CD מבין גם אותם.",
 "lv": 0,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/#hook-deletion-policies"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
 },
 {
 "s": 22,
@@ -6089,7 +6089,7 @@
 "x": "תזכיר שאפשר להימנע מסיסמה בכלל: DB זמני ב-service container עם סיסמה אקראית לכל ריצה, או Testcontainers. אין סוד לשמור.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets"
 },
 {
 "s": 20,
@@ -6124,7 +6124,7 @@
 "x": "תזכיר שאם state כבר נכנס ל-Git, מסירים אותו מההיסטוריה (git filter-repo) ומסובבים כל סוד שהיה בו. מחיקה ב-commit חדש לא מספיקה.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/state/sensitive-data"
+"r": "https://developer.hashicorp.com/terraform/language/manage-sensitive-data"
 },
 {
 "s": 17,
@@ -6474,7 +6474,7 @@
 "x": "תזכיר setup-node עם cache: 'npm' כקיצור, ושה-cache נשמר רק בסוף job מוצלח. ותגיד שאתה לא שם secrets או תוצרים בתוך cache.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching"
 },
 {
 "s": 21,
@@ -6544,7 +6544,7 @@
 "x": "תזכיר GitHub Environments: required reviewers, wait timer, ו-secrets שזמינים רק ל-job של אותה סביבה. כך גם הסודות של פרודקשן מוגנים.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idneeds"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 19,
@@ -6579,7 +6579,7 @@
 "x": "תגיד שב-CI אתה משתמש ב--var-file מפורש לכל סביבה, ולא סומך על auto.tfvars. ככה ברור בדיוק אילו ערכים נכנסו.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/values/variables#variable-definition-precedence"
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
 },
 {
 "s": 6,
@@ -7034,7 +7034,7 @@
 "x": "תזכיר גם cache של DB של הסורק ושל תוצאות, והרצה במקביל ל-tests. לרוב אפשר להוריד 12 דקות ל-2 בלי לאבד כיסוי.",
 "lv": 0,
 "k": "t",
-"r": "https://trivy.dev/latest/docs/configuration/cache/"
+"r": "https://trivy.dev/latest/guide/configuration/cache/"
 },
 {
 "s": 21,
@@ -7104,7 +7104,7 @@
 "x": "תזכיר runner groups בארגון, שמגבילים אילו repos יכולים להשתמש ב-runners מסוימים. זו סיבה נפוצה ל-runner שקיים אבל לא לוקח jobs.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/monitoring-and-troubleshooting-self-hosted-runners"
+"r": "https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/monitor-and-troubleshoot"
 },
 {
 "s": 19,
@@ -7209,7 +7209,7 @@
 "x": "תסביר את ה-trade-off: Cluster מאזן טוב ומסתיר את ה-IP, Local שומר IP אבל תלוי בפיזור הפודים. ה-LB משתמש ב-`healthCheckNodePort` כדי לשלוח רק ל-nodes עם פודים. עם anti-affinity מקבלים פיזור טוב יותר.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/services-networking/service/#external-traffic-policy"
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/"
 },
 {
 "s": 1,
@@ -7314,7 +7314,7 @@
 "x": "תזכיר `Chart.lock` כדי לקבע גרסאות של dependencies, ושה-URL ב-`Chart.yaml` חייב להתאים בדיוק ל-URL שרשום ב-Argo CD, כולל `/` בסוף.",
 "lv": 0,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-dependencies"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/"
 },
 {
 "s": 22,
@@ -8469,7 +8469,7 @@
 "x": "תזכיר שברירת המחדל המומלצת היא permissions: contents: read ברמת workflow, והוספה ממוקדת לכל job. זה חלק מ-hardening של Actions.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#permissions-for-the-github_token"
+"r": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token"
 },
 {
 "s": 4,
@@ -9519,7 +9519,7 @@
 "x": "תזכיר `permissions: {}` ברמת ה-workflow ואז הוספה לכל job, וכלים כמו StepSecurity Harden-Runner שמזהים אילו הרשאות באמת נדרשות.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token"
+"r": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token#modifying-the-permissions-for-the-github_token"
 },
 {
 "s": 19,
@@ -9659,7 +9659,7 @@
 "x": "תגיד שזה שימושי וגם מסוכן: drift ידני שורד upgrades ואף אחד לא יודע עליו. Argo CD עם self-heal מזהה ומבטל drift כזה.",
 "lv": 0,
 "k": "t",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
 },
 {
 "s": 6,
@@ -9764,7 +9764,7 @@
 "x": "תזכיר github.ref_name לשם הקצר, ו-github.head_ref ב-pull_request לשם ה-branch של ה-PR. ההבדלים בין השלושה הם שאלה נפוצה.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/accessing-contextual-information-about-workflow-runs#github-context"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#github-context"
 },
 {
 "s": 12,
@@ -9799,7 +9799,7 @@
 "x": "תזכיר את המלכודת: required check שלא רץ נשאר 'Pending' ב-GitHub. פותרים עם job מסכם שתמיד רץ, או עם dorny/paths-filter בתוך ה-workflow.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 16,
@@ -10044,7 +10044,7 @@
 "x": "תזכיר שעם needs ו-if: ${{ !cancelled() }} ה-job רץ גם כשתלות נכשלה, אבל לא כשבוטל. זה שימושי לדוחות ולניקוי.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idneeds"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 9,
@@ -10324,7 +10324,7 @@
 "x": "תזכיר ש-cancel-in-progress: false חשוב ל-deploy, כדי לא לעצור deploy באמצע. ובעולם GitOps הבעיה נעלמת: Argo CD מסנכרן תמיד ל-HEAD של ה-repo.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency"
 },
 {
 "s": 3,
@@ -10429,7 +10429,7 @@
 "x": "תן דוגמה: Deployment עם image שבור הוא Synced (תואם ל-Git) אבל Degraded (הפודים לא עולים). זה ההבדל שמראיינים רוצים לשמוע.",
 "lv": 0,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync_status/"
+"r": "https://argo-cd.readthedocs.io/en/stable/core_concepts/"
 },
 {
 "s": 19,
@@ -12389,7 +12389,7 @@
 "x": "תזכיר שה-probe צריך לבדוק משהו אמיתי, כמו endpoint `/ready` שמוכן רק אחרי טעינת קונפיג וחיבורים. אפשר להוסיף `minReadySeconds` כהגנה נוספת מפני פודים שקורסים מיד אחרי שעלו.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/probes/"
 },
 {
 "s": 15,
@@ -12529,7 +12529,7 @@
 "x": "תגיד שאתה מבדיל: 502 (תשובה שבורה או חיבור נדחה), 503 (אין upstream זמין), 504 (timeout). כל אחד שולח לכיוון אחר.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/502"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/502"
 },
 {
 "s": 14,
@@ -13054,7 +13054,7 @@
 "x": "תגיד שאתה מגדיר את ברירת המחדל של הארגון ל-read-only, ומוסיף הרשאות לכל workflow. ככה דליפה של token מוגבלת למינימום.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication"
+"r": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token"
 },
 {
 "s": 9,
@@ -13334,7 +13334,7 @@
 "x": "תזכיר להריץ `kubeconform` או `kubectl apply --dry-run=server` ב-CI על ה-manifests המרונדרים. ככה טעויות כאלה לא מגיעות ל-Argo CD בכלל.",
 "lv": 0,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#skip-schema-validation"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
 },
 {
 "s": 13,
@@ -13544,7 +13544,7 @@
 "x": "תגיד שבמעבר בין states אתה עושה את זה בשני צעדים: import ב-state החדש עם plan נקי, ורק אז removed ב-state הישן.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/resources/syntax#removing-resources"
+"r": "https://developer.hashicorp.com/terraform/language/block/resource"
 },
 {
 "s": 2,
@@ -13649,7 +13649,7 @@
 "x": "תזכיר inputs מסוג choice להגבלת ערכים (dev, staging, prod), ושילוב עם environment protection כדי שהפעלה ל-prod תדרוש אישור.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#workflow_dispatch"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch"
 },
 {
 "s": 6,
@@ -13964,7 +13964,7 @@
 "x": "תזכיר שבצד השרת עדיף 308 להפניה מ-HTTP ל-HTTPS של API, ו-HSTS לדפדפנים. ובצד הלקוח, curl -L בלי --post301 משנה ל-GET.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/308"
 },
 {
 "s": 21,
@@ -14104,7 +14104,7 @@
 "x": "תגיד שאתה בודק בלשונית Actions שה-workflow בכלל מופיע. אם לא, הבעיה היא במיקום או ב-YAML לא תקין, לא ב-trigger.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/quickstart"
+"r": "https://docs.github.com/en/actions/get-started/quickstart"
 },
 {
 "s": 3,
@@ -14139,7 +14139,7 @@
 "x": "`kubectl describe hpa` מציג את השגיאה המדויקת, למשל `missing request for cpu` או `unable to fetch metrics`. בדיקה מהירה ל-metrics-server: `kubectl top pods`.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-resource-metrics"
+"r": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#support-for-resource-metrics"
 },
 {
 "s": 1,
@@ -14244,7 +14244,7 @@
 "x": "תבדיל בין cache (תלויות, מותר שיחסר) ל-artifact (תוצר שחייב לעבור). ותזכיר retention-days כדי ש-artifacts ישנים לא יצברו עלות.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/storing-and-sharing-data-from-a-workflow"
+"r": "https://docs.github.com/en/actions/tutorials/store-and-share-data"
 },
 {
 "s": 3,
@@ -14279,7 +14279,7 @@
 "x": "ב-Helm מוסיפים `{{- if not .Values.autoscaling.enabled }}` סביב replicas. ב-Argo CD אפשר להגדיר `ignoreDifferences` על `/spec/replicas`, כדי שלא יראה את זה כ-drift.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#migrating-deployments-and-statefulsets-to-horizontal-autoscaling"
+"r": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#migrating-deployments-and-statefulsets-to-horizontal-autoscaling"
 },
 {
 "s": 5,
@@ -14419,7 +14419,7 @@
 "x": "תזכיר שאפשר גם להחליף base image או להסיר את החבילה, וזה עדיף על exception. ו-VEX הוא הפורמט הסטנדרטי לתעד ש-CVE לא רלוונטי.",
 "lv": 0,
 "k": "t",
-"r": "https://trivy.dev/latest/docs/configuration/filtering/"
+"r": "https://trivy.dev/latest/guide/configuration/filtering/"
 },
 {
 "s": 16,
@@ -15014,7 +15014,7 @@
 "x": "תזכיר לבדוק עם `go version -m <binary>` אילו גרסאות באמת בבינארי. וב-CI לבנות עם `--no-cache` או `--pull` כשמעדכנים תלויות קריטיות.",
 "lv": 0,
 "k": "t",
-"r": "https://trivy.dev/latest/docs/coverage/language/golang/"
+"r": "https://trivy.dev/latest/guide/coverage/language/golang/"
 },
 {
 "s": 1,
@@ -15119,7 +15119,7 @@
 "x": "תזכיר שזה בדיוק וקטור של SSRF: אפליקציה פגיעה מגיעה ל-IMDS ומוציאה מפתחות (מקרה Capital One). ותזכיר HttpTokens=required ו-HttpPutResponseHopLimit=1.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.aws.amazon.com/eks/latest/userguide/best-practices/identity-and-access-management.html"
+"r": "https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html"
 },
 {
 "s": 8,
@@ -15749,7 +15749,7 @@
 "x": "תזכיר ש-S3 מחזיר 403 גם על אובייקט שלא קיים כשאין ListBucket, ושיש שרתים שמחזירים 404 במקום 403 כדי לא לחשוף קיום.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/403"
 },
 {
 "s": 23,
@@ -15819,7 +15819,7 @@
 "x": "תזכיר .terraform-version או .tool-versions בריפו, כך ש-tfenv או mise בוחרים את הגרסה הנכונה אוטומטית בכל תיקייה.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/terraform#specifying-a-required-terraform-version"
+"r": "https://developer.hashicorp.com/terraform/language/block/terraform"
 },
 {
 "s": 13,
@@ -16204,7 +16204,7 @@
 "x": "תזכיר שב-GitOps זה קורה כמעט מעצמו: אם ה-image tag של שירות לא השתנה, Argo CD לא נוגע בו. וב-GitLab יש rules:changes לכל job.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 19,
@@ -16764,7 +16764,7 @@
 "x": "תזכיר שעל self-hosted runners הגבול שונה (עד 5 ימים ל-workflow), ושאתה תמיד מגדיר timeout-minutes מפורש. זה הרגל של עבודה מסודרת.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 13,
@@ -17079,7 +17079,7 @@
 "x": "תזכיר ש-AWS ו-GitHub (secret scanning partner program) לפעמים מזהים ומסמנים את המפתח אוטומטית. ובטווח הארוך: OIDC במקום מפתחות, ו-push protection שחוסם לפני ה-push.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning"
+"r": "https://docs.github.com/en/code-security/concepts/secret-security/secret-scanning"
 },
 {
 "s": 18,
@@ -17604,7 +17604,7 @@
 "x": "תגיד שאתה נזהר עם 301: דפדפנים שומרים אותו, וקשה לבטל. בהעברה אתה מתחיל ב-302, ורק כשבטוח עובר ל-301.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Redirections"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Redirections"
 },
 {
 "s": 1,
@@ -17709,7 +17709,7 @@
 "x": "תזכיר break-glass role עם MFA לחירום, ו-CloudTrail alerts על מחיקות. ותגיד שעדיף ש-destroy בכלל לא יהיה אפשרי מחוץ ל-pipeline.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/cloud-docs/run/remote-operations"
+"r": "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/run/remote-operations"
 },
 {
 "s": 12,
@@ -17744,7 +17744,7 @@
 "x": "תזכיר allow_failure ב-GitLab ו-continue-on-error ב-Actions, ושמשתמשים בהם רק לבדיקות ניסיוניות. ב-required checks הם לעולם לא צריכים להופיע.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepscontinue-on-error"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 17,
@@ -17814,7 +17814,7 @@
 "x": "תזכיר שעם fail-fast: false כדאי continue-on-error רק לגרסאות ניסיוניות (למשל node nightly), עם matrix.include. ככה הן לא מכשילות את ה-PR.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstrategyfail-fast"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 4,
@@ -18024,7 +18024,7 @@
 "x": "תזכיר שהתיעוד של HashiCorp עצמו אומר 'provisioners are a last resort'. ותגיד שאתה מעדיף immutable infrastructure: AMI מוכן עם Packer ו-user data קצר.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/resources/provisioners/syntax"
+"r": "https://developer.hashicorp.com/terraform/language/provisioners"
 },
 {
 "s": 7,
@@ -18934,7 +18934,7 @@
 "x": "תזכיר ש-`kubectl` משתמש ב-namespace מה-context, וזו הסיבה הנפוצה לטעות. ב-GitOps וב-ESO מגדירים namespace מפורש בכל manifest. כלים כמו reflector משכפלים Secrets בין namespaces כשבאמת צריך.",
 "lv": 0,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/configuration/secret/#restrictions"
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/"
 },
 {
 "s": 3,
@@ -19704,7 +19704,7 @@
 "x": "תזכיר שזה בדיוק המנגנון למעבר מ-kubectl apply ל-Helm בלי downtime. פקודת kubectl label ו-annotate אחת לכל משאב, ואז helm install.",
 "lv": 0,
 "k": "t",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#three-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/"
 },
 {
 "s": 17,
@@ -19739,7 +19739,7 @@
 "x": "תגיד שאימוץ שימושי במעבר מ-kubectl ל-Helm בלי downtime. ותזכיר שב-Argo CD אותו מצב פשוט מסומן OutOfSync והוא מאמץ לבד.",
 "lv": 0,
 "k": "t",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#three-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/"
 },
 {
 "s": 7,
@@ -19809,7 +19809,7 @@
 "x": "תזכיר שעדיף בכלל לא סודות קבועים: OIDC ל-AWS, GCP ו-Azure מחליף מפתחות. ו-environment secrets מגבילים סוד לסביבה מסוימת.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets"
 },
 {
 "s": 19,
@@ -19914,7 +19914,7 @@
 "x": "תזכיר ש-Dependabot יודע לעדכן SHAs של actions עם הערה של הגרסה, ושאפשר לאכוף SHA ב-org policy. מקרה tj-actions/changed-files ב-2025 הוא דוגמה מצוינת לראיון.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions"
+"r": "https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions"
 },
 {
 "s": 16,
@@ -20159,7 +20159,7 @@
 "x": "תזכיר condition על token.actions.githubusercontent.com:sub עם repo ו-environment, כדי ש-fork או branch אחר לא יוכלו לקחת את ה-role.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/aws-configuration"
+"r": "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration"
 },
 {
 "s": 12,
@@ -20404,7 +20404,7 @@
 "x": "תזכיר שכל job רץ על runner נקי, ולכן קבצים לא עוברים בין jobs בלי artifacts. זו נקודה שמראיינים אוהבים לבדוק.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/about-github-actions/understanding-github-actions"
+"r": "https://docs.github.com/en/actions/get-started/understand-github-actions"
 },
 {
 "s": 21,
@@ -20474,7 +20474,7 @@
 "x": "תזכיר שבלי retry, auto-sync שנכשל לא ינסה שוב את אותו commit. retry עם backoff הוא ההגדרה המומלצת לאפליקציות עם תלויות ב-operators או CRDs.",
 "lv": 0,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automatic-retry"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/"
 },
 {
 "s": 13,
@@ -20649,7 +20649,7 @@
 "x": "תזכיר ש-HTTPS_PROXY מגדיר forward proxy ללקוח, ו-ingress controller הוא reverse proxy. שאלת המשך: איך proxy ארגוני עושה TLS inspection.",
 "lv": 0,
 "k": "k",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Proxy_servers_and_tunneling"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Proxy_servers_and_tunneling"
 },
 {
 "s": 11,
@@ -21104,7 +21104,7 @@
 "x": "תזכיר שה-set-output הישן הוצא משימוש לטובת $GITHUB_OUTPUT. ושערכים מסומנים כסוד לא עוברים ב-outputs.",
 "lv": 0,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/passing-information-between-jobs"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/pass-job-outputs"
 },
 {
 "s": 5,
@@ -21524,7 +21524,7 @@
 "x": "תזכיר required_version = \"~> 1.9.0\" בקוד ו-.terraform-version בריפו, כדי ש-tfenv ו-CI יבחרו את אותה גרסה תמיד.",
 "lv": 0,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/terraform#specifying-a-required-terraform-version"
+"r": "https://developer.hashicorp.com/terraform/language/block/terraform"
 },
 {
 "s": 6,
@@ -21699,7 +21699,7 @@
 "x": "תזכיר שבפרודקשן מגדירים SSO ומכבים את admin (`admin.enabled: \"false\"`). ה-Secret הראשוני הוא רק להתחלה, ומוחקים אותו אחרי ההתקנה.",
 "lv": 0,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/getting_started/#4-login-using-the-cli"
+"r": "https://argo-cd.readthedocs.io/en/stable/getting_started/"
 },
 {
 "s": 23,
@@ -21874,7 +21874,7 @@
 "x": "תזכיר dorny/paths-filter כשרוצים להחליט ברמת job ולא ברמת workflow. ככה ה-workflow תמיד רץ, ו-required checks תמיד מדווחים.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 10,
@@ -22364,7 +22364,7 @@
 "x": "תוסיף ש-liveness לא אמור לבדוק תלויות חיצוניות כמו DB, אחרת תקלה ב-DB תגרום ל-restart לכל הפודים בבת אחת. readiness כן יכול לשקף תלות, כי הוא רק מוציא את הפוד מהתעבורה.",
 "lv": 0,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/"
+"r": "https://kubernetes.io/docs/concepts/workloads/pods/probes/"
 },
 {
 "s": 15,
@@ -22504,7 +22504,7 @@
 "x": "תזכיר required reviewers ו-deployment branches ב-environment, ושעם OIDC אפשר להגביל את ה-role ב-AWS לאותו environment בלבד.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment"
+"r": "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments"
 },
 {
 "s": 2,
@@ -22819,7 +22819,7 @@
 "x": "תזכיר ש-S3 תומך היום גם ב-interface endpoint, וזה שימושי לגישה מ-on-prem דרך VPN. ל-VPC עצמו gateway endpoint זול יותר.",
 "lv": 0,
 "k": "k",
-"r": "https://docs.aws.amazon.com/vpc/latest/userguide/privatelink/concepts.html"
+"r": "https://docs.aws.amazon.com/vpc/latest/privatelink/concepts.html"
 },
 {
 "s": 20,
@@ -23414,7 +23414,7 @@
 "x": "תגיד שאתה משתמש ב-reusable workflow לתבנית pipeline שלמה (build, scan, deploy), ו-composite action לרצף steps קטן כמו setup. ככה כל אחד במקום הנכון.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/sharing-automations/avoiding-duplication"
+"r": "https://docs.github.com/en/actions/concepts/workflows-and-actions/reusing-workflow-configurations"
 },
 {
 "s": 5,
@@ -23589,7 +23589,7 @@
 "x": "תזכיר שה-annotation עובד עם webhooks, כי ה-webhook מכיל את רשימת הקבצים ששונו. ב-polling Argo CD לא יודע מה השתנה.",
 "lv": 1,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/#webhook-and-manifest-paths-annotation"
+"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/"
 },
 {
 "s": 18,
@@ -24569,7 +24569,7 @@
 "x": "תזכיר להבדיל בין מה ש-Kubernetes עושה (מעדכן את הקובץ) לבין מה שהאפליקציה עושה. בדיקה: `kubectl exec ... cat /path` מראה את הערך החדש. פתרונות: reload על שינוי קובץ, או Reloader שעושה rollout.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/configuration/secret/#mounted-secrets-are-updated-automatically"
+"r": "https://kubernetes.io/docs/concepts/configuration/secret/"
 },
 {
 "s": 17,
@@ -25934,7 +25934,7 @@
 "x": "תזכיר שזה בדיוק למה secrets של prod שייכים ל-environment, ולמה OIDC עדיף: ה-role ב-AWS יכול לדרוש `ref:refs/heads/main` ב-sub.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions"
+"r": "https://docs.github.com/en/actions/reference/security/secure-use"
 },
 {
 "s": 8,
@@ -26109,7 +26109,7 @@
 "x": "תזכיר שעדיף !cancelled() על always(), כדי שביטול ידני לא יריץ ניקוי באמצע. וב-cleanup כדאי שכל צעד יהיה אידמפוטנטי.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/using-conditions-to-control-job-execution"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-jobs-with-conditions"
 },
 {
 "s": 17,
@@ -26249,7 +26249,7 @@
 "x": "תגיד שעל main או deploy אתה שם cancel-in-progress: false, כדי לא לבטל deploy באמצע. הביטול מתאים ל-PRs ול-feature branches.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency"
 },
 {
 "s": 18,
@@ -26319,7 +26319,7 @@
 "x": "תזכיר שהספק מאשר כל צרכן (acceptance required) ויכול להגביל principals. וזה הדפוס שבו SaaS חיצוניים (Datadog, Snowflake) מתחברים פרטית.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.aws.amazon.com/vpc/latest/userguide/privatelink/privatelink-share-your-services.html"
+"r": "https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-share-your-services.html"
 },
 {
 "s": 10,
@@ -27194,7 +27194,7 @@
 "x": "תזכיר שזו הסיבה ל-concurrency ב-CI לכל state: רק pipeline אחד בכל פעם. Atlantis נועל project עד שה-PR ממוזג.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/cli/commands/apply#apply-saved-plan-mode"
+"r": "https://developer.hashicorp.com/terraform/cli/commands/apply"
 },
 {
 "s": 23,
@@ -27544,7 +27544,7 @@
 "x": "תזכיר שיש tolerance של 10% (אין שינוי אם היחס בין 0.9 ל-1.1), ושמדיניות `behavior.scaleUp` יכולה להגביל כמה מוסיפים בכל פעם. כדאי לדעת לחשב את זה בעל פה בראיון.",
 "lv": 1,
 "k": "k",
-"r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details"
+"r": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#algorithm-details"
 },
 {
 "s": 14,
@@ -27859,7 +27859,7 @@
 "x": "תזכיר שעם ARC צריך לחשוב על Docker-in-Docker או Kaniko לבניית images, ועל IRSA או Pod Identity לגישה ל-AWS בלי סודות.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/about-actions-runner-controller"
+"r": "https://docs.github.com/en/actions/concepts/runners/actions-runner-controller"
 },
 {
 "s": 18,
@@ -28594,7 +28594,7 @@
 "x": "תזכיר שאחרי deploy כדאי smoke test שבודק שהגרסה החדשה באמת עונה. ככה גם deploy ששקר בקוד יציאה נתפס.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsshell"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 15,
@@ -29014,7 +29014,7 @@
 "x": "תזכיר ephemeral values ו-write-only attributes מ-Terraform 1.10/1.11, שמאפשרים סודות שלא נשמרים ב-state בכלל. זה מראה שאתה מעודכן.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/values/variables#suppressing-values-in-cli-output"
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
 },
 {
 "s": 5,
@@ -29364,7 +29364,7 @@
 "x": "תזכיר להשתמש בזה ברמת משאב (annotation) ולא ברמת Application, כדי לא לאבד validation לכל השאר.",
 "lv": 1,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#skip-schema-validation"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
 },
 {
 "s": 15,
@@ -29469,7 +29469,7 @@
 "x": "תגיד שב-reusable workflows משותפים בין צוותים אתה מעדיף secrets מפורשים, כדי לראות בדיוק מה עובר. inherit מתאים לתוך אותו repo.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/sharing-automations/reusing-workflows#passing-secrets-to-nested-workflows"
+"r": "https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows#passing-secrets-to-nested-workflows"
 },
 {
 "s": 12,
@@ -29539,7 +29539,7 @@
 "x": "תזכיר את ה-provider awscc (Cloud Control API), שתומך במשאבים חדשים מהר יותר מ-aws provider. זו חלופה טובה ל-CLI.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/resources/provisioners/local-exec"
+"r": "https://developer.hashicorp.com/terraform/language/provisioners"
 },
 {
 "s": 16,
@@ -29819,7 +29819,7 @@
 "x": "תזכיר שכדאי גם לפצל Application ענק לכמה קטנים, כדי שכל sync יהיה ממוקד ושגיאה אחת לא תעצור הכול.",
 "lv": 1,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#selective-sync"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
 },
 {
 "s": 4,
@@ -30624,7 +30624,7 @@
 "x": "תזכיר שלעלייה אין חלון ברירת מחדל (0 שניות), כי תגובה מהירה לעומס חשובה יותר. בשירותים עם עלייה איטית אפשר להוסיף חלון קטן גם ל-scaleUp.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#stabilization-window"
+"r": "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#stabilization-window"
 },
 {
 "s": 20,
@@ -31254,7 +31254,7 @@
 "x": "תזכיר שזה וקטור דליפה מוכר, וגם `set -x` בסקריפטים יכול להדפיס ערכים. ב-review של workflows מחפשים echo, debug ו-printenv.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#using-secrets-in-a-workflow"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#using-secrets-in-a-workflow"
 },
 {
 "s": 0,
@@ -31464,7 +31464,7 @@
 "x": "תזכיר שעם includeSubDomains ו-preload זה קשה עוד יותר לבטל. ותגיד שאתה מתחיל עם max-age קצר ומגדיל רק אחרי שכל ה-subdomains תומכים ב-HTTPS.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security"
 },
 {
 "s": 19,
@@ -32374,7 +32374,7 @@
 "x": "תזכיר GitHub App עם actions/create-github-app-token כפתרון המומלץ, עדיף על PAT אישי. ותגיד שצריך להיזהר מלולאות כשמאפשרים את זה.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow"
+"r": "https://docs.github.com/en/actions/tutorials/authenticate-with-github_token#using-the-github_token-in-a-workflow"
 },
 {
 "s": 9,
@@ -32829,7 +32829,7 @@
 "x": "תזכיר ש-helm diff upgrade היה מראה את המחיקה מראש. ותגיד שאתה מתייחס להסרת משאב מ-chart כשינוי שדורש review.",
 "lv": 1,
 "k": "t",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#three-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/"
 },
 {
 "s": 9,
@@ -33214,7 +33214,7 @@
 "x": "תזכיר ש-hostPort תלוי בתמיכה של ה-CNI (portmap plugin), ושב-Pod Security Standard של Baseline הוא מוגבל. מקרה לגיטימי הוא ingress controller שרץ כ-DaemonSet על פורטים 80 ו-443.",
 "lv": 1,
 "k": "k",
-"r": "https://kubernetes.io/docs/concepts/configuration/overview/#services"
+"r": "https://kubernetes.io/blog/2025/11/25/configuration-good-practices/#avoid-hostport-and-hostnetwork-unless-absolutely-necessary"
 },
 {
 "s": 17,
@@ -34089,7 +34089,7 @@
 "x": "תזכיר שגם HashiCorp אומרים ש-CLI workspaces לא מתאימים להפרדת הרשאות בין סביבות. ותגיד שאתה משתמש בהם רק לעותקים זמניים, כמו לכל PR.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/state/workspaces#when-not-to-use-multiple-workspaces"
+"r": "https://developer.hashicorp.com/terraform/language/state/workspaces"
 },
 {
 "s": 15,
@@ -34439,7 +34439,7 @@
 "x": "תזכיר להגביל את ה-trust policy לפי `sub` (repo, branch, environment) ו-`aud`. ותזכיר שאותו דפוס עובד עם GitLab CI, Azure ו-GCP (workload identity federation).",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services"
+"r": "https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws"
 },
 {
 "s": 17,
@@ -34509,7 +34509,7 @@
 "x": "תסביר את ה-cascading failure: restarts תחת עומס מעבירים עוד עומס לפודים הנותרים, ואז גם הם נכשלים. liveness צריך לבדוק רק שהתהליך חי, בלי תלויות ובלי עבודה כבדה. ברירות המחדל: `timeoutSeconds: 1`, `failureThreshold: 3`.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes"
+"r": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
 },
 {
 "s": 10,
@@ -34614,7 +34614,7 @@
 "x": "דוגמה טובה: HPA עם replicas, או webhook שמזריק sidecar ושדה שמנוהל על ידי operator. ignoreDifferences לבד מסתיר את הבעיה, ורק עם האופציה ה-sync מפסיק לדרוס.",
 "lv": 1,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#respect-ignore-difference-configs"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
 },
 {
 "s": 13,
@@ -35699,7 +35699,7 @@
 "x": "תזכיר paths-ignore ו-tags-ignore לסינון נוסף, ושב-push של tag ה-github.ref הוא refs/tags/v1.2. בדיקה של זה ב-if היא חלופה.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#onpushbranchestagsbranches-ignoretags-ignore"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax"
 },
 {
 "s": 19,
@@ -35839,7 +35839,7 @@
 "x": "תשווה ל-Helm 2, שעשה two-way merge והתעלם משינויים ידניים. ותזכיר ש-Helm 4 עובר ל-server-side apply, שמנהל בעלות על שדות.",
 "lv": 1,
 "k": "k",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
 },
 {
 "s": 22,
@@ -36259,7 +36259,7 @@
 "x": "תזכיר שסדר יצירה לא אומר סדר מוכנות: Deployment יכול לעלות לפני ש-DB מוכן. לזה צריך readiness, init containers או retry באפליקציה.",
 "lv": 1,
 "k": "k",
-"r": "https://github.com/helm/helm/blob/main/pkg/release/util/kind_sorter.go"
+"r": "https://github.com/helm/helm/blob/main/pkg/release/v1/util/kind_sorter.go"
 },
 {
 "s": 2,
@@ -36434,7 +36434,7 @@
 "x": "תזכיר שעם Pod Identity ו-session tags אפשר role אחד עם condition לפי kubernetes-namespace. זה מקטין את מספר ה-roles כשיש עשרות צוותים.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.aws.amazon.com/eks/latest/userguide/best-practices/identity-and-access-management.html"
+"r": "https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html"
 },
 {
 "s": 19,
@@ -36679,7 +36679,7 @@
 "x": "תזכיר שזה חל על כל שדה שמשתמש שולט בו: title, body, branch name, commit message. ו-actionlint ו-zizmor מזהים את הדפוס.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#understanding-the-risk-of-script-injections"
+"r": "https://docs.github.com/en/actions/reference/security/secure-use"
 },
 {
 "s": 0,
@@ -37274,7 +37274,7 @@
 "x": "תזכיר שמעבר ל-for_each על משאבים קיימים דורש moved blocks מ-[0] ל-[\"dev\"] וכו'. אחרת המעבר עצמו יגרום ל-destroy.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/count#when-to-use-for_each-instead-of-count"
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/count"
 },
 {
 "s": 15,
@@ -37554,7 +37554,7 @@
 "x": "תן דוגמה: S3 cross-region replication, או תעודת ACM ב-us-east-1 ל-CloudFront כשה-stack כולו באזור אחר. זה המקרה הקלאסי.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/providers/configuration#alias-multiple-provider-configurations"
+"r": "https://developer.hashicorp.com/terraform/language/block/provider"
 },
 {
 "s": 9,
@@ -37624,7 +37624,7 @@
 "x": "תשווה: validation לקלט, precondition ו-postcondition לעצירה כשהנחה נשברת, ו-check לניטור רציף בלי לחסום. לכל אחד יש מקום.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/checks"
+"r": "https://developer.hashicorp.com/terraform/language/validate"
 },
 {
 "s": 14,
@@ -37869,7 +37869,7 @@
 "x": "תזכיר שמעבר מ-count ל-for_each על משאבים קיימים דורש moved blocks (from = x[0], to = x[\"a\"]), אחרת יהיה destroy ו-create.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/count#when-to-use-for_each-instead-of-count"
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/count"
 },
 {
 "s": 22,
@@ -37904,7 +37904,7 @@
 "x": "תזכיר headers כמו X-RateLimit-Remaining שמאפשרים להאט לפני ה-429. ובצד השרת, rate limiting לפי לקוח עם token bucket.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/429"
 },
 {
 "s": 18,
@@ -38184,7 +38184,7 @@
 "x": "תזכיר את הדפוס של helm create: {{- if not .Values.autoscaling.enabled }} replicas. כך HPA ו-Helm לא מתנגשים על אותו שדה.",
 "lv": 1,
 "k": "t",
-"r": "https://helm.sh/docs/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
+"r": "https://helm.sh/docs/v3/faq/changes_since_helm2/#improved-upgrade-strategy-3-way-strategic-merge-patches"
 },
 {
 "s": 23,
@@ -38219,7 +38219,7 @@
 "x": "תגיד שבכל migration אתה עושה inventory של credentials, מחליף ב-OIDC מה שאפשר, ומסובב את השאר. ככה ה-migration גם משפר אבטחה.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect"
+"r": "https://docs.github.com/en/actions/concepts/security/openid-connect"
 },
 {
 "s": 3,
@@ -38324,7 +38324,7 @@
 "x": "תזכיר שצריך לתאם timeouts: keep-alive בשרת ארוך מה-idle timeout של ה-LB, אחרת מקבלים 502 לסירוגין. זה מתחבר לשאלה על ALB.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive"
+"r": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Keep-Alive"
 },
 {
 "s": 5,
@@ -38429,7 +38429,7 @@
 "x": "תזכיר את המחיר: משאב שהשתנה בשדה שמוחרג מה-diff לא יוחל. ברוב המקרים זה בסדר, ול-apps גדולים זו אופטימיזציה חשובה.",
 "lv": 1,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#selective-sync"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/"
 },
 {
 "s": 4,
@@ -39094,7 +39094,7 @@
 "x": "תזכיר שאם סיסמה כבר הודפסה ללוג, מסובבים אותה ומוחקים את הלוג. ותזכיר manage_master_user_password ב-RDS, שמשאיר את הסיסמה מחוץ ל-Terraform.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/values/variables#suppressing-values-in-cli-output"
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
 },
 {
 "s": 22,
@@ -39304,7 +39304,7 @@
 "x": "תזכיר: aws eks describe-addon-versions --kubernetes-version מראה את הגרסאות המתאימות. ובניהול ב-Terraform, גרסת ה-add-on צריכה להיות חלק מאותו PR של שדרוג.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.aws.amazon.com/eks/latest/userguide/managing-add-ons.html"
+"r": "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html"
 },
 {
 "s": 18,
@@ -39514,7 +39514,7 @@
 "x": "תזכיר `trivy image --download-db-only` כשלב נפרד, ובדיקה של תאריך ה-DB. ובינארים סטטיים (Go) נבדקים לפי ה-build info, ולכן חשוב לבנות עם מידע על מודולים.",
 "lv": 1,
 "k": "t",
-"r": "https://trivy.dev/latest/docs/scanner/vulnerability/"
+"r": "https://trivy.dev/latest/guide/scanner/vulnerability/"
 },
 {
 "s": 15,
@@ -39654,7 +39654,7 @@
 "x": "תגיד ש-removed הוא הבן הזוג של import ו-moved: שלושתם שינויי state בקוד, עם review. זה מה שמשנה מ-Terraform 1.5 ואילך.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/resources/syntax#removing-resources"
+"r": "https://developer.hashicorp.com/terraform/language/block/resource"
 },
 {
 "s": 2,
@@ -39759,7 +39759,7 @@
 "x": "תזכיר rulesets החדשים ותכונת merge queue, ושגם שם צריך שה-check ידווח. ה-pattern של job מסכם (all-checks) פותר את כל המקרים.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request"
 },
 {
 "s": 18,
@@ -39864,7 +39864,7 @@
 "x": "תגיד שאתה מתחיל ממדידה: timestamps לכל step בלוג. אחר כך cache לתלויות, image מוכן מראש עם התלויות, וכלים מהירים כמו uv או npm ci עם cache.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching"
 },
 {
 "s": 16,
@@ -40809,7 +40809,7 @@
 "x": "תזכיר שאפשר לשלב environment ב-OIDC trust policy (sub כולל environment:production), כך שרק job שאושר לפרודקשן לוקח את ה-role.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment"
+"r": "https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments"
 },
 {
 "s": 13,
@@ -41229,7 +41229,7 @@
 "x": "תזכיר שב-GitOps הבעיה נעלמת: רק Argo CD מחיל, ו-CI רק כותב ל-Git. שינויים מקבילים נפתרים כ-merge conflict ב-Git.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/control-the-concurrency-of-workflows-and-jobs"
+"r": "https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency"
 },
 {
 "s": 8,
@@ -41439,7 +41439,7 @@
 "x": "תציע פתרונות: load balancing בצד הלקוח עם headless Service ו-`round_robin` של gRPC, service mesh (Istio, Linkerd) שמאזן ב-L7, או `MaxConnectionAge` בשרת כדי לסגור חיבורים מדי פעם. מראיינים אוהבים לראות שאתה מבין L4 מול L7.",
 "lv": 1,
 "k": "t",
-"r": "https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies"
+"r": "https://kubernetes.io/docs/concepts/services-networking/service/"
 },
 {
 "s": 19,
@@ -42384,7 +42384,7 @@
 "x": "תזכיר שאותו דבר נכון ל-ECR (layers ב-S3) ול-DynamoDB. ותגיד שאתה בודק NAT costs ב-Cost Explorer לפי usage type NatGateway-Bytes.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints-s3.html"
+"r": "https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html"
 },
 {
 "s": 5,
@@ -43119,7 +43119,7 @@
 "x": "הפתרון: לנהל את הסיסמה מחוץ ל-chart (External Secrets), או לתת אותה ב-values. ותזכיר שזה מקרה קלאסי של הבדל בין Helm רגיל ל-Helm דרך Argo CD.",
 "lv": 1,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-lookup"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/"
 },
 {
 "s": 17,
@@ -43189,7 +43189,7 @@
 "x": "תן דוגמה: for_each = { for k, v in var.subnets : k => v } כש-k הוא שם כמו private-a, ולא subnet ID. זה הדפוס שמונע את השגיאה.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each#limitations-on-values-used-in-for_each"
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
 },
 {
 "s": 14,
@@ -43364,7 +43364,7 @@
 "x": "תגיד שעל runners קבועים יש גם סיכון אבטחה: job זדוני יכול להשאיר משהו שירוץ ב-job הבא. ephemeral פותר גם את זה.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/autoscaling-with-self-hosted-runners#using-ephemeral-runners-for-autoscaling"
+"r": "https://docs.github.com/en/actions/reference/runners/self-hosted-runners"
 },
 {
 "s": 15,
@@ -43469,7 +43469,7 @@
 "x": "תזכיר שב-ECR ה-password הוא token שפג תוקפו אחרי 12 שעות, וצריך מנגנון שמחדש אותו. זו מלכודת נפוצה.",
 "lv": 1,
 "k": "k",
-"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/#helm-oci-repositories"
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/helm/"
 },
 {
 "s": 13,
@@ -43714,7 +43714,7 @@
 "x": "תזכיר NetworkPolicy ל-repo-server שמתירה רק Git, registries ו-Redis, וחסימה של IMDS (hop limit 1 או policy). זה hardening שמופיע בתיעוד האבטחה של Argo CD.",
 "lv": 1,
 "k": "t",
-"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/security/#networkpolicies"
+"r": "https://argo-cd.readthedocs.io/en/stable/operator-manual/security/"
 },
 {
 "s": 2,
@@ -44204,7 +44204,7 @@
 "x": "תזכיר גם preconditions ו-postconditions ב-lifecycle, שבודקים הנחות על משאבים, ו-check blocks שמזהירים בלי להכשיל.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/values/variables#custom-validation-rules"
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
 },
 {
 "s": 23,
@@ -44239,7 +44239,7 @@
 "x": "תזכיר Dependabot או Renovate שמעדכנים SHAs עם הערה של הגרסה (# v4.1.0). ככה מקבלים גם בטיחות וגם עדכונים.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions"
+"r": "https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions"
 },
 {
 "s": 6,
@@ -44379,7 +44379,7 @@
 "x": "תזכיר: hosted runners ל-repos ציבוריים, ו-self-hosted רק ל-repos פרטיים, עם runners זמניים (ARC ב-Kubernetes) ורשת מבודדת.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security"
+"r": "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners"
 },
 {
 "s": 11,
@@ -44694,7 +44694,7 @@
 "x": "תזכיר את ההגדרה Require approval for fork pull request workflows, ו-runners מבודדים לגמרי (ephemeral, בלי גישה לרשת פנימית) אם חייבים.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#self-hosted-runner-security"
+"r": "https://docs.github.com/en/actions/concepts/runners/self-hosted-runners"
 },
 {
 "s": 16,
@@ -44834,7 +44834,7 @@
 "x": "תזכיר את המעקף הזמני: apply עם -target למשאב שיוצר את ה-ID, ואז apply מלא. אבל תגיד שהתיקון הנכון הוא לבנות מפתחות סטטיים.",
 "lv": 1,
 "k": "t",
-"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each#limitations-on-values-used-in-for_each"
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
 },
 {
 "s": 18,
@@ -44939,7 +44939,7 @@
 "x": "תזכיר שגם schedule לא מדויק: הוא יכול להתעכב בזמני עומס, ו-cron רץ ב-UTC. ל-job קריטי בזמן מדויק כדאי מנגנון אחר.",
 "lv": 1,
 "k": "t",
-"r": "https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule"
+"r": "https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule"
 },
 {
 "s": 23,
@@ -45359,7 +45359,7 @@
 "x": "תזכיר terraform.workspace בקוד כדי לגזור שמות ייחודיים, ותגיד שב-HCP Terraform 'workspace' הוא מושג אחר: יחידת state ו-run עם הגדרות משלה.",
 "lv": 1,
 "k": "k",
-"r": "https://developer.hashicorp.com/terraform/language/state/workspaces#when-not-to-use-multiple-workspaces"
+"r": "https://developer.hashicorp.com/terraform/language/state/workspaces"
 },
 {
 "s": 14,

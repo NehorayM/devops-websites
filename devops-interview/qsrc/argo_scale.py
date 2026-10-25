@@ -189,7 +189,7 @@ Q(S, MS, T,
   ("Run one repo-server Deployment per Application",
    "זה מבזבז משאבים ולא פותר את הבעיה: כל commit עדיין דורש רינדור של כל ה-apps."),
   tip="תזכיר שה-annotation עובד עם webhooks, כי ה-webhook מכיל את רשימת הקבצים ששונו. ב-polling Argo CD לא יודע מה השתנה.",
-  ref=D+"operator-manual/high_availability/#webhook-and-manifest-paths-annotation"),
+  ref="https://argo-cd.readthedocs.io/en/stable/operator-manual/high_availability/"),
 
 Q(S, JM, K,
   "What is `in-cluster` in Argo CD?",

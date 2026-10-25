@@ -344,7 +344,7 @@ Q(S, JM, T,
   ("Run `USER app` before the COPY, so files are owned by app",
    "USER לא משפיע על הבעלות של קבצים ב-COPY. הם עדיין נוצרים כ-root, אלא אם מוסיפים `--chown`."),
   tip="תזכיר שב-Kubernetes עם volume, `fsGroup` הוא החלופה. ו-`COPY --chmod` קיים ב-BuildKit לקביעת הרשאות בלי RUN נוסף.",
-  ref=D+"reference/dockerfile/#copy---chown---chmod"),
+  ref="https://docs.docker.com/reference/dockerfile/"),
 
 Q(S, MS, T,
   "Builds sometimes produce different images from the same commit, because `RUN pip install -r requirements.txt` pulls newer versions. How do you make builds reproducible?",

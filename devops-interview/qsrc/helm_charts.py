@@ -487,7 +487,7 @@ Q(S, JM, T,
   ("Nothing, since Helm always overwrites the existing resources",
    "Helm 3 דווקא מסרב לדרוס, כדי לא לפגוע במשאבים של מישהו אחר. בגלל זה השגיאה."),
   tip="תגיד שאימוץ שימושי במעבר מ-kubectl ל-Helm בלי downtime. ותזכיר שב-Argo CD אותו מצב פשוט מסומן OutOfSync והוא מאמץ לבד.",
-  ref=D+"faq/changes_since_helm2/#three-way-strategic-merge-patches"),
+  ref="https://helm.sh/docs/v3/faq/changes_since_helm2/"),
 
 Q(S, MS, K,
   "What does `.Files.Get` let a chart do?",
