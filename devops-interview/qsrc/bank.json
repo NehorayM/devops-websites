@@ -5909,9 +5909,9 @@
 "HookCompleted לא קיים ב-Argo CD, למרות שהוא נשמע הגיוני. הערך השלישי הוא BeforeHookCreation, שמוחק את ה-hook הקודם.",
 "HookSucceeded מוחק אחרי הצלחה, HookFailed אחרי כשל, ו-BeforeHookCreation מוחק את הישן לפני יצירת חדש. אפשר לשלב כמה מהם, מופרדים בפסיק.",
 "השמות נשמעים הגיוניים, אבל הם לא ערכים של Argo CD. כל הערכים מתחילים ב-Hook או Before.",
-"AfterSync ו-Never לא ערכים של delete policy. בלי policy, ה-hook פשוט נשאר."
+"AfterSync ו-Never לא ערכים של delete policy: AfterSync הוא סוג של hook. ובלי policy בכלל, Argo CD מניח BeforeHookCreation."
 ],
-"x": "תזכיר שאם לא מגדירים policy, ה-hook נשאר עד שמוחקים אותו ידנית, וזה מה שגורם לשגיאת `already exists`. Helm משתמש בשמות שונים (`before-hook-creation`) ו-Argo CD מבין גם אותם.",
+"x": "תזכיר שבלי policy בכלל Argo CD מניח BeforeHookCreation, ולכן Job באותו שם לא נתקע. `HookSucceeded` לבד משאיר Job שנכשל, וזה מה שגורם לשגיאת `already exists`. Helm משתמש בשמות אחרים (`before-hook-creation`), ו-Argo CD מבין גם אותם.",
 "lv": 0,
 "k": "k",
 "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/"
@@ -9453,7 +9453,7 @@
 },
 {
 "s": 18,
-"q": "After `helm uninstall`, the release name can't be reused because a hook Job from the old release still exists. Why wasn't it deleted?",
+"q": "After `helm uninstall`, a hook Job from the old release is still in the namespace. Why wasn't it deleted?",
 "o": [
 [
 "A",
@@ -9465,7 +9465,7 @@
 ],
 [
 "C",
-"Hooks aren't managed by the release without a delete policy"
+"Uninstall skips hooks, as they aren't part of the release"
 ],
 [
 "D",
@@ -9478,10 +9478,10 @@
 "y": [
 "uninstall מוחק את כל המשאבים של ה-release, כולל workloads. hooks הם היוצא מן הכלל.",
 "Helm מוחק Jobs רגילים של ה-release בלי בעיה. רק משאבים של hooks מתנהגים אחרת.",
-"משאבים של hooks לא נחשבים חלק מה-release, ו-uninstall לא מוחק אותם. בלי hook-delete-policy, Job של hook נשאר. הוא יתנגש בהתקנה הבאה אם השם קבוע. before-hook-creation או hook-succeeded פותרים.",
+"משאבים שנוצרו ב-hook לא נחשבים חלק מה-release, ולכן uninstall לא מוחק אותם. כדי לנקות אותם מגדירים `helm.sh/hook-delete-policy` (למשל hook-succeeded) או `ttlSecondsAfterFinished` ל-Job. בלי policy בכלל, Helm מוחק את ה-Job הישן רק רגע לפני שה-hook הבא נוצר.",
 "TTL היה מוחק את ה-Job אחרי זמן, לא שומר אותו. הבעיה היא שאף מנגנון לא מחק אותו."
 ],
-"x": "תזכיר שאפשר להוסיף גם ttlSecondsAfterFinished ל-Job של hook, כגיבוי שמנקה אותו גם אם ה-delete policy לא תפס.",
+"x": "תזכיר ש-`ttlSecondsAfterFinished` על Job של hook מנקה אותו גם אחרי uninstall. ובלי policy, ברירת המחדל before-hook-creation מוחקת את ה-Job הישן רק כשה-hook רץ שוב.",
 "lv": 0,
 "k": "t",
 "r": "https://helm.sh/docs/topics/charts_hooks/#hook-resources-are-not-managed-with-corresponding-releases"
@@ -39907,7 +39907,7 @@
 "o": [
 [
 "A",
-"When apply can't update a field; it recreates, risking downtime"
+"When apply's annotation won't fit; it overwrites the whole object"
 ],
 [
 "B",
@@ -39926,9 +39926,9 @@
 "A"
 ],
 "y": [
-"`Replace=true` משתמש ב-`kubectl replace` או create במקום apply. זה פותר שדות immutable או annotations גדולים, אבל עלול למחוק וליצור מחדש משאבים, ומשאבים כמו Deployment יאבדו את הפודים שלהם.",
+"`Replace=true` מריץ `kubectl replace` (או create) במקום apply, ולכן לא נשמרת annotation של last-applied. זה פותר משאבים שגדולים מדי ל-annotation. הסיכון: replace מחליף את כל האובייקט ודורס שדות שאחרים קבעו. מחיקה ויצירה מחדש קורות רק עם `Force=true`.",
 "שינוי CRD לא נפתר ב-replace של ה-CRs. migration של storage version הוא תהליך אחר.",
-"Secrets עובדים עם apply כרגיל. Replace שימושי לשדות immutable או לגודל annotation.",
+"Secrets עובדים עם apply כרגיל. התיעוד מציג את Replace בעיקר למשאבים שגדולים מדי ל-annotation של last-applied.",
 "replace לא מהיר יותר בצורה משמעותית, והוא מסוכן יותר. משתמשים בו רק כשצריך."
 ],
 "x": "תזכיר שעדיף SSA כשהבעיה היא גודל annotation, ו-`Force=true,Replace=true` רק כשבאמת אין דרך אחרת. אפשר להגדיר את זה כ-annotation על משאב בודד.",
@@ -42866,7 +42866,7 @@
 "B"
 ],
 "y": [
-"Replace יגרום למחיקה ויצירה מחדש, וה-webhook יזריק שוב. זה מחמיר את המצב.",
+"Replace מחליף את האובייקט במקום apply, אבל ה-webhook מזריק את השדות שוב בכל יצירה של pod. ה-diff נשאר, וה-sync רק נעשה אגרסיבי יותר.",
 "ה-webhook מוסיף שדות ב-admission, ו-Argo CD רואה הבדל מול Git ו-self-heal מנסה להחזיר. `ignoreDifferences` (עם jqPathExpressions או `managedFieldsManagers`) על השדות האלה, יחד עם `RespectIgnoreDifferences=true`, עוצר את ה-flapping.",
 "זה מפסיק את ה-flapping אבל משאיר את ה-app OutOfSync תמיד, ואז drift אמיתי לא ייראה.",
 "זה שביר: כל עדכון של ה-mesh משנה את השדות, וה-webhook עלול להזריק שוב ולשכפל. Git צריך לתאר את מה שאתה מנהל."
@@ -44022,7 +44022,7 @@
 ],
 "y": [
 "זה ימנע diff, אבל גם ימנע מ-Argo CD לעדכן את ה-Job כשהוא באמת משתנה, והשם המשתנה עדיין יוצר אובייקט חדש.",
-"Replace ימחק וייצור את ה-Job בכל sync, שזה בדיוק מה שקורה. זה לא פותר את הבעיה.",
+"`kubectl replace` לא יכול לשנות template של Job, כי הוא immutable, ולכן ייכשל באותה שגיאה. רק Force מוחק ויוצר, וזו בדיוק ההתנהגות שרוצים להימנע ממנה.",
 "זה ישאיר Jobs ישנים ב-cluster לנצח, בלי לפתור את ה-diff ואת היצירה מחדש של ה-Job החדש.",
 "Job רגיל ב-Git עם שם שמשתנה או template שונה נוצר ונמחק בכל sync. hook עם `BeforeHookCreation` מתאים ל-Job שרץ בכל deploy, ו-CronJob מתאים לעבודה חוזרת לפי זמן."
 ],

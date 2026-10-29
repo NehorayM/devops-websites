@@ -15,7 +15,7 @@ SUBJECT = {
        P("`helm rollback <release> <revision>` מיישם מחדש את ה-manifest של revision קודם, **כ-revision חדש**. ההיסטוריה לא נמחקת."),
        TABLE(["דגל", "מה הוא עושה"],
              ["`--install`", "מתקין אם ה-release לא קיים; אותה פקודה לכל ריצה"],
-             ["`--wait`", "מחכה שה-pods יהיו Ready וה-Jobs יסתיימו"],
+             ["`--wait`", "מחכה שה-pods, ה-PVCs וה-Services יהיו מוכנים (ל-Jobs צריך גם `--wait-for-jobs`)"],
              ["`--atomic`", "rollback אוטומטי בכישלון (כולל wait)"],
              ["`--timeout`", "כמה לחכות"],
              ["`--history-max`", "כמה revisions לשמור"]),

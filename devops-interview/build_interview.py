@@ -75,10 +75,18 @@ def validate(items, partial):
                 errs.append(f"{w}: point is not Hebrew: {p[:50]!r}")
             if len(p) > 230:
                 errs.append(f"{w}: point too long to scan ({len(p)} chars)")
+            # a bare fragment ("NetworkPolicy שחוסמת") doesn't tell the reader what to say
+            if len(p) < 40:
+                errs.append(f"{w}: point too thin to learn from ({len(p)} chars): {p[:50]!r}")
         if not o.follow or HEB.search(o.follow):
             errs.append(f"{w}: needs an English follow-up question")
+        elif not o.follow.strip().endswith("?"):
+            errs.append(f"{w}: the follow-up must be a question ending in '?'")
         if not o.trap or not HEB.search(o.trap):
             errs.append(f"{w}: needs a Hebrew trap line")
+        # the trap says what goes wrong, why, and what to say instead (one line can't)
+        elif len(o.trap) < 80:
+            errs.append(f"{w}: trap must say why it's wrong and what to say instead ({len(o.trap)} chars)")
         host = re.sub(r"^https://([^/]+)/?.*$", r"\1", o.ref or "")
         if not (o.ref or "").startswith("https://") or host not in REF_HOSTS:
             errs.append(f"{w}: reference must be https on a documentation host, got {o.ref!r}")

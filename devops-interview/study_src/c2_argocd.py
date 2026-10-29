@@ -39,7 +39,7 @@ spec:
     TABLE(["Sync option", "מתי"],
           ["CreateNamespace=true", "namespace לא קיים"],
           ["ServerSideApply=true", "annotation too long, CRDs גדולים"],
-          ["Replace=true", "field is immutable (מסוכן)"],
+          ["Force=true,Replace=true", "field is immutable: מוחק ויוצר מחדש (מסוכן)"],
           ["SkipDryRunOnMissingResource=true", "CR עם CRD באותו sync"],
           ["Prune=false (על משאב)", "להגן ממחיקה"]),
     TRAP("Healthy לא אומר שהאפליקציה עובדת: הוא מבוסס על status של משאבים ו-readiness. בדיקה אמיתית: PostSync hook או analysis ב-Argo Rollouts."),

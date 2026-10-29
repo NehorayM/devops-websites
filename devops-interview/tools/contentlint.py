@@ -99,6 +99,13 @@ STALE = [
     ("#16 chroot /host said to work in a plain kubectl debug node pod", r"עם `chroot /host` אפשר להריץ כלים של ה-node, בלי SSH"),
     ("#18 Ingress NGINX described as merely shrinking / current default", r"התחזוקה של ingress-nginx מצטמצמת"),
     ("#19 create-only/create-update said to block all deletions", r"`applicationsSync: create-only` או `create-update` חוסם מחיקות"),
+    # found while rewriting interview mode, checked against the Helm 3 and Argo CD docs sources
+    ("#19b a hook with no delete policy said to block the next run (default is before-hook-creation)",
+     r"בלי hook-delete-policy, Job של hook נשאר\. הוא יתנגש|אם לא מגדירים policy, ה-hook נשאר עד שמוחקים"
+     r"|בלי policy, ה-hook פשוט נשאר|Job בלי `hook-delete-policy: before-hook-creation` נשאר|לשכוח `hook-delete-policy`, כך שה-Job"),
+    ("#19c `helm --wait` said to wait for Jobs (that needs --wait-for-jobs)", r"--wait`[^\n]{0,40}ה-Jobs יסתיימו"),
+    ("#19d `Replace=true` said to delete and recreate (only Force=true does)",
+     r"Replace מוחק ויוצר|Replace ימחק וייצור|`Replace=true` או Force sync מוחקים|\(או delete ו-create\)|\"Replace=true\", \"field is immutable"),
 ]
 texts = list(all_texts())
 for name, pat in STALE:
