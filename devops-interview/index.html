@@ -2725,7 +2725,8 @@ const QS=DATA.questions, SECTIONS=DATA.sections, SHORT=DATA.short||SECTIONS;
 // commit that carries it: stamping before committing always names the PREVIOUS commit, which
 // is exactly the wrong answer for "is this page stale?". A timestamp cannot be wrong that way.
 const BUILD='2026-09-27 08:59 UTC';
-const BANKV='76b5be6aad';
+const BANKV='f2298b953d';
+const BANKV_OK=["76b5be6aad"];
 const TEST=(typeof window!=='undefined'&&(window.__TEST__||/[?&]test=1/.test(location.search)));
 // Every bar in the app is an <i> whose width is a percentage. Most of the sums feeding them
 // are ratios that cannot exceed 1 — but not all, and the ones that can were rendering widths
@@ -2994,11 +2995,13 @@ async function loadProfile(){
   normaliseProfile(P);
   // the question bank is index-keyed; a new bank invalidates anything that
   // stored an index, so those fields start over while progress is kept
-  if(P.bank!==BANKV){
+  // a reworded bank keeps its slots (BANKV_OK lists those versions), so nothing resets
+  if(P.bank!==BANKV&&!BANKV_OK.includes(P.bank)){
     P.bank=BANKV; P.seen={}; P.wrong=[]; P.marks=[]; P.sr={};
     delete P.lastPaper;        // it stores question indices too
     P.runs={}; P.runsDone=[]; P.examHist={};
   }
+  P.bank=BANKV;
   loaded=true; muted=!!P.muted;
   refreshTop(); renderHome();
 }
@@ -4908,7 +4911,8 @@ function importProfile(file){
       // an imported file is the least trustworthy shape of all — it may be hand-edited,
       // from an older version, or simply not a profile at all
       normaliseProfile(P);
-      if(P.bank!==BANKV){ P.bank=BANKV; P.seen={}; P.wrong=[]; P.marks=[]; P.sr={}; }
+      if(P.bank!==BANKV&&!BANKV_OK.includes(P.bank)){ P.bank=BANKV; P.seen={}; P.wrong=[]; P.marks=[]; P.sr={}; }
+      P.bank=BANKV;
       saveProfile(); refreshTop(); renderHome(); renderDaily(); renderInv(); renderCharge(); renderDiff();
       toast('Progress imported'); go('homeScreen');
     }catch(e){ toast('Import failed — invalid file'); }
@@ -11634,7 +11638,7 @@ if(TEST){
   window.__t={
     get P(){return P;}, get route(){return route;}, get curQ(){return curQ;}, get chosen(){return chosen;},
     get gScore(){return gScore;}, get gRunning(){return gRunning;}, get G(){return G;},
-    QS, SECTIONS, SHORT, BANKV, bySec, BADGES, GAMES,
+    QS, SECTIONS, SHORT, BANKV, BANKV_OK, bySec, BADGES, GAMES,
     HEB, hebLine, hebToday, hebHTML, SEC_EM, secEm, DOMAIN_COL, secColor, STUDY_T,
     go, startSession, startReview, nextQuestion, submitAnswer, get route2(){return route;}, toggleOpt:(l)=>{
       const el=[...$('qOpts').children].find(e=>e.dataset.ltr===l); if(el) el.onclick();
