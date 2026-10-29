@@ -270,7 +270,7 @@ spec:
      ("Disable the repo-server", "ה-repo-server מרנדר manifests. כיבויו לא משנה את התנהגות המחיקה, ורק שובר את ה-syncs."),
      ("Add a PostSync hook", "PostSync hook רץ אחרי sync מוצלח. הוא לא מעורב במחיקת Application ולא יכול לעצור אותה."),
      ("Use a floating targetRevision", "targetRevision קובע מאיזה commit לקרוא. אין לו שום השפעה על מה שקורה כשה-Application נמחק."),
-     x="עם preserveResourcesOnDeletion, מחיקת Application שנוצר ע\"י ApplicationSet משאירה את המשאבים בקלאסטר במקום למחוק אותם."),
+     x="עם preserveResourcesOnDeletion, מחיקת Application שנוצר על ידי ApplicationSet משאירה את המשאבים בקלאסטר במקום למחוק אותם."),
    F("deletion", "Why is renaming a folder used by a git directory generator risky?",
      ("The old Application and its workloads are deleted and a new one is created", "נכון. ה-generator רואה תיקייה שנעלמה ותיקייה חדשה, ולכן זו מחיקה ויצירה ולא שינוי שם, עם downtime ואולי אובדן נתונים."),
      ("Git doesn't allow renaming folders", "Git מאפשר שינוי שם של תיקיות בלי בעיה. הסיכון נמצא באופן שבו ה-ApplicationSet מפרש את השינוי."),

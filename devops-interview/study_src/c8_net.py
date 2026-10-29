@@ -55,7 +55,7 @@ curl -v https://api.example.com/healthz
     TABLE(["L4", "L7"],
           ["TCP/UDP לפי IP ופורט", "HTTP: host, path, headers"],
           ["source IP נשמר", "IP של הלקוח ב-X-Forwarded-For"],
-          ["NLB", "ALB, ingress-nginx"]),
+          ["NLB", "ALB, Envoy Gateway, Traefik"]),
     KEY("502 לסירוגין: keep-alive של ה-backend קצר משל ה-LB. ה-backend צריך timeout ארוך יותר."),
     TRAP("curl -k מסתיר את הבעיה. intermediate חסר: דפדפן עובד, curl נכשל."),
     ASK("Explain the TLS handshake and what can go wrong.",

@@ -109,7 +109,7 @@ kubectl get rolebindings -n shop -o wide
          "kube-proxy",
          "CoreDNS",
          "The Cluster Autoscaler",
-         x="Kyverno (וגם Sigstore policy-controller) בודק שה-image חתום ע\"י הזהות הנכונה לפני שה-pod נוצר."),
+         x="Kyverno (וגם Sigstore policy-controller) בודק שה-image חתום על ידי הזהות הנכונה לפני שה-pod נוצר."),
        C("What is the first step when you suspect a pod is compromised?",
          "Isolate it with a deny-all NetworkPolicy and keep it for evidence",
          "Delete it immediately",

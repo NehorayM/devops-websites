@@ -84,7 +84,7 @@ SUBJECT = {
              ["Cluster Autoscaler", "גודל node group", "pods שלא נכנסו"],
              ["Karpenter", "instances חדשים לפי הצורך", "pods שלא נכנסו, ו-consolidation"],
              ["KEDA", "replicas, כולל לאפס", "אירועים: אורך תור, lag"]),
-       KEY("אחוז ה-CPU ב-HPA מחושב **ביחס ל-requests**. pod בלי CPU requests לא יכול להיות מנוהל ע\"י HPA לפי CPU."),
+       KEY("אחוז ה-CPU ב-HPA מחושב **ביחס ל-requests**. pod בלי CPU requests לא יכול להיות מנוהל על ידי HPA לפי CPU."),
        P("הנוסחה של HPA: `desired = ceil(current × currentMetric / target)`. ירידה מחכה stabilization window (5 דקות כברירת מחדל) כדי לא לקפוץ למעלה ולמטה."),
        TREE(["HPA מראה `<unknown>`?", "metrics-server לא עובד, או ל-pods אין requests"],
             ["HPA ב-max ועדיין עומס?", "להעלות max, או שה-bottleneck במקום אחר"],

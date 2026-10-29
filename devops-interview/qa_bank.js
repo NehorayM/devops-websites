@@ -3729,11 +3729,42 @@ function authoredChecks(){
   // without reading. Stage 9 rebalanced every file (now ~23% longest, ~29% shortest).
   const longest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
     return L[a]>Math.max(...L.filter((_,j)=>j!==a)); }).length;
-  ok(longest<=303,'the right option is the longest in at most 303 questions ('+longest+')');
+  ok(longest<=294,'the right option is the longest in at most 294 questions ('+longest+')');
   // Shortening right answers too far creates the opposite tell, so cap that side too.
   const shortest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
     return L[a]<Math.min(...L.filter((_,j)=>j!==a)); }).length;
-  ok(shortest<=376,'the right option is the shortest in at most 376 questions ('+shortest+')');
+  ok(shortest<=373,'the right option is the shortest in at most 373 questions ('+shortest+')');
+  // The October 2026 audit found other ways to spot the answer without knowing the material. Each cap
+  // matches tools/contentlint.py, which explains them: `code` on the right option only, absolute words
+  // ("always", "only") on every wrong one, the right one alone repeating the question's words.
+  const ABS=/\b(always|never|all|every|only|any|completely|entirely|guarantees?)\b/i;
+  const STOP=new Set('what how why the and does with which that this for are from you your its into when than then not but use using'.split(' '));
+  const words=s=>new Set(String(s).toLowerCase().replace(/`/g,'').match(/[a-z0-9_.\-/]{3,}/g)||[]);
+  let codeOnly=0, codeBut=0, absT=0, echoT=0;
+  t.QS.forEach(q=>{ const ot=q.o.map(o=>o[1]), r=q.o.findIndex(o=>q.a.includes(o[0])), w=[0,1,2,3].filter(k=>k!==r);
+    const tick=ot.map(s=>s.includes('`')), nt=tick.filter(Boolean).length;
+    if(tick[r]&&nt===1) codeOnly++;
+    if(!tick[r]&&nt===3) codeBut++;
+    if(w.every(k=>ABS.test(ot[k]))&&!ABS.test(ot[r])) absT++;
+    const sw=new Set([...words(q.q)].filter(x=>!STOP.has(x))), inW=new Set();
+    w.forEach(k=>words(ot[k]).forEach(x=>{ if(sw.has(x)) inW.add(x); }));
+    if([...words(ot[r])].filter(x=>sw.has(x)&&!inW.has(x)&&x.length>4).length>=2) echoT++;
+  });
+  ok(codeOnly<=12&&codeBut<=3,'`code` formatting does not single out the right option ('+codeOnly+', '+codeBut+')');
+  ok(absT<=3,'the wrong options are not the only ones with absolute words ('+absT+')');
+  ok(echoT<=8,'the right option rarely echoes the question on its own ('+echoT+')');
+  // One question asked the same thing as another (SHA pinning); compare stem + right answer.
+  const nw=t.QS.map(q=>{ const s=words(q.q); q.o.forEach(o=>{ if(q.a.includes(o[0])) words(o[1]).forEach(x=>s.add(x)); }); return s; });
+  let dup=0;
+  for(let a=0;a<nw.length;a++) for(let b=a+1;b<nw.length;b++){
+    let n=0; nw[a].forEach(x=>{ if(nw[b].has(x)) n++; });
+    const u=nw[a].size+nw[b].size-n; if(u&&n/u>0.6) dup++; }
+  eq(dup,0,'no two questions are near-duplicates');
+  // Doc links go to the page that answers the question, not a site's front page
+  // (except roots that are the document itself; see ONE_PAGE in tools/contentlint.py).
+  const ONE_PAGE=new Set(['https://principlesofchaos.org/','https://stryker-mutator.io/docs/','https://www.conftest.dev/']);
+  const land=t.QS.filter(q=>!ONE_PAGE.has(q.r)&&(/^https:\/\/[^/]+\/?$/.test(q.r)||/\/docs\/?$|\/en\/stable\/?$|\/doc\/?$/.test(q.r))).map(q=>q.r);
+  eq(land.length,0,'no doc link is a landing page '+land.slice(0,3).join(' '));
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');

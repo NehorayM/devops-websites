@@ -257,7 +257,7 @@ O("tf-state", MS, K,
    "נעילה לכל state. כלים: Atlantis, HCP Terraform, Spacelift."],
   follow="Why give the plan step a read-only role?",
   trap="להריץ apply מהמחשב האישי ישירות לפרודקשן.",
-  ref="https://www.runatlantis.io/docs/"),
+  ref="https://www.runatlantis.io/docs/using-atlantis.html"),
 
 O("tf-state", JM, T,
   "`terraform plan` works locally but fails in CI with authentication errors. What do you check?",

@@ -227,7 +227,7 @@ kubectl debug api-7d9f8c6b5-9tlmn -it --copy-to=api-debug --container=api -- sh"
       "`kubectl rollout undo` חוזר לגרסה הקודמת; ב-GitOps עושים revert ב-Git."),
    TRAP("שלוש טעויות שחוזרות בראיונות: liveness שבודק את ה-DB, Deployment בלי readiness probe, ו-`kubectl logs` בלי `--previous` על pod שקורס."),
    H("exit codes"),
-   P("קוד מעל 128 אומר שהתהליך נהרג ע\"י signal: מחסירים 128 ומקבלים את מספר ה-signal. 137 הוא SIGKILL (בדרך כלל OOMKilled), ו-143 הוא SIGTERM (כיבוי רגיל). 1 הוא שגיאה של האפליקציה עצמה, ו-0 הוא הצלחה."),
+   P("קוד מעל 128 אומר שהתהליך נהרג על ידי signal: מחסירים 128 ומקבלים את מספר ה-signal. 137 הוא SIGKILL (בדרך כלל OOMKilled), ו-143 הוא SIGTERM (כיבוי רגיל). 1 הוא שגיאה של האפליקציה עצמה, ו-0 הוא הצלחה."),
    H("איך לענות בראיון"),
    P("כשנותנים לך pod תקוע, תתאר תהליך ולא ניחוש: קודם `kubectl get` כדי לראות את ה-STATUS, אחר כך `describe` בשביל ה-Events וה-exit code, ואז לוגים. תגיד מה כל ממצא אומר, ומה הצעד הבא שלך. מראיינים מחפשים סדר מחשבה, לא פקודה אחת נכונה."),
  ],

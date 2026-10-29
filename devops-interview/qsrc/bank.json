@@ -287,11 +287,11 @@
 "o": [
 [
 "A",
-"The script was saved with Windows CRLF line endings"
+"The script was saved with Windows `CRLF` line endings"
 ],
 [
 "B",
-"The bash version on the CI runner is far too old"
+"The `bash` version on the CI runner is far too old"
 ],
 [
 "C",
@@ -855,7 +855,7 @@
 ],
 [
 "C",
-"`template` is faster, so it is preferred in every chart"
+"`template` renders faster, so most charts prefer it"
 ],
 [
 "D",
@@ -902,7 +902,7 @@
 ],
 "y": [
 "בלי state Terraform ינסה ליצור הכל מחדש ויתנגש עם משאבים קיימים. זה מחמיר מאוד.",
-"moved { from = aws_instance.web  to = aws_instance.app } אומר ל-Terraform שזה אותו אובייקט בכתובת חדשה. ה-plan מראה העברה בלי destroy. הבלוק נמצא בקוד, עובר review, ועובד גם לצרכנים של module.",
+"בלוק `moved` עם `from = aws_instance.web` ו-`to = aws_instance.app` אומר ל-Terraform שזה אותו אובייקט בכתובת חדשה. ה-plan מראה העברה בלי destroy. הבלוק נמצא בקוד, עובר review, ועובד גם לצרכנים של module.",
 "אפשר לשנות כתובות: moved או terraform state mv. רק צריך להגיד ל-Terraform על השינוי.",
 "-target רק מצמצם את ה-plan. הוא לא מקשר בין הכתובת הישנה לחדשה, ו-Terraform עדיין יחשוב שזה משאב חדש."
 ],
@@ -1092,11 +1092,11 @@
 "o": [
 [
 "A",
-"A read-only view of the kubelet's state and its configuration"
+"A read-only view of the `kubelet` state and its configuration"
 ],
 [
 "B",
-"An SSH session to the node, through the API server"
+"An `ssh` session to the node, through the API server"
 ],
 [
 "C",
@@ -1111,12 +1111,12 @@
 "C"
 ],
 "y": [
-"הפוד לא מוגבל לקריאה, ויש בו גישה מלאה לקבצים של ה-node. לכן צריך הרשאה מתאימה ולמחוק אותו בסוף.",
+"הפוד לא מוגבל לקריאה: ה-filesystem של ה-node מחובר ב-`/host`, וה-container רץ ב-namespaces של ה-host. לכן צריך הרשאה מתאימה ולמחוק את הפוד בסוף.",
 "אין SSH בתהליך. kubectl יוצר פוד רגיל ומחבר אליו, דרך ה-API וה-kubelet.",
-"`kubectl debug node` יוצר פוד עם hostNetwork, hostPID ו-hostIPC על ה-node, ומחבר את ה-root של ה-host ל-`/host`. עם `chroot /host` אפשר להריץ כלים של ה-node, בלי SSH.",
+"`kubectl debug node` יוצר פוד חדש על ה-node, ב-namespaces של הרשת, ה-PID וה-IPC של ה-host, ומחבר את ה-root של ה-host ל-`/host`. הפוד לא privileged, ולכן `chroot /host` נכשל, אלא אם מוסיפים `--profile=sysadmin`.",
 "ephemeral containers נכנסים לפוד קיים, עם `kubectl debug <pod>`. `node/` יוצר פוד חדש ייעודי."
 ],
-"x": "תזכיר שהפוד לא נמחק לבד, צריך למחוק אותו בסוף. ב-1.30+ יש `--profile` (למשל sysadmin) שקובע אילו הרשאות לתת. ב-EKS זו חלופה טובה ל-SSH או SSM.",
+"x": "תזכיר שהפוד לא נמחק לבד, וצריך למחוק אותו בסוף. כשצריך `chroot /host` או כלים של root, מוסיפים `--profile=sysadmin`, שנותן פוד privileged. ב-EKS זו חלופה טובה ל-SSH או SSM.",
 "lv": 0,
 "k": "k",
 "r": "https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/"
@@ -1590,11 +1590,11 @@
 ],
 [
 "C",
-"Some capabilities add syscall overhead to every network call"
+"Some capabilities add measurable overhead to network syscalls"
 ],
 [
 "D",
-"Kubernetes requires a drop list for any pod to pass Baseline"
+"The Baseline profile rejects pods that don't declare a drop list"
 ]
 ],
 "a": [
@@ -2161,7 +2161,7 @@
 "A"
 ],
 "y": [
-"StrictModes של sshd בודק שה-home, ‏~/.ssh ו-authorized_keys לא ניתנים לכתיבה ע\"י אחרים. אחרת מישהו היה יכול להוסיף מפתח. מתקנים: chmod 700 ~/.ssh, chmod 600 authorized_keys.",
+"StrictModes של sshd בודק שה-home, ‏~/.ssh ו-authorized_keys לא ניתנים לכתיבה על ידי אחרים. אחרת מישהו היה יכול להוסיף מפתח. מתקנים: chmod 700 ~/.ssh, chmod 600 authorized_keys.",
 "authorized_keys בתיקיית הבית הוא המיקום הרגיל. /etc/ssh מכיל מפתחות של השרת.",
 "מפתחות SSH רגילים לא פגים לעולם. רק SSH certificates מכילים תאריך תוקף.",
 "הרשאות לא משפיעות על מהירות טעינה. sshd מסרב לקבצים כאלה בגלל סיכון אבטחה ברור."
@@ -2442,7 +2442,7 @@
 ],
 "y": [
 "ביטול נעילה קבוע מסיר את ההגנה מפני שני applies במקביל. זה מזמין השחתה של ה-state.",
-"אם S3 לא זמין השגיאה הייתה על גישה ל-backend, לא על נעילה שמוחזקת ע\"י run אחר.",
+"אם S3 לא זמין השגיאה הייתה על גישה ל-backend, לא על נעילה שמוחזקת על ידי run אחר.",
 "run שנקטע (CI שבוטל, לפטופ שנסגר) לא שחרר את הנעילה. בודקים בהודעה מי נעל ומתי, מוודאים שאין run פעיל, ואז terraform force-unlock <LOCK_ID>. לא מבטלים נעילה בלי לבדוק.",
 "נעילה תקועה לא אומרת שה-state פגום. מחיקה שלו תגרום ל-Terraform לשכוח את כל המשאבים."
 ],
@@ -2687,7 +2687,7 @@
 ],
 "y": [
 "CRD ב-templates/ יכול להימחק ב-uninstall יחד עם כל ה-CRs שלו. ויש בעיית סדר עם CRs באותו release.",
-"קבצים ב-crds/ מותקנים לפני שאר התבניות, רק ב-install הראשון. Helm לא משדרג ולא מוחק אותם כדי לא לאבד custom resources. שדרוג CRDs נעשה ידנית, ב-chart נפרד או ע\"י ה-operator.",
+"קבצים ב-crds/ מותקנים לפני שאר התבניות, רק ב-install הראשון. Helm לא משדרג ולא מוחק אותם כדי לא לאבד custom resources. שדרוג CRDs נעשה ידנית, ב-chart נפרד או על ידי ה-operator.",
 "אפשר בהחלט, ול-Helm יש לזה תיקייה ייעודית, crds/. רק צריך להבין את המגבלות שלה בשדרוג.",
 "values הם קלט לתבניות, לא משאבים שמותקנים. CRD צריך להיות manifest מלא בקובץ משלו."
 ],
@@ -2877,11 +2877,11 @@
 "o": [
 [
 "A",
-"The scheduler's logs, which show why the PVC wasn't provisioned"
+"The `kube-scheduler` logs, which show why the PVC wasn't provisioned"
 ],
 [
 "B",
-"The kubelet's logs on the node the pod was assigned to"
+"The `kubelet` logs on the node the pod was assigned to"
 ],
 [
 "C",
@@ -3651,7 +3651,7 @@
 ],
 [
 "B",
-"Prints the chart's default `values.yaml`"
+"Prints the chart's default values file"
 ],
 [
 "C",
@@ -4627,7 +4627,7 @@
 "o": [
 [
 "A",
-"Echo it at the start of the build so failures are easy"
+"Print it with `echo` at the start so failures are easy"
 ],
 [
 "B",
@@ -4639,7 +4639,7 @@
 ],
 [
 "D",
-"Read it from an internal URL at the start of every build"
+"Fetch it with `curl` from an internal URL in every build"
 ]
 ],
 "a": [
@@ -4736,7 +4736,7 @@
 ],
 [
 "B",
-"Raise the CI job's timeout to a full hour to let it finish"
+"Raise the CI job's `timeout` to a full hour to let it finish"
 ],
 [
 "C",
@@ -4744,7 +4744,7 @@
 ],
 [
 "D",
-"Run the CI job in an interactive mode and type the value"
+"Run the CI job with `-input=true` and type the value"
 ]
 ],
 "a": [
@@ -5069,7 +5069,7 @@
 "dynamic לא יוצר resources, רק בלוקים מקוננים בתוך resource. לכמה resources משתמשים ב-for_each.",
 "provider נקבע לכל resource מראש, לפני ה-plan. dynamic לא מחליף providers באמצע ריצה.",
 "source של module חייב להיות קבוע בזמן init. dynamic לא קשור לטעינת modules.",
-"dynamic \"ingress\" { for_each = var.rules  content { ... } } מייצר בלוק מקונן לכל איבר. שימושי לכללי SG, settings של provider ועוד. שימוש מוגזם הופך את הקוד לקשה לקריאה."
+"בלוק `dynamic \"ingress\"` עם `for_each = var.rules` ובלוק `content` מייצר בלוק מקונן לכל איבר. שימושי לכללי SG, settings של provider ועוד. שימוש מוגזם הופך את הקוד לקשה לקריאה."
 ],
 "x": "תזכיר שהתיעוד ממליץ להשתמש ב-dynamic בחסכנות, בעיקר במודולים לשימוש חוזר. בקוד פשוט, בלוקים מפורשים קריאים יותר.",
 "lv": 0,
@@ -5397,7 +5397,7 @@
 "o": [
 [
 "A",
-"user_data is frozen at creation and can never be changed"
+"`user_data` is frozen at creation and can never be changed"
 ],
 [
 "B",
@@ -5405,7 +5405,7 @@
 ],
 [
 "C",
-"The AMI was deleted, so Terraform must build a new instance"
+"The `ami` was deleted, so Terraform must build a new instance"
 ],
 [
 "D",
@@ -5922,7 +5922,7 @@
 "o": [
 [
 "A",
-"The DNS records that were published for the server"
+"The DNS records for the server, checked with `dig`"
 ],
 [
 "B",
@@ -5934,7 +5934,7 @@
 ],
 [
 "D",
-"The TLS certificate that the application presents"
+"The TLS certificate, checked with `openssl s_client`"
 ]
 ],
 "a": [
@@ -6649,7 +6649,7 @@
 "x": "תגיד שלפני שימוש ב-module מה-registry אתה בודק: מי מתחזק, כמה הורדות, מתי עודכן, ואילו משאבים הוא יוצר. ותזכיר private registry ארגוני.",
 "lv": 0,
 "k": "k",
-"r": "https://registry.terraform.io/"
+"r": "https://developer.hashicorp.com/terraform/registry"
 },
 {
 "s": 18,
@@ -6679,7 +6679,7 @@
 "helm pull --untar מוריד ופורס chart לתיקייה. אפשר לקרוא את התבניות לפני התקנה, לבדוק מה הוא יוצר, או לשמור עותק ב-repo (vendoring) כדי לא להיות תלוי ב-repo חיצוני.",
 "pull רק מוריד ופורס קבצים. התקנה נעשית עם helm install, ותמיד דורשת גישה ל-cluster.",
 "היסטוריה נקראת עם helm history או helm get. pull עוסק רק ב-charts שנמצאים ב-repository.",
-"Helm לא מושך container images. הם נמשכים ע\"י ה-kubelet כשה-pods עולים על ה-node."
+"Helm לא מושך container images. הם נמשכים על ידי ה-kubelet כשה-pods עולים על ה-node."
 ],
 "x": "תגיד שאתה תמיד קורא chart של צד שלישי לפני התקנה: אילו RBAC הוא יוצר, אילו hooks, ואילו images. helm template עם ה-values שלך משלים את התמונה.",
 "lv": 0,
@@ -7112,7 +7112,7 @@
 "o": [
 [
 "A",
-"Only the resources that are marked with prevent_destroy"
+"Only the resources that are marked with `prevent_destroy`"
 ],
 [
 "B",
@@ -7120,7 +7120,7 @@
 ],
 [
 "C",
-"The history of the resources that were destroyed before"
+"The history of resources destroyed by earlier `apply` runs"
 ],
 [
 "D",
@@ -7299,7 +7299,7 @@
 ],
 [
 "D",
-"Credentials for the private dependency repo, set in Argo CD"
+"Credentials for the private Helm repo, as an Argo CD `repository` secret"
 ]
 ],
 "a": [
@@ -7497,11 +7497,11 @@
 "o": [
 [
 "A",
-"The provider wasn't initialised before plan was run"
+"The provider wasn't initialised with `terraform init`"
 ],
 [
 "B",
-"The tfvars file that should hold the value is missing"
+"The `.tfvars` file that should hold the value is missing"
 ],
 [
 "C",
@@ -7672,7 +7672,7 @@
 "o": [
 [
 "A",
-"Deletes the resource and creates it again on each apply"
+"Deletes the resource and creates it again on each `apply`"
 ],
 [
 "B",
@@ -7684,7 +7684,7 @@
 ],
 [
 "D",
-"Creates two copies of the resource when it is turned on"
+"Creates two copies of the resource when `enabled` is on"
 ]
 ],
 "a": [
@@ -7726,7 +7726,7 @@
 "A"
 ],
 "y": [
-"SIGTERM (15) מבקש מהתהליך לסיים: הוא יכול לתפוס אותו, לסגור חיבורים ולשמור מצב. SIGKILL (9) נאכף ע\"י הקרנל מיד, בלי שהתהליך יכול לתפוס או להתעלם. Kubernetes שולח TERM, מחכה grace period, ואז KILL.",
+"SIGTERM (15) מבקש מהתהליך לסיים: הוא יכול לתפוס אותו, לסגור חיבורים ולשמור מצב. SIGKILL (9) נאכף על ידי הקרנל מיד, בלי שהתהליך יכול לתפוס או להתעלם. Kubernetes שולח TERM, מחכה grace period, ואז KILL.",
 "השהיה היא SIGSTOP (או SIGTSTP מ-Ctrl+Z). TERM ו-KILL מסיימים את התהליך, לא משהים אותו.",
 "זה הפוך: את SIGKILL אי אפשר לתפוס או לחסום בשום מצב. SIGTERM הוא האות שהתהליך יכול לטפל בו.",
 "אף אות לא מאתחל תהליך בעצמו. restart הוא עבודה של systemd או supervisor שרואה שהתהליך נגמר."
@@ -7769,7 +7769,7 @@
 "x": "תזכיר את ארבעת העקרונות של OpenGitOps: declarative, versioned and immutable, pulled automatically, continuously reconciled. כדאי להבחין בין GitOps לבין CI שעושה `kubectl apply`, זו שאלה נפוצה.",
 "lv": 0,
 "k": "k",
-"r": "https://opengitops.dev/"
+"r": "https://github.com/open-gitops/documents/blob/main/PRINCIPLES.md"
 },
 {
 "s": 6,
@@ -7987,11 +7987,11 @@
 "o": [
 [
 "A",
-"Block new pods; delay them; and evict all pods on the node at once"
+"Block new pods; delay them by a minute; and evict running pods at once"
 ],
 [
 "B",
-"Block DaemonSet pods; warn; and evict Deployment pods only"
+"Block DaemonSet pods; log a warning; and evict Deployment pods"
 ],
 [
 "C",
@@ -8442,11 +8442,11 @@
 "o": [
 [
 "A",
-"Make the repository public so the token can comment"
+"Make the repository public so `GITHUB_TOKEN` can comment"
 ],
 [
 "B",
-"Re-run the failing job with debug logging turned on"
+"Re-run the job with `ACTIONS_STEP_DEBUG` turned on"
 ],
 [
 "C",
@@ -8477,7 +8477,7 @@
 "o": [
 [
 "A",
-"The cluster CA expired, so every node must rejoin the cluster"
+"The cluster CA expired, so every node must `kubeadm join` again"
 ],
 [
 "B",
@@ -8485,7 +8485,7 @@
 ],
 [
 "C",
-"kubectl's token from the admin ServiceAccount expired"
+"The `kubectl` token from the admin ServiceAccount expired"
 ],
 [
 "D",
@@ -9041,7 +9041,7 @@
 ],
 [
 "B",
-"Docker sends SIGINT, which Python handles only in interactive mode"
+"`docker stop` sends SIGINT, which Python handles only interactively"
 ],
 [
 "C",
@@ -9049,7 +9049,7 @@
 ],
 [
 "D",
-"Python ignores SIGTERM unless the app installs a handler for it"
+"Python ignores SIGTERM unless the app sets a `signal` handler"
 ]
 ],
 "a": [
@@ -9640,7 +9640,7 @@
 ],
 [
 "C",
-"No; every upgrade deletes the Deployment and creates it again"
+"No; resources the chart doesn't set get reset to their defaults"
 ],
 [
 "D",
@@ -9653,7 +9653,7 @@
 "y": [
 "זה היה נכון ל-replace מלא, אבל Helm 3 עושה patch. שדות שה-chart לא מגדיר לא נדרסים.",
 "ה-three-way merge מחשב patch רק לשדות שה-chart מגדיר. אם ה-chart לא מזכיר resources, השינוי הידני נשאר אחרי upgrade. זה גם הסיבה ש-HPA ו-mutating webhooks לא נדרסים על שדות שה-chart לא נוגע בהם.",
-"Helm לא מוחק Deployments ב-upgrade רגיל. רק --force מחליף משאבים במחיקה ויצירה.",
+"Helm לא מאפס שדות שה-chart לא מגדיר. ה-patch נוגע רק בשדות שה-chart מנהל, ולכן הערכים שנערכו ידנית נשארים אחרי upgrade.",
 "--reuse-values עוסק ב-values של ה-chart, לא בשדות שנערכו ידנית ב-cluster."
 ],
 "x": "תגיד שזה שימושי וגם מסוכן: drift ידני שורד upgrades ואף אחד לא יודע עליו. Argo CD עם self-heal מזהה ומבטל drift כזה.",
@@ -9807,11 +9807,11 @@
 "o": [
 [
 "A",
-"The messages are too large and must be split in two"
+"The messages are too large, which slows processing down"
 ],
 [
 "B",
-"The visibility timeout is shorter than processing"
+"The visibility timeout ends before processing finishes"
 ],
 [
 "C",
@@ -9819,7 +9819,7 @@
 ],
 [
 "D",
-"The queue must be FIFO, since standard queues repeat"
+"Standard queues ignore the visibility timeout; use FIFO"
 ]
 ],
 "a": [
@@ -9829,7 +9829,7 @@
 "גודל הודעה (עד 256KB) לא גורם לכפילות. הבעיה היא זמן העיבוד מול ה-timeout.",
 "SQS מסתיר הודעה שנקראה למשך ה-visibility timeout. אם העיבוד לוקח יותר זמן ולא נמחקה, ההודעה חוזרת לתור ומישהו אחר מעבד אותה שוב. מגדירים timeout ארוך מהעיבוד, או מאריכים עם ChangeMessageVisibility.",
 "SQS standard מבטיח at-least-once, לא שלוש פעמים. הכפילות כאן נגרמת מה-timeout.",
-"FIFO נותן exactly-once processing בחלון של 5 דקות, אבל עם timeout קצר מדי גם הוא יחזיר הודעה."
+"גם תור standard מכבד את ה-visibility timeout. FIFO נותן exactly-once processing בחלון של 5 דקות, אבל עם timeout קצר מדי גם הוא יחזיר את ההודעה לתור."
 ],
 "x": "תזכיר שעם Lambda כצרכן, AWS ממליצה visibility timeout של לפחות פי 6 מ-timeout של הפונקציה. ושצרכנים צריכים להיות אידמפוטנטיים בכל מקרה.",
 "lv": 0,
@@ -9982,7 +9982,7 @@
 "o": [
 [
 "A",
-"Lint checks only, without creating or planning anything"
+"Lint checks only, like `terraform validate`, with no plan"
 ],
 [
 "B",
@@ -9990,7 +9990,7 @@
 ],
 [
 "C",
-"Unit tests that are written in Go for the provider's code"
+"Unit tests written in Go, as `_test.go` files for the provider"
 ],
 [
 "D",
@@ -10184,7 +10184,7 @@
 "x": "תזכיר שיש baseline scan (פסיבי, מהיר) ו-full scan (אקטיבי, איטי ומסוכן לפרודקשן). מריצים active scan רק מול סביבת בדיקות.",
 "lv": 0,
 "k": "k",
-"r": "https://www.zaproxy.org/docs/"
+"r": "https://www.zaproxy.org/docs/docker/baseline-scan/"
 },
 {
 "s": 6,
@@ -10884,7 +10884,7 @@
 "x": "תגיד שלסביבות prod רוב הצוותים עוברים ל-Terraform (terraform-aws-modules/eks) כדי לנהל הכל במקום אחד, ו-eksctl נשאר לבדיקות מהירות.",
 "lv": 0,
 "k": "k",
-"r": "https://eksctl.io/"
+"r": "https://eksctl.io/getting-started/"
 },
 {
 "s": 21,
@@ -10962,11 +10962,11 @@
 "o": [
 [
 "A",
-"From env vars on the applicationset-controller, one per environment"
+"From env vars on the `applicationset-controller`, one per environment"
 ],
 [
 "B",
-"From labels on the destination namespace in each cluster"
+"From `labels` on the destination namespace in each cluster"
 ],
 [
 "C",
@@ -11242,11 +11242,11 @@
 "o": [
 [
 "A",
-"The values file is too large for Helm to parse in one go"
+"The `values.yaml` file is too large for Helm to parse in one go"
 ],
 [
 "B",
-"The chart's version in Chart.yaml is not valid SemVer"
+"The `version` in `Chart.yaml` is not valid SemVer"
 ],
 [
 "C",
@@ -11366,9 +11366,9 @@
 "C"
 ],
 "y": [
-"30 שניות יעמיסו על ספק ה-Git ועל ה-repo-server בהרבה apps. ברירת המחדל היא 3 דקות.",
-"10 דקות זה ארוך מברירת המחדל. אפשר להגדיר את זה, אבל הערך הרגיל הוא 180 שניות.",
-"`timeout.reconciliation` ב-`argocd-cm` הוא 180 שניות כברירת מחדל, עם jitter קטן כדי לא להעמיס. webhook מ-Git מקצר את זה לשניות.",
+"30 שניות יעמיסו על ספק ה-Git ועל ה-repo-server בהרבה apps. ברירת המחדל היא 120 שניות, ועוד jitter של עד 60 שניות.",
+"10 דקות זה ארוך מברירת המחדל. אפשר להגדיר את זה, אבל הערך הרגיל הוא 120 שניות ועוד עד 60 שניות של jitter.",
+"`timeout.reconciliation` ב-`argocd-cm` הוא 120 שניות כברירת מחדל, ו-`timeout.reconciliation.jitter` מוסיף עד 60 שניות, כדי שכל ה-apps לא יבדקו באותו רגע. בסך הכול עד כ-3 דקות, וזה המספר שבתיעוד. webhook מ-Git מקצר את זה לשניות.",
 "polling פעיל כברירת מחדל ומשמש גם גיבוי ל-webhooks. אפשר לכבות אותו, אבל זו לא ברירת המחדל."
 ],
 "x": "תזכיר שעם הרבה Applications ו-repo גדול, polling יכול להגיע ל-rate limits של GitHub. webhooks עם polling ארוך יותר הם הפתרון.",
@@ -11565,11 +11565,11 @@
 ],
 [
 "C",
-"Line 20 of the values file has a YAML indentation typo in it"
+"Line 20 of `values.yaml` has a YAML indentation typo in it"
 ],
 [
 "D",
-"The image repository does not exist in the container registry"
+"The `image.repository` doesn't exist in the container registry"
 ]
 ],
 "a": [
@@ -11732,7 +11732,7 @@
 "o": [
 [
 "A",
-"Whether the chart's repository was added to the client"
+"Whether the chart's repository was added with `helm repo add`"
 ],
 [
 "B",
@@ -11744,7 +11744,7 @@
 ],
 [
 "D",
-"Whether Tiller is running in the kube-system namespace"
+"Whether Tiller is running in the `kube-system` namespace"
 ]
 ],
 "a": [
@@ -11876,7 +11876,7 @@
 ],
 [
 "B",
-"In the TLS certificate that the API presents to clients"
+"In the TLS certificate's `subjectAltName` list for the API"
 ],
 [
 "C",
@@ -11884,7 +11884,7 @@
 ],
 [
 "D",
-"In a DNS TXT record that is published for the frontend"
+"In a DNS `TXT` record that is published for the frontend"
 ]
 ],
 "a": [
@@ -11926,7 +11926,7 @@
 "A"
 ],
 "y": [
-"Ingress הוא רק אובייקט ב-API. בלי controller (ingress-nginx, Traefik, AWS LB Controller) אף אחד לא קורא אותו, ואף load balancer או proxy לא נוצר.",
+"Ingress הוא רק אובייקט ב-API. בלי controller (למשל Traefik או AWS Load Balancer Controller) אף אחד לא קורא אותו, ואף load balancer או proxy לא נוצר.",
 "ה-aggregation layer מיועד להרחבות API, לא לתעבורת משתמשים. ה-API server לא משמש proxy לאפליקציות.",
 "ה-cloud controller manager מטפל ב-Services מסוג LoadBalancer וב-nodes. Ingress בענן מטופל על ידי controller נפרד, כמו AWS Load Balancer Controller.",
 "kube-proxy עובד ב-L4 ומטפל רק ב-Services. הוא לא קורא Ingress ולא יודע לנתב לפי host או path."
@@ -12051,7 +12051,7 @@
 ],
 [
 "B",
-"It keeps the resource out of the diff, so it never shows OutOfSync"
+"It hides the resource from the diff, so it stays Synced"
 ],
 [
 "C",
@@ -12300,7 +12300,7 @@
 ],
 [
 "C",
-"`reboot`, so the service starts in a clean state"
+"`systemctl restart myapp` and see whether it stays up"
 ],
 [
 "D",
@@ -12313,7 +12313,7 @@
 "y": [
 "בינארי חסר יופיע בלוג של השירות עם הודעה ברורה. ls לא מראה למה השירות נכשל.",
 "status מציג את המצב, קוד היציאה ואת השורות האחרונות מהלוג. journalctl -u myapp -e (או -b) מציג את כל הפלט של השירות. כך רואים את השגיאה האמיתית: קובץ חסר, הרשאה, פורט תפוס.",
-"reboot מוחק את ההקשר ולא מסביר כלום. השירות כנראה ייכשל שוב באותה סיבה.",
+"restart מנסה שוב בלי להסביר כלום. אם השירות נכשל, הוא ייכשל שוב מאותה סיבה, ועדיין לא תדע למה.",
 "passwd מאשר שמשתמש קיים, אבל לא מראה למה השירות נכשל. קודם קוראים את הלוג."
 ],
 "x": "תזכיר systemctl cat myapp לראות את ה-unit בפועל (כולל drop-ins), ו-systemd-analyze verify לבדיקת תחביר. זה מראה עבודה שיטתית.",
@@ -12331,7 +12331,7 @@
 ],
 [
 "B",
-"Add more agents so a stuck build doesn't block the others"
+"Add agents and raise `numExecutors` so others aren't blocked"
 ],
 [
 "C",
@@ -12339,7 +12339,7 @@
 ],
 [
 "D",
-"Restart the Jenkins controller every night to clear it"
+"Restart the Jenkins controller nightly via `/safeRestart`"
 ]
 ],
 "a": [
@@ -12418,7 +12418,7 @@
 "y": [
 "הרשאות IAM של instance מגיעות מ-instance profile. user data הוא רק סקריפט אתחול שרץ ב-boot.",
 "user data גלוי לכל מי שקורא IMDS או מתאר את ה-instance. אסור לשים בו סיסמאות.",
-"user data מועבר ל-instance ומורץ ע\"י cloud-init בהפעלה הראשונה כ-root: התקנות, הגדרות, הצטרפות ל-cluster. הוא נגיש דרך IMDS, ולכן אסור לשים בו סודות.",
+"user data מועבר ל-instance ומורץ על ידי cloud-init בהפעלה הראשונה כ-root: התקנות, הגדרות, הצטרפות ל-cluster. הוא נגיש דרך IMDS, ולכן אסור לשים בו סודות.",
 "נתוני חיוב נמצאים ב-Billing וב-Cost Explorer. user data לא קשור לחיוב."
 ],
 "x": "תזכיר שהלוג נמצא ב-/var/log/cloud-init-output.log, המקום הראשון לחפש כשהאתחול נכשל. ושבברירת מחדל הוא רץ רק ב-boot הראשון.",
@@ -12774,7 +12774,7 @@
 "x": "תזכיר שאותו קובץ .pre-commit-config.yaml רץ גם ב-CI (pre-commit run --all-files), כך שהגרסאות זהות. זה פותר את בעיית 'עובר אצלי, נכשל ב-CI'.",
 "lv": 0,
 "k": "k",
-"r": "https://pre-commit.com/"
+"r": "https://pre-commit.com/#intro"
 },
 {
 "s": 11,
@@ -13272,7 +13272,7 @@
 "o": [
 [
 "A",
-"Explicit dependencies are required on every single resource"
+"An explicit `depends_on` is required on every single resource"
 ],
 [
 "B",
@@ -13284,7 +13284,7 @@
 ],
 [
 "D",
-"They are the same thing, and differ only in how they are written"
+"They are the same thing, written in two different ways in HCL"
 ]
 ],
 "a": [
@@ -13342,11 +13342,11 @@
 "o": [
 [
 "A",
-"Disable kubectl in every pipeline and deploy by hand"
+"Remove kubectl from the pipeline and deploy by hand"
 ],
 [
 "B",
-"Rename the clusters every month so mistakes stand out"
+"Rename the clusters so their names show the environment"
 ],
 [
 "C",
@@ -13538,7 +13538,7 @@
 "y": [
 "זה יוצר שני states שמנהלים את אותם משאבים. כל אחד יילחם בשני על כל שינוי.",
 "זה מוחק 40 משאבים חיים ויוצר השבתה ארוכה, בשביל שינוי שהוא רק ארגון של קוד.",
-"המשאבים עברו לנהל ע\"י state אחר, אבל ה-state הישן עדיין מכיר אותם ורוצה למחוק. removed { from = module.app  lifecycle { destroy = false } } (או state rm) מוציא אותם בלי לגעת בענן.",
+"המשאבים עברו לניהול של state אחר, אבל ה-state הישן עדיין מכיר אותם ורוצה למחוק. בלוק `removed` עם `from = module.app` ו-`destroy = false` בתוך `lifecycle` (או `state rm`) מוציא אותם בלי לגעת בענן.",
 "ה-apply הבא יבצע בדיוק את מה שה-plan מראה. אי אפשר פשוט להתעלם ממנו ולקוות לטוב."
 ],
 "x": "תגיד שבמעבר בין states אתה עושה את זה בשני צעדים: import ב-state החדש עם plan נקי, ורק אז removed ב-state הישן.",
@@ -13731,7 +13731,7 @@
 ],
 [
 "B",
-"A checksum annotation of the ConfigMap on the pod template"
+"A `checksum/config` annotation on the pod template"
 ],
 [
 "C",
@@ -13956,7 +13956,7 @@
 "B"
 ],
 "y": [
-"גוף גדול מדי מחזיר 413 Payload Too Large. כאן הגוף אבד בדרך, הוא לא נדחה ע\"י השרת.",
+"גוף גדול מדי מחזיר 413 Payload Too Large. כאן הגוף אבד בדרך, הוא לא נדחה על ידי השרת.",
 "לפי ההיסטוריה של HTTP, לקוחות רבים ממירים POST ל-GET כשהם עוקבים אחרי 301 או 302, והגוף נזרק. 307 ו-308 מבטיחים שאותו method וגוף יישלחו. הפתרון הנכון: לקרוא ל-HTTPS ישירות.",
 "השרת לא קיבל את הגוף בכלל. הלקוח שלח GET בלי גוף אחרי שעקב אחרי ההפניה.",
 "POST עם גוף עובד ב-HTTPS בדיוק כמו ב-HTTP. הבעיה היא ההפניה שקורית באמצע."
@@ -14516,7 +14516,7 @@
 "B"
 ],
 "y": [
-"מספר ה-nodes של ה-LB מנוהל ע\"י AWS לפי עומס. cross-zone רק משנה לאן כל node שולח.",
+"מספר ה-nodes של ה-LB מנוהל על ידי AWS לפי עומס. cross-zone רק משנה לאן כל node שולח.",
 "בלי cross-zone, כל node של ה-LB מחלק רק ל-targets ב-AZ שלו, ואם ב-AZ אחד יש פחות targets הם מקבלים יותר עומס. עם cross-zone כל target מקבל חלק שווה. ב-ALB זה פעיל תמיד, ב-NLB כבוי כברירת מחדל.",
 "cross-zone עוסק בפיזור עומס, לא בהצפנה. הצפנה בין LB ל-targets מוגדרת עם HTTPS או TLS ל-target.",
 "load balancer הוא משאב אזורי ולא עובר אזורים. מעבר בין אזורים נעשה עם Route 53 או Global Accelerator."
@@ -14637,7 +14637,7 @@
 "o": [
 [
 "A",
-"Turn off auto-sync for any Application that holds a PVC"
+"Turn off prune in the auto-sync policy of apps with PVCs"
 ],
 [
 "B",
@@ -14649,7 +14649,7 @@
 ],
 [
 "D",
-"Turn on `PruneLast=true`, so the PVC is deleted only at the end"
+"Turn on `PruneLast=true`, so those resources are deleted last"
 ]
 ],
 "a": [
@@ -15205,11 +15205,11 @@
 ],
 [
 "C",
-"The cluster has no worker nodes that could run the pods"
+"The install fails because no worker node can run the pods"
 ],
 [
 "D",
-"The Helm client is too new for this version of the cluster"
+"The Helm client is too new to send this manifest to the cluster"
 ]
 ],
 "a": [
@@ -15314,7 +15314,7 @@
 ],
 [
 "D",
-"You can't tell what runs, and rollbacks aren't reliable"
+"You can't tell which build a `:latest` pod runs, or roll back"
 ]
 ],
 "a": [
@@ -15520,11 +15520,11 @@
 ],
 [
 "C",
-"Moves the directory into the home folder of app"
+"Moves the directory into `/home/app`, the user's home"
 ],
 [
 "D",
-"Changes the directory's permission bits to read-only"
+"Changes the permission bits to read-only, like `chmod 444`"
 ]
 ],
 "a": [
@@ -15800,11 +15800,11 @@
 ],
 [
 "C",
-"Delete the `.terraform` folder before each and every run"
+"Delete the `.terraform` folder before running `init` again"
 ],
 [
 "D",
-"Run plan only in CI, and never on any developer machine"
+"Run plans in CI, and stop running them on developer laptops"
 ]
 ],
 "a": [
@@ -15854,7 +15854,7 @@
 "x": "תזכיר ש-Helm charts חייבים SemVer, ושב-Chart.yaml יש version ו-appVersion נפרדים. ותזכיר ש-0.x פירושו שה-API עדיין לא יציב.",
 "lv": 0,
 "k": "k",
-"r": "https://semver.org/"
+"r": "https://semver.org/#summary"
 },
 {
 "s": 9,
@@ -15975,11 +15975,11 @@
 ],
 [
 "C",
-"Choosing the subchart's version at runtime from a value"
+"Choosing the subchart's `version` at runtime from a value"
 ],
 [
 "D",
-"Encrypting the subchart's values with a key from a secret"
+"Encrypting the subchart's values with a key from a `Secret`"
 ]
 ],
 "a": [
@@ -16912,11 +16912,11 @@
 "o": [
 [
 "A",
-"The CI runner has an old Kubernetes version installed on it"
+"The CI runner has an old `kubectl` version installed on it"
 ],
 [
 "B",
-"Helm in CI ignores Chart.yaml and uses built-in defaults"
+"Helm in CI ignores `Chart.yaml` and uses built-in defaults"
 ],
 [
 "C",
@@ -17262,7 +17262,7 @@
 "o": [
 [
 "A",
-"Whether a runner with matching tags is online and active"
+"Whether a runner carrying those tags is up and not paused"
 ],
 [
 "B",
@@ -17437,7 +17437,7 @@
 "o": [
 [
 "A",
-"The stdout logs of every pod, collected from each worker node"
+"Pod stdout logs, collected by the control plane from each node"
 ],
 [
 "B",
@@ -17445,7 +17445,7 @@
 ],
 [
 "C",
-"VPC flow logs for every subnet that the cluster's nodes use"
+"VPC flow logs; the audit part shows which IPs hit the API"
 ],
 [
 "D",
@@ -17458,7 +17458,7 @@
 "y": [
 "לוגים של pods נאספים עם agent כמו Fluent Bit או CloudWatch agent. control plane logging לא כולל אותם.",
 "חיוב מופיע ב-Cost Explorer וב-CUR. הלוגים של ה-control plane עוסקים בפעולות.",
-"flow logs מוגדרים על ה-VPC או הסאבנט, בנפרד מ-EKS. הם מראים תעבורת רשת, לא פעולות API.",
+"flow logs מוגדרים על ה-VPC או הסאבנט, בנפרד מ-EKS. הם מראים תעבורת רשת, לא מי עשה איזו פעולה ב-API.",
 "EKS שולח ל-CloudWatch Logs חמישה סוגים לפי בחירה: api, audit, authenticator, controllerManager, scheduler. audit מתעד כל קריאה ל-API: מי, מה, מתי ועל איזה אובייקט. חיוני לחקירות אבטחה."
 ],
 "x": "תזכיר שהלוגים לא פעילים כברירת מחדל ועולים כסף לפי נפח. ותזכיר ש-GuardDuty EKS Protection קורא את ה-audit log גם בלי להפעיל אותו ב-CloudWatch.",
@@ -17651,11 +17651,11 @@
 ],
 [
 "B",
-"Cluster parameters are only filled in after the controller restarts"
+"Cluster parameters are filled in after the next controller restart"
 ],
 [
 "C",
-"Placeholders need `goTemplate: true` before any value is replaced"
+"Placeholders need `goTemplate: true` before values are replaced"
 ],
 [
 "D",
@@ -17927,7 +17927,7 @@
 "o": [
 [
 "A",
-"Fix the module source, and then run init again"
+"Fix the module source in the code, then run init again"
 ],
 [
 "B",
@@ -17935,7 +17935,7 @@
 ],
 [
 "C",
-"Rebuild the infrastructure from a snapshot to be safe"
+"Restore the old module source from a backup of the state"
 ],
 [
 "D",
@@ -17948,7 +17948,7 @@
 "y": [
 "init מוריד modules לפי source בקוד, לא לפי ה-state. אם ה-repo של ה-module הוזז או נמחק, מעדכנים את ה-source לכתובת הנכונה (או לעותק מקומי), ומריצים init. ה-state והתשתית לא נפגעים.",
 "init לא קורא את ה-module מה-state. מחיקת state רק תגרום ל-Terraform לשכוח את כל התשתית.",
-"התשתית תקינה לגמרי ולא צריכה שחזור. הבעיה היא בכתובת של קוד, לא במשאבים בענן.",
+"ה-source של module נקבע בקוד, לא ב-state. שחזור state ישן לא משנה את מה ש-init מנסה להוריד, והוא עדיין ייכשל.",
 "apply בלי init ייכשל מיד, כי ה-modules וה-providers לא מותקנים בתיקייה."
 ],
 "x": "תגיד שזו סיבה לשמור modules קריטיים ב-registry פנימי או ב-repo של הארגון, עם tags. module ב-repo אישי של עובד שעזב הוא סיכון.",
@@ -18207,11 +18207,11 @@
 "o": [
 [
 "A",
-"The namespace's ResourceQuota blocks new objects until reset"
+"A ResourceQuota keeps the namespace Terminating until reset"
 ],
 [
 "B",
-"Argo CD can't create a namespace that it once pruned"
+"Argo CD's own finalizer blocks recreating a pruned namespace"
 ],
 [
 "C",
@@ -18226,8 +18226,8 @@
 "C"
 ],
 "y": [
-"ResourceQuota לא מונע יצירה של namespace, הוא חל על משאבים בתוכו. והשגיאה מתייחסת למחיקה שלא הסתיימה.",
-"Argo CD יכול ליצור את ה-namespace מחדש אחרי שהמחיקה הסתיימה. הבעיה היא שהיא עוד לא הסתיימה.",
+"ResourceQuota לא משאיר namespace ב-Terminating. הוא מגביל משאבים בתוך namespace פעיל, והמחיקה תקועה בגלל finalizer.",
+"Argo CD יכול ליצור את ה-namespace מחדש אחרי שהמחיקה הסתיימה. ה-finalizer שתוקע כאן שייך ל-namespace, לא ל-Argo CD.",
 "namespace במחיקה (עם finalizer שלא הוסר, לרוב בגלל CRD או APIService שלא זמין) לא מקבל משאבים חדשים ולא ניתן ליצור אותו מחדש. בודקים `kubectl get ns <name> -o yaml` ואת ה-conditions.",
 "project שחוסם Namespace נותן שגיאה מפורשת על הרשאה. כאן ה-namespace קיים ותקוע ב-Terminating."
 ],
@@ -18701,7 +18701,7 @@
 ],
 [
 "B",
-"The script's line endings and its text encoding"
+"The script's line endings, checked with `file run.sh`"
 ],
 [
 "C",
@@ -18709,7 +18709,7 @@
 ],
 [
 "D",
-"Whether you're logged in as the root user right now"
+"Whether you're logged in as root, per `whoami`"
 ]
 ],
 "a": [
@@ -18732,7 +18732,7 @@
 "o": [
 [
 "A",
-"A larger MTU on the corporate network's interfaces"
+"A larger `mtu` on the corporate network's interfaces"
 ],
 [
 "B",
@@ -18744,7 +18744,7 @@
 ],
 [
 "D",
-"A new DNS record that points at the vendor's API host"
+"A new entry in `/etc/hosts` for the vendor's API host"
 ]
 ],
 "a": [
@@ -18915,7 +18915,7 @@
 ],
 [
 "C",
-"Secrets are namespaced; pods can only use Secrets in their own namespace"
+"Secrets are namespaced; a pod in `prod` can't use one from `default`"
 ],
 [
 "D",
@@ -19082,7 +19082,7 @@
 "o": [
 [
 "A",
-"Defines a variable that every template in the file sees"
+"Defines a `$variable` that every template in the file sees"
 ],
 [
 "B",
@@ -19090,7 +19090,7 @@
 ],
 [
 "C",
-"Adds a shared label to every resource in the release"
+"Adds a shared label to every resource, like `commonLabels`"
 ],
 [
 "D",
@@ -19424,7 +19424,7 @@
 "x": "תזכיר שתוקף תעודות ציבוריות יורד בהדרגה ל-47 יום עד 2029, כך שחידוש ידני הופך לבלתי אפשרי. אוטומציה היא חובה.",
 "lv": 0,
 "k": "t",
-"r": "https://letsencrypt.org/docs/"
+"r": "https://cert-manager.io/docs/usage/certificate/#reissuance-triggered-by-expiry-renewal"
 },
 {
 "s": 8,
@@ -19677,7 +19677,7 @@
 "o": [
 [
 "A",
-"A finalizer named helm that marks it as owned by a release"
+"A `helm` finalizer that marks it as owned by a release"
 ],
 [
 "B",
@@ -19689,7 +19689,7 @@
 ],
 [
 "D",
-"An owner reference that points at the namespace it lives in"
+"An `ownerReference` that points at the namespace it lives in"
 ]
 ],
 "a": [
@@ -20027,11 +20027,11 @@
 "o": [
 [
 "A",
-"The timezone that is configured inside the container"
+"The timezone set in the container's `/etc/localtime`"
 ],
 [
 "B",
-"The container's CPU and memory limits in its spec"
+"The container's CPU and memory `limits` in its spec"
 ],
 [
 "C",
@@ -20171,7 +20171,7 @@
 ],
 [
 "B",
-"Re-running the PR's checks once a day while it is still open"
+"Re-running the PR's tests once a day until it can merge"
 ],
 [
 "C",
@@ -20521,7 +20521,7 @@
 ],
 [
 "B",
-"kube-state-metrics, which reports Argo CD Application health"
+"`kube-state-metrics`, which reports Argo CD Application health"
 ],
 [
 "C",
@@ -20529,7 +20529,7 @@
 ],
 [
 "D",
-"metrics-server, which exposes each Application's pod health"
+"`metrics-server`, which exposes each Application's pod health"
 ]
 ],
 "a": [
@@ -20571,7 +20571,7 @@
 "B"
 ],
 "y": [
-"מספר cores לא מגביל קבצים פתוחים. הגבול מוגדר לכל תהליך ע\"י ulimit או systemd.",
+"מספר cores לא מגביל קבצים פתוחים. הגבול מוגדר לכל תהליך על ידי ulimit או systemd.",
 "כל socket, קובץ ו-pipe הם file descriptor. ברירת המחדל (1024 soft) נמוכה לשרתים. בודקים cat /proc/<pid>/limits ו-ls /proc/<pid>/fd | wc -l, ומעלים את הגבול: LimitNOFILE ב-systemd או ulimit -n.",
 "גודל דיסק לא קשור למספר קבצים פתוחים. השגיאה מדברת על מספר descriptors, לא על מקום.",
 "גרסת הקרנל לא קובעת את הגבול לתהליך. יש גבול מערכתי (fs.file-max), אבל הוא כמעט אף פעם הבעיה."
@@ -20797,7 +20797,7 @@
 "o": [
 [
 "A",
-"Sends SIGHUP to PID 1 in every container so it reloads its config"
+"Sends `SIGHUP` to PID 1 in every container so it reloads config"
 ],
 [
 "B",
@@ -20805,7 +20805,7 @@
 ],
 [
 "C",
-"Deletes the pods in batches and lets the same ReplicaSet recreate them"
+"Deletes pods in batches and lets the same `ReplicaSet` recreate them"
 ],
 [
 "D",
@@ -21077,7 +21077,7 @@
 "o": [
 [
 "A",
-"Job outputs only work on Windows-hosted runners"
+"Job outputs only work on `windows-latest` runners"
 ],
 [
 "B",
@@ -21089,7 +21089,7 @@
 ],
 [
 "D",
-"Both jobs have to run on the very same runner machine"
+"Both jobs have to share the same `runs-on` runner machine"
 ]
 ],
 "a": [
@@ -21518,7 +21518,7 @@
 "y": [
 "מחיקה גורמת ל-Terraform לשכוח את כל התשתית. זה מחמיר מאוד בשביל בעיה של גרסה.",
 "עריכה ידנית של גרסה מסוכנת, כי הפורמט אולי באמת השתנה. זה עלול להשחית את ה-state.",
-"state שנכתב ע\"י 1.9 משתמש בפורמט שגרסה 1.6 לא מבטיחה לקרוא, ולכן היא מסרבת. מעדכנים את CI ל-1.9 ומקבעים required_version, כדי שאף אחד לא ייצור שוב פער. downgrade של state לא נתמך.",
+"state שנכתב על ידי 1.9 משתמש בפורמט שגרסה 1.6 לא מבטיחה לקרוא, ולכן היא מסרבת. מעדכנים את CI ל-1.9 ומקבעים required_version, כדי שאף אחד לא ייצור שוב פער. downgrade של state לא נתמך.",
 "אין דגל כזה שעוקף בדיקת גרסת state. וגם לא כדאי שיהיה, כי הבדיקה מגינה על ה-state."
 ],
 "x": "תזכיר required_version = \"~> 1.9.0\" בקוד ו-.terraform-version בריפו, כדי ש-tfenv ו-CI יבחרו את אותה גרסה תמיד.",
@@ -22411,11 +22411,11 @@
 ],
 [
 "B",
-"The files referenced by COPY, which the client uploads lazily"
+"The files referenced by `COPY`, which the client uploads lazily"
 ],
 [
 "C",
-"The base image's filesystem, which COPY adds files on top of"
+"The base image's filesystem, which `COPY` adds files on top of"
 ],
 [
 "D",
@@ -22512,7 +22512,7 @@
 "o": [
 [
 "A",
-"Environment variables are set once, when the container starts"
+"`envFrom` values are set once, when the container starts"
 ],
 [
 "B",
@@ -22656,7 +22656,7 @@
 ],
 [
 "B",
-"Turn off the firewall on the host so the port opens"
+"Turn off the host firewall with `ufw disable`"
 ],
 [
 "C",
@@ -22664,14 +22664,14 @@
 ],
 [
 "D",
-"Run the application as root permanently from now on"
+"Run the application as root with `sudo`, from now on"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"הפורט לא תפוס ע\"י אף אחד. השגיאה היא הרשאה של הקרנל, ו-reboot לא ישנה אותה.",
+"הפורט לא תפוס על ידי אף אחד. השגיאה היא הרשאה של הקרנל, ו-reboot לא ישנה אותה.",
 "firewall לא קשור ל-bind מקומי. ה-permission denied מגיע מהקרנל, לא מ-iptables.",
 "פורטים מתחת ל-1024 דורשים הרשאה. אפשר להאזין על 8080 ולשים NGINX או LB מקדימה, לתת capability ספציפית (AmbientCapabilities ב-systemd, או setcap), או בקונטיינר להשתמש ב-net.ipv4.ip_unprivileged_port_start.",
 "root נותן לאפליקציה גישה לכל המערכת. פרצה בה הופכת לפרצה במכונה כולה, בלי שום מחסום."
@@ -22897,7 +22897,7 @@
 "o": [
 [
 "A",
-"NetworkPolicy can't select pods in other namespaces at all"
+"A policy can't select pods from another namespace at all"
 ],
 [
 "B",
@@ -23061,7 +23061,7 @@
 "גם Gateway וגם Ingress controller שולחים בדרך כלל ישירות ל-endpoints. ההבדל הוא במודל ה-API, לא במסלול החבילות.",
 "Gateway API מפריד בין GatewayClass (ספק התשתית), Gateway (צוות הפלטפורמה) ו-HTTPRoute (צוות האפליקציה). פיצולי תעבורה, headers ו-TCP/gRPC routes הם חלק מהמפרט, ולא annotations שונות לכל controller."
 ],
-"x": "תזכיר שמ-2025 התחזוקה של ingress-nginx מצטמצמת, והרבה ארגונים עוברים ל-Gateway API. כדאי לדעת להסביר traffic splitting עם `weight` ב-HTTPRoute, שב-Ingress דרש annotations.",
+"x": "תזכיר ש-Ingress NGINX הופסק במרץ 2026: אין יותר גרסאות, תיקוני באגים או תיקוני אבטחה, ולכן ארגונים עוברים ל-Gateway API. כדאי לדעת להסביר traffic splitting עם `weight` ב-HTTPRoute, שב-Ingress דרש annotations.",
 "lv": 1,
 "k": "k",
 "r": "https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/"
@@ -23395,7 +23395,7 @@
 ],
 [
 "C",
-"Composite actions define jobs; reusable workflows can't"
+"A composite action defines jobs; a reusable workflow can't"
 ],
 [
 "D",
@@ -23430,11 +23430,11 @@
 ],
 [
 "C",
-"Add `for: 30m` to every alert so short spikes never fire"
+"Add `for: 30m` to the alerts so short spikes stop firing"
 ],
 [
 "D",
-"Lower every threshold so problems are caught before users notice"
+"Lower the thresholds so problems are caught before users notice"
 ]
 ],
 "a": [
@@ -23566,11 +23566,11 @@
 ],
 [
 "B",
-"Run one repo-server Deployment per Application"
+"Run one `argocd-repo-server` Deployment per Application"
 ],
 [
 "C",
-"Turn off webhooks and poll Git once an hour instead"
+"Turn off webhooks; set `timeout.reconciliation` to 1h"
 ],
 [
 "D",
@@ -23597,7 +23597,7 @@
 "o": [
 [
 "A",
-"Locks the release so that no further upgrades are allowed"
+"Locks the release so later `helm upgrade` calls are refused"
 ],
 [
 "B",
@@ -23605,7 +23605,7 @@
 ],
 [
 "C",
-"Makes the upgrade instant by skipping every validation check"
+"Skips all validation, like `--disable-openapi-validation`"
 ],
 [
 "D",
@@ -24319,7 +24319,7 @@
 "הנוחות היא לא העיקר. היתרון הוא review ב-PR, plan מוקדם וחזרתיות בכל סביבה.",
 "import קורא את המשאב מהענן, ולכן תמיד צריך credentials עם הרשאת קריאה למשאב.",
 "import לא מוחק ולא יוצר שום משאב. הוא רק מוסיף משאב קיים ל-state של Terraform.",
-"import { to = aws_s3_bucket.logs  id = \"my-logs\" } נכנס ל-PR, ה-plan מראה מה ייובא, וה-apply מבצע. plan -generate-config-out=gen.tf כותב קוד התחלתי. terraform import הישן משנה state מיד בלי review."
+"בלוק `import` עם `to = aws_s3_bucket.logs` ו-`id = \"my-logs\"` נכנס ל-PR, ה-plan מראה מה ייובא, וה-apply מבצע. `plan -generate-config-out=gen.tf` כותב קוד התחלתי. `terraform import` הישן משנה state מיד בלי review."
 ],
 "x": "תזכיר שמ-1.7 import block תומך ב-for_each, לייבוא עשרות משאבים בבת אחת. ושהקוד שנוצר הוא נקודת התחלה שצריך לנקות.",
 "lv": 1,
@@ -24694,7 +24694,7 @@
 ],
 [
 "D",
-"They are features that exist only inside Docker"
+"cgroups and namespaces are Docker features, not kernel ones"
 ]
 ],
 "a": [
@@ -25281,11 +25281,11 @@
 ],
 [
 "B",
-"rm has a bug in how it expands wildcards"
+"`rm` has a bug in how it expands wildcards"
 ],
 [
 "C",
-"The script ran as a normal user, not root"
+"The script ran as a normal user, not `root`"
 ],
 [
 "D",
@@ -25297,7 +25297,7 @@
 ],
 "y": [
 "אם DIR ריק, rm -rf $DIR/* הופך ל-rm -rf /*. set -u מכשיל על משתנה שלא הוגדר, ו-${DIR:?} נכשל גם על משתנה ריק. ציטוט ו-cd עם בדיקה מוסיפים הגנה.",
-"ההרחבה של * נעשית ע\"י ה-shell, לא ע\"י rm, והיא עובדת בדיוק כמו שהוגדר.",
+"ההרחבה של * נעשית על ידי ה-shell, לא על ידי rm, והיא עובדת בדיוק כמו שהוגדר.",
 "משתמש רגיל דווקא היה נחסם מלמחוק קבצים של המערכת. זה לא מסביר את המחיקה.",
 "דיסק מלא לא גורם ל-rm למחוק תיקייה אחרת. הבעיה היא בנתיב שנבנה ממשתנה ריק."
 ],
@@ -25409,7 +25409,7 @@
 "x": "תזכיר את החיסרון: הערכים עוברים דרך ה-repo-server וה-cache שלו, ומופיעים ב-diff וב-manifests שנשמרו. לכן הרבה עוברים ל-ESO.",
 "lv": 1,
 "k": "k",
-"r": "https://argocd-vault-plugin.readthedocs.io/en/stable/"
+"r": "https://argocd-vault-plugin.readthedocs.io/en/stable/howitworks/"
 },
 {
 "s": 11,
@@ -25732,7 +25732,7 @@
 "o": [
 [
 "A",
-"In the Elasticsearch config file inside the image"
+"In the `elasticsearch.yml` file inside the image"
 ],
 [
 "B",
@@ -25744,7 +25744,7 @@
 ],
 [
 "D",
-"By switching to a different tag of the same image"
+"By switching to a different `:tag` of the same image"
 ]
 ],
 "a": [
@@ -25946,15 +25946,15 @@
 ],
 [
 "B",
-"Create all of them with auto-sync, so they finish rendering faster"
+"Create them with `automated` sync, so they render in one pass"
 ],
 [
 "C",
-"Run a dedicated Argo CD instance for every new ApplicationSet"
+"Run a dedicated Argo CD instance for each large ApplicationSet"
 ],
 [
 "D",
-"Remove the repo-server's memory limits so it can render them all"
+"Remove the repo-server's `resources.limits` so it renders them all"
 ]
 ],
 "a": [
@@ -26125,18 +26125,18 @@
 ],
 [
 "C",
-"It upgrades the running release to those two versions"
+"It runs `helm upgrade` on the release to those versions"
 ],
 [
 "D",
-"It signs the chart package with the release key for both"
+"It signs the package with the release key, like `--sign`"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"Helm לא מוריד container images בכלל. ה-image נמשך ע\"י ה-kubelet כשה-pod עולה.",
+"Helm לא מוריד container images בכלל. ה-image נמשך על ידי ה-kubelet כשה-pod עולה.",
 "--version ו---app-version משנים את הערכים ב-Chart.yaml שבתוך ה-tgz בלבד, בלי לשנות את הקובץ במקור. שימושי ב-CI: אותו chart נארז עם גרסה לפי build number ו-appVersion לפי ה-image.",
 "helm package עובד מקומית ויוצר קובץ tgz. שדרוג של release רץ נעשה רק עם helm upgrade.",
 "חתימה נעשית עם הדגלים --sign ו---key. הדגלים בשאלה משנים רק את הגרסאות בחבילה."
@@ -26397,7 +26397,7 @@
 "o": [
 [
 "A",
-"Credentials are kept in plain text on the controller"
+"Credentials are stored in plain text on the controller's disk"
 ],
 [
 "B",
@@ -26409,7 +26409,7 @@
 ],
 [
 "D",
-"The Script Console can decrypt any stored credential"
+"Groovy run from the console can decrypt any stored secret"
 ]
 ],
 "a": [
@@ -26615,11 +26615,11 @@
 ],
 [
 "C",
-"StatefulSets use `OnDelete` by default, so no pod updates on its own"
+"StatefulSets use `OnDelete` by default, so the broken pod isn't replaced"
 ],
 [
 "D",
-"The revert waits until the old PVC detaches from `web-2`"
+"OrderedReady waits until the old PVC detaches from `web-2`"
 ]
 ],
 "a": [
@@ -26739,7 +26739,7 @@
 "x": "תזכיר את ה-Pact Broker ואת can-i-deploy: לפני deploy שואלים אם הגרסה תואמת לגרסאות שרצות בסביבה. זה מראה שאתה מבין איך זה משתלב ב-pipeline.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.pact.io/"
+"r": "https://docs.pact.io/getting_started/how_pact_works"
 },
 {
 "s": 11,
@@ -26747,7 +26747,7 @@
 "o": [
 [
 "A",
-"Its secrets are only exposed if the PR edits the workflow file"
+"Secrets leak through the workflow file, which the PR can edit"
 ],
 [
 "B",
@@ -26759,14 +26759,14 @@
 ],
 [
 "D",
-"Fork PRs can't be checked out at all in `pull_request_target`"
+"GitHub blocks checking out fork code in `pull_request_target`"
 ]
 ],
 "a": [
 "B"
 ],
 "y": [
-"ב-pull_request_target ה-workflow נלקח מה-base, אבל הקוד שרץ הוא של ה-fork. לא צריך לשנות את ה-workflow כדי לנצל.",
+"ב-pull_request_target ה-workflow נלקח מה-base, ולכן ה-PR לא יכול לשנות אותו. הסכנה היא בקוד של ה-fork שרץ עם ה-secrets.",
 "`pull_request_target` רץ בהקשר של ה-base repo, עם secrets ו-GITHUB_TOKEN עם הרשאות כתיבה. checkout של ה-head מה-fork והרצת `npm install` מריצים scripts של התוקף (postinstall) עם כל ההרשאות האלה.",
 "גם ב-repos ציבוריים יש secrets ו-token עם הרשאות כתיבה. רוב המתקפות האלה היו על repos ציבוריים.",
 "אפשר לעשות checkout ל-head של ה-fork במפורש עם `ref`, ו-actions/checkout מאפשר זאת. זו בדיוק הטעות."
@@ -26817,7 +26817,7 @@
 "o": [
 [
 "A",
-"DNS lookups are slow for the other region's host"
+"Slow DNS lookups for the other region, repeated 50 times"
 ],
 [
 "B",
@@ -26825,7 +26825,7 @@
 ],
 [
 "C",
-"There isn't enough bandwidth between the regions"
+"There isn't enough bandwidth between regions for the calls"
 ],
 [
 "D",
@@ -26922,7 +26922,7 @@
 "o": [
 [
 "A",
-"To keep the state lock fresh between scheduled runs"
+"To refresh the state, so drift is fixed without code changes"
 ],
 [
 "B",
@@ -26941,7 +26941,7 @@
 "C"
 ],
 "y": [
-"נעילה נוצרת ומשתחררת בכל run מחדש. אין שום צורך לרענן אותה מראש או לשמור עליה.",
+"plan לא מתקן ולא כותב ל-state. הוא רק מדווח על הבדלים, ומישהו צריך להחליט מה לעשות איתם.",
 "providers לא דורשים שום תדירות של plans. זו פרקטיקה טובה שלנו, לא דרישה טכנית.",
 "plan מתוזמן עם -detailed-exitcode מחזיר 2 כשיש שינויים, ו-CI מתריע. drift שמתגלה אחרי יום קל לחקור: מי שינה ולמה. drift שמתגלה אחרי חצי שנה הופך כל apply למסוכן.",
 "plan לא מנקה שום דבר בעצמו. הוא רק מדווח על הבדלים בין קוד למציאות בענן."
@@ -27027,7 +27027,7 @@
 "o": [
 [
 "A",
-"Encryption for every volume, with keys held by the API server"
+"Encryption for all storage, with keys held by the Kubernetes API"
 ],
 [
 "B",
@@ -27272,7 +27272,7 @@
 "o": [
 [
 "A",
-"random_password generates a new value on every plan run"
+"random_password makes a new value in each engineer's plan"
 ],
 [
 "B",
@@ -27284,7 +27284,7 @@
 ],
 [
 "D",
-"The random provider version is too old for stable output"
+"The local random provider is too old to give stable output"
 ]
 ],
 "a": [
@@ -27311,11 +27311,11 @@
 ],
 [
 "B",
-"Rolling back is possible only for databases, not for application code"
+"Rolling back is possible for databases, but not for application code"
 ],
 [
 "C",
-"Rolling forward deletes all of the older versions from the registry"
+"Rolling forward deletes the older versions from the registry"
 ],
 [
 "D",
@@ -27385,7 +27385,7 @@
 ],
 [
 "C",
-"Smaller images, a nearby registry or cache, and pre-pulling"
+"Smaller images, a nearby `pull-through` cache, and pre-pulling"
 ],
 [
 "D",
@@ -27455,7 +27455,7 @@
 ],
 [
 "C",
-"Release names can't be used inside any loop in a template"
+"`.Release.Name` can't be used inside a `range` loop at all"
 ],
 [
 "D",
@@ -27805,7 +27805,7 @@
 ],
 [
 "C",
-"Ship logs off the node with an agent like Fluent Bit"
+"Ship logs off the node with a `fluent-bit` DaemonSet"
 ],
 [
 "D",
@@ -27852,7 +27852,7 @@
 ],
 "y": [
 "ARC הוא controller של GitHub שמקים runner sets ב-Kubernetes. הוא יוצר pod לכל job ומוחק אחריו, ומגדיל או מקטין לפי התור. כך מקבלים runners בתוך הרשת שלך, נקיים ובקנה מידה.",
-"תמחור של hosted runners נקבע ע\"י GitHub. ARC מנהל runners שלך, על התשתית שלך.",
+"תמחור של hosted runners נקבע על ידי GitHub. ARC מנהל runners שלך, על התשתית שלך.",
 "ARC מריץ את ה-runner הרשמי של GitHub Actions. אין שום Jenkins מעורב בתהליך.",
 "ARC לא מטפל בלוגים של workflows. הוא מנהל את מחזור החיים של runners ב-Kubernetes."
 ],
@@ -27929,7 +27929,7 @@
 "x": "תגיד במפורש שבדיקות צריכות להיות hermetic: כל בדיקה יוצרת את הנתונים שלה ולא סומכת על מצב קיים. אם DB לכל ריצה יקר, תציע schema לכל job או טרנזקציה שמתבטלת בסוף כל בדיקה.",
 "lv": 1,
 "k": "t",
-"r": "https://testcontainers.com/"
+"r": "https://java.testcontainers.org/modules/databases/"
 },
 {
 "s": 13,
@@ -27976,11 +27976,11 @@
 ],
 [
 "B",
-"Edit the release Secret by hand to mark the status deployed"
+"Mark the install deployed by editing the release Secret"
 ],
 [
 "C",
-"Run `helm rollback` to revision zero to reset the release"
+"Roll the failed release back to revision zero to reset it"
 ],
 [
 "D",
@@ -28042,7 +28042,7 @@
 "o": [
 [
 "A",
-"The bucket is set to read-only while an apply is running"
+"The bucket gets a read-only `bucket policy` while apply runs"
 ],
 [
 "B",
@@ -28054,7 +28054,7 @@
 ],
 [
 "D",
-"Locking requires HCP Terraform and can't use plain S3"
+"Locking needs HCP Terraform's `cloud` block, not plain S3"
 ]
 ],
 "a": [
@@ -28182,11 +28182,11 @@
 "o": [
 [
 "A",
-"Kubernetes RBAC overrides project rules when the SA is cluster-admin"
+"Kubernetes RBAC overrides project rules when the SA is `cluster-admin`"
 ],
 [
 "B",
-"Resources created by PostSync hooks are exempt from project rules"
+"Resources from `PostSync` hooks are exempt from project rules"
 ],
 [
 "C",
@@ -28427,7 +28427,7 @@
 "o": [
 [
 "A",
-"When its node is unreachable and the pod might still be running there"
+"When its node is `NotReady` and the pod might still be running there"
 ],
 [
 "B",
@@ -29271,11 +29271,11 @@
 ],
 [
 "B",
-"Helm caches the value from the previous release and reuses it"
+"Helm caches the previous release's value, like `--reuse-values`"
 ],
 [
 "C",
-"The value must be written as the string \"false\" in quotes"
+"The value must be the string `\"false\"`, written in quotes"
 ],
 [
 "D",
@@ -29711,7 +29711,7 @@
 "gVisor הוא runtime שמגדירים עם RuntimeClass. RuntimeDefault לא מחליף את ה-runtime, הוא רק מסנן syscalls.",
 "RuntimeDefault מפעיל את פרופיל ה-seccomp של containerd או CRI-O, שחוסם עשרות syscalls שקונטיינר רגיל לא צריך, כמו `kexec_load`, `mount` ו-`ptrace` מסוימים. זה מקטין את משטח התקיפה של הקרנל."
 ],
-"x": "תזכיר שעד 1.27 ברירת המחדל הייתה Unconfined, וה-kubelet יכול להפעיל RuntimeDefault לכל הפודים עם `--seccomp-default`. Restricted דורש אותו במפורש.",
+"x": "תזכיר שבלי הגדרה ברירת המחדל היא עדיין Unconfined, אלא אם ה-kubelet רץ עם `--seccomp-default` (GA מ-1.27), שמפעיל RuntimeDefault לכל הפודים. Restricted דורש RuntimeDefault או Localhost במפורש.",
 "lv": 1,
 "k": "k",
 "r": "https://kubernetes.io/docs/tutorials/security/seccomp/"
@@ -29761,15 +29761,15 @@
 ],
 [
 "B",
-"Every resource stays, since uninstall only clears the history"
+"Every resource stays, since `uninstall` only clears the history"
 ],
 [
 "C",
-"Nothing at all stays behind once an uninstall has finished"
+"Nothing stays behind once the uninstall has finished running"
 ],
 [
 "D",
-"Only the Services stay, so that their IP addresses are kept"
+"Only the Services stay, so their `clusterIP` addresses are kept"
 ]
 ],
 "a": [
@@ -29854,7 +29854,7 @@
 "x": "תתאר שכבות: RBAC שמגביל exec בפרודקשן, audit log שמתעד מי נכנס, Falco שמזהה מה נעשה בפנים, ו-NetworkPolicy egress שחוסם יציאה לא מוכרת. מראיינים אוהבים defense in depth.",
 "lv": 1,
 "k": "t",
-"r": "https://falco.org/docs/"
+"r": "https://falco.org/docs/concepts/rules/"
 },
 {
 "s": 23,
@@ -30982,11 +30982,11 @@
 "o": [
 [
 "A",
-"The JVM version installed is too new for the kernel"
+"The JVM is too new for the kernel, as `uname -r` shows"
 ],
 [
 "B",
-"The disk is full, so new threads can't be created"
+"The disk is full (`df -h`), so new threads can't be created"
 ],
 [
 "C",
@@ -31161,11 +31161,11 @@
 ],
 [
 "B",
-"Turn off all logging on the server to save space"
+"Turn off all logging with `Storage=none` to save space"
 ],
 [
 "C",
-"Delete /var/log/journal while journald keeps running"
+"Delete `/var/log/journal` while journald keeps running"
 ],
 [
 "D",
@@ -31231,7 +31231,7 @@
 ],
 [
 "B",
-"Masking is applied only to secrets set at the org level"
+"Masking covers org-level secrets, not repository ones"
 ],
 [
 "C",
@@ -31239,7 +31239,7 @@
 ],
 [
 "D",
-"GitHub masks values only when they're under 16 characters"
+"GitHub stops masking values longer than 16 characters"
 ]
 ],
 "a": [
@@ -31249,7 +31249,7 @@
 "GitHub מחפש בלוג את המחרוזת המדויקת של כל secret. base64, URL-encoding או חיתוך יוצרים מחרוזת אחרת, והיא מודפסת גלויה. אפשר לרשום ערך נגזר עם `::add-mask::`, אבל עדיף לא להדפיס סודות בכלל.",
 "גם secrets של repo ושל environment ממוסכים באותה דרך. הבעיה היא בשינוי הערך לפני ההדפסה.",
 "ה-shell לא משנה. המיסוך פועל על הטקסט בלוג, והערך המקודד פשוט לא תואם.",
-"אין מגבלת אורך כזו במנגנון המיסוך. גם סודות ארוכים ממוסכים כשהם מופיעים בלוג כמו שהם."
+"אין מגבלת אורך כזו במנגנון המיסוך. גם סודות ארוכים ממוסכים כשהם מופיעים בלוג בדיוק כמו שהם."
 ],
 "x": "תזכיר שזה וקטור דליפה מוכר, וגם `set -x` בסקריפטים יכול להדפיס ערכים. ב-review של workflows מחפשים echo, debug ו-printenv.",
 "lv": 1,
@@ -31441,15 +31441,15 @@
 ],
 [
 "B",
-"Speeds up the TLS handshakes by caching their keys"
+"Speeds up HTTPS by letting browsers cache TLS keys"
 ],
 [
 "C",
-"Tells browsers to use only HTTPS for the domain"
+"Tells browsers to load the domain only over HTTPS"
 ],
 [
 "D",
-"Blocks automated bots from visiting the whole site"
+"Blocks bots from crawling the domain over plain HTTP"
 ]
 ],
 "a": [
@@ -31472,7 +31472,7 @@
 "o": [
 [
 "A",
-"Ignore all changes on the policy forever with lifecycle"
+"Ignore all policy changes forever with `ignore_changes`"
 ],
 [
 "B",
@@ -31484,7 +31484,7 @@
 ],
 [
 "D",
-"Recreate the policy on every apply so the diff disappears"
+"Recreate it on every apply with `replace_triggered_by`"
 ]
 ],
 "a": [
@@ -32180,11 +32180,11 @@
 ],
 [
 "C",
-"Writing every pipeline in YAML instead of Groovy syntax"
+"Writing pipelines in YAML instead of Groovy syntax"
 ],
 [
 "D",
-"Encrypting every build log that the controller stores"
+"Encrypting the build logs that the controller stores"
 ]
 ],
 "a": [
@@ -32331,8 +32331,8 @@
 "D"
 ],
 "y": [
-"שעון החומרה מנוהל ע\"י הקרנל ו-hwclock, לא ע\"י systemd. timer מתזמן הרצה של שירותים.",
-"סנכרון זמן נעשה ע\"י chrony או systemd-timesyncd. timer לא נוגע בשעון המערכת בכלל.",
+"שעון החומרה מנוהל על ידי הקרנל ו-hwclock, לא על ידי systemd. timer מתזמן הרצה של שירותים.",
+"סנכרון זמן נעשה על ידי chrony או systemd-timesyncd. timer לא נוגע בשעון המערכת בכלל.",
 "זמני עלייה מודדים עם systemd-analyze blame. timer הוא מנגנון תזמון, לא מדידה.",
 "systemd timer (.timer) מפעיל .service לפי OnCalendar או OnBootSec. היתרונות על cron: הפלט נכנס ל-journal, אפשר dependencies ומגבלות משאבים, Persistent=true מריץ ריצות שהוחמצו, ו-RandomizedDelaySec מפזר עומס."
 ],
@@ -32355,11 +32355,11 @@
 ],
 [
 "C",
-"CI is designed to run only on pull requests by default"
+"CI runs on pull requests by default, not on pushes"
 ],
 [
 "D",
-"The push failed on the runner without any error shown"
+"GITHUB_TOKEN lacks write access, so the push silently failed"
 ]
 ],
 "a": [
@@ -32382,7 +32382,7 @@
 "o": [
 [
 "A",
-"One repo versus a credential template for a URL prefix"
+"`repository` is one repo; `repo-creds` is a template for a URL prefix"
 ],
 [
 "B",
@@ -32701,11 +32701,11 @@
 ],
 [
 "B",
-"Kubernetes counts `2Gi` as 2,000 MB, so the heap alone doesn't fit"
+"Kubernetes counts `2Gi` memory as 2,000 MB, so the heap can't fit"
 ],
 [
 "C",
-"The GC spikes to twice the heap size during a full collection"
+"GC doubles the heap during a full collection, past the limit"
 ],
 [
 "D",
@@ -32845,11 +32845,11 @@
 ],
 [
 "C",
-"A nightly snapshot of the Redis volume, restored on disaster"
+"A nightly snapshot of the `argocd-redis` volume, restored on disaster"
 ],
 [
 "D",
-"A Velero backup of the repo-server's cache directory"
+"A Velero backup of the repo-server's `/tmp` cache directory"
 ]
 ],
 "a": [
@@ -33055,11 +33055,11 @@
 ],
 [
 "C",
-"Secrets can't be created by Helm, only by kubectl or operators"
+"Secrets can't be created by Helm, only by `kubectl` or operators"
 ],
 [
 "D",
-"The value must be wrapped in quotes twice to be accepted"
+"The value must be wrapped twice, as `quote | quote`"
 ]
 ],
 "a": [
@@ -33086,7 +33086,7 @@
 ],
 [
 "B",
-"When the resource has no dependencies on any other resource"
+"When the resource has no dependencies on other resources"
 ],
 [
 "C",
@@ -33284,7 +33284,7 @@
 "x": "תגיד שהיתרון הוא שה-credentials נשארים בתוך הרשת שלך, לא אצל SaaS. והחיסרון: שרת לתחזק, ותשומת לב ל-PRs מ-forks.",
 "lv": 1,
 "k": "k",
-"r": "https://www.runatlantis.io/docs/"
+"r": "https://www.runatlantis.io/docs/using-atlantis.html"
 },
 {
 "s": 15,
@@ -33401,7 +33401,7 @@
 ],
 [
 "B",
-"Only the ServiceAccount that created the Secret and its pods"
+"The ServiceAccount that created the Secret, and its pods"
 ],
 [
 "C",
@@ -33471,7 +33471,7 @@
 ],
 [
 "B",
-"Tell every consumer to pin the old module version for good"
+"Tell every consumer to pin the old module `version` for good"
 ],
 [
 "C",
@@ -33479,7 +33479,7 @@
 ],
 [
 "D",
-"Delete and recreate the NAT gateways in every account"
+"Delete and recreate the NAT gateways with `-replace`"
 ]
 ],
 "a": [
@@ -34051,7 +34051,7 @@
 "auto-sync נשאר מופעל. הוא פשוט לא ינסה שוב את אותו commit, אבל commit חדש יפעיל אותו.",
 "אין הכפלה של ה-timeout. בלי retry, ניסיון חוזר לאותו commit לא קורה בכלל."
 ],
-"x": "תזכיר שזה מכוון: אם כל reconcile היה מנסה שוב, manifest שבור היה מעמיס על ה-API כל 3 דקות. sync ידני או retry מוגדר הם הדרך.",
+"x": "תזכיר שזה מכוון: אם כל reconcile היה מנסה שוב, manifest שבור היה מעמיס על ה-API בכל מחזור polling, כמה פעמים בשעה. sync ידני או retry מוגדר הם הדרך.",
 "lv": 1,
 "k": "t",
 "r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automated-sync-semantics"
@@ -34101,7 +34101,7 @@
 ],
 [
 "B",
-"gp2 volumes do not support any form of encryption at rest"
+"gp2 volumes don't support encryption at rest with KMS keys"
 ],
 [
 "C",
@@ -34237,7 +34237,7 @@
 "o": [
 [
 "A",
-"Replacing Kubernetes NetworkPolicies everywhere in the cluster"
+"Replacing NetworkPolicies with security groups cluster-wide"
 ],
 [
 "B",
@@ -34684,7 +34684,7 @@
 "x": "תזכיר שאפשר להריץ אותם על `terraform plan -out` (בפורמט JSON) כדי לבדוק את מה שבאמת ישתנה, כולל ערכים ממודולים.",
 "lv": 1,
 "k": "k",
-"r": "https://www.checkov.io/"
+"r": "https://www.checkov.io/1.Welcome/What%20is%20Checkov.html"
 },
 {
 "s": 9,
@@ -34889,7 +34889,7 @@
 "הרעש יופיע בכל plan שבכל זאת ירוץ. וגרוע יותר, apply יחזיר את הקיבולת באמצע עומס.",
 "prevent_destroy חוסם רק מחיקה. הוא לא משפיע על שינוי של desired_capacity בכל plan.",
 "זה מאבד את ניהול כל שאר ההגדרות של ה-ASG. מספיק להתעלם משדה אחד שמשתנה מבחוץ.",
-"ignore_changes אומר ל-Terraform לא להשוות שדה מסוים אחרי היצירה. ה-ASG מנוהל ע\"י scaling policies, ו-Terraform מגדיר רק את הערך ההתחלתי. כך ה-plan נקי, ו-Terraform לא מחזיר את הקיבולת לאחור."
+"ignore_changes אומר ל-Terraform לא להשוות שדה מסוים אחרי היצירה. ה-ASG מנוהל על ידי scaling policies, ו-Terraform מגדיר רק את הערך ההתחלתי. כך ה-plan נקי, ו-Terraform לא מחזיר את הקיבולת לאחור."
 ],
 "x": "תזכיר שאותו דפוס חל על replicas ב-Kubernetes עם HPA, ועל tags שכלי אחר מוסיף. ותגיד שאתה מוסיף הערה בקוד שמסבירה למה השדה מוחרג.",
 "lv": 1,
@@ -35077,11 +35077,11 @@
 "o": [
 [
 "A",
-"A PreferNoSchedule taint on the node, so its pods can't be moved off of it"
+"A `PreferNoSchedule` taint on the node, so its pods can't be moved off"
 ],
 [
 "B",
-"Pods requesting far more CPU than they use, which inflates the node's apparent use"
+"Pods whose CPU `requests` far exceed use, which inflates the node's apparent use"
 ],
 [
 "C",
@@ -35174,7 +35174,7 @@
 "x": "תזכיר שזה מה שמחקרי DORA מצאו אצל צוותים מהירים: פחות משלושה branches פעילים, וחיים של פחות מיום. ושזה דורש CI מהיר ו-flags.",
 "lv": 1,
 "k": "k",
-"r": "https://trunkbaseddevelopment.com/"
+"r": "https://dora.dev/capabilities/trunk-based-development/"
 },
 {
 "s": 7,
@@ -35322,7 +35322,7 @@
 "o": [
 [
 "A",
-"Give every pod in the cluster the database password"
+"Keep the node security group and give only some pods the password"
 ],
 [
 "B",
@@ -35341,7 +35341,7 @@
 "B"
 ],
 "y": [
-"סיסמה לכל ה-pods מבטלת את ההפרדה שביקשו. כל pod פגיע ב-cluster יוכל לגשת לנתונים.",
+"ה-SG של ה-node עדיין פותח את הרשת לכל pod על ה-node. סיסמה מגבילה רק מי שמכיר אותה, לא מי שיכול להגיע ל-DB.",
 "עם SG for Pods, ה-pods שצריכים DB מקבלים SG ייעודי, וה-SG של RDS מאפשר 5432 או 3306 רק ממנו. pods אחרים על אותו node לא מגיעים ל-DB. אפשר להוסיף IAM database authentication.",
 "זה מגדיל את החשיפה במקום להקטין אותה. DB צריך להישאר בסאבנט פרטי, בלי כתובת ציבורית.",
 "פתיחה לכל האינטרנט חושפת את ה-DB ל-brute force ולפגיעויות. סיסמה לא מספיקה."
@@ -35474,7 +35474,7 @@
 ],
 [
 "D",
-"A selectorless Service plus a manual EndpointSlice with that IP"
+"A no-`selector` Service plus an EndpointSlice with that IP"
 ]
 ],
 "a": [
@@ -35917,7 +35917,7 @@
 "o": [
 [
 "A",
-"Services can never change their type once they are created"
+"Services can never change `type` once they are created"
 ],
 [
 "B",
@@ -35925,7 +35925,7 @@
 ],
 [
 "C",
-"Helm supports Services of type NodePort and nothing else"
+"Helm supports Services of `type: NodePort` and nothing else"
 ],
 [
 "D",
@@ -35987,7 +35987,7 @@
 "o": [
 [
 "A",
-"Update every plugin automatically on a nightly schedule"
+"Update plugins automatically on a nightly schedule"
 ],
 [
 "B",
@@ -35995,7 +35995,7 @@
 ],
 [
 "C",
-"Remove every plugin and then reinstall them from scratch"
+"Remove the plugins, then reinstall them from scratch"
 ],
 [
 "D",
@@ -36372,7 +36372,7 @@
 "o": [
 [
 "A",
-"The readiness probe fails after exit, and that triggers the back-off"
+"The `readinessProbe` fails after exit, and that triggers the back-off"
 ],
 [
 "B",
@@ -36469,7 +36469,7 @@
 "x": "תגיד שזה מכניס FinOps ל-PR: מפתחים רואים עלות לפני merge. ותזכיר policy שמבקש אישור נוסף לשינוי מעל סכום מסוים.",
 "lv": 1,
 "k": "k",
-"r": "https://www.infracost.io/docs/"
+"r": "https://github.com/infracost/actions"
 },
 {
 "s": 22,
@@ -36582,11 +36582,11 @@
 "o": [
 [
 "A",
-"Rotate the stored kubeconfig once every single year"
+"Rotate the stored `KUBECONFIG` file once every year"
 ],
 [
 "B",
-"Make the cluster's API server public to all of CI"
+"Make the API server public, allowing `0.0.0.0/0` for CI"
 ],
 [
 "C",
@@ -36870,7 +36870,7 @@
 ],
 [
 "C",
-"A handler that cordons and drains the node on the 2-minute notice"
+"A handler, like `aws-node-termination-handler`, that drains on notice"
 ],
 [
 "D",
@@ -36940,11 +36940,11 @@
 ],
 [
 "C",
-"A full Argo CD install in the target cluster, managed by the hub"
+"A full Argo CD install in the target, in namespace `argocd`"
 ],
 [
 "D",
-"A read-only ServiceAccount, upgraded when the first sync needs more"
+"A read-only `view` ServiceAccount, upgraded when a sync needs more"
 ]
 ],
 "a": [
@@ -37107,7 +37107,7 @@
 "o": [
 [
 "A",
-"Compress the values file before passing it to the upgrade"
+"Compress the large chart files before the upgrade"
 ],
 [
 "B",
@@ -37126,7 +37126,7 @@
 "D"
 ],
 "y": [
-"Helm כבר דוחס את ה-release (gzip). והבעיה היא הקבצים הגדולים בתוך ה-chart.",
+"Helm כבר דוחס את ה-release עם gzip. דחיסה נוספת לא תקטין מספיק, והבעיה היא הקבצים הגדולים בתוך ה-chart.",
 "הגבול הוא לכל Secret של release, לא ל-namespace. פיצול לא מקטין את ה-chart.",
 "כל revision הוא Secret נפרד. מחיקת revisions ישנים לא מקטינה את ה-Secret של ה-revision החדש.",
 "כל revision שומר את כל ה-chart ב-Secret, ו-etcd מגביל אובייקט ל-1MB. dashboards גדולים שייכים ל-ConfigMaps שנוצרים מחוץ ל-chart (או sidecar שטוען מ-Git), או HELM_DRIVER=sql ששומר ב-PostgreSQL."
@@ -37146,7 +37146,7 @@
 ],
 [
 "B",
-"It becomes an environment variable in the final image's config"
+"It becomes an `ENV` variable in the final image's config"
 ],
 [
 "C",
@@ -37154,7 +37154,7 @@
 ],
 [
 "D",
-"It's read only by the legacy builder, and BuildKit ignores it"
+"It's read only by the legacy builder; `BuildKit` ignores it"
 ]
 ],
 "a": [
@@ -37317,11 +37317,11 @@
 "o": [
 [
 "A",
-"CoreDNS, since sandboxes need DNS before they can start"
+"`CoreDNS`, since sandboxes need DNS before they can start"
 ],
 [
 "B",
-"The node's kube-proxy pod, which assigns pod IPs on start"
+"The node's `kube-proxy` pod, which assigns pod IPs on start"
 ],
 [
 "C",
@@ -37527,7 +37527,7 @@
 "o": [
 [
 "A",
-"Run Terraform twice in a row with different environment variables"
+"Run Terraform twice in a row with different `AWS_REGION` values"
 ],
 [
 "B",
@@ -37535,7 +37535,7 @@
 ],
 [
 "C",
-"List both regions in a single provider block, separated by a comma"
+"List both in one provider's `region`, separated by a comma"
 ],
 [
 "D",
@@ -37846,11 +37846,11 @@
 ],
 [
 "B",
-"The AWS provider version is too old to handle lists of subnets"
+"The `aws` provider version is too old to handle lists of subnets"
 ],
 [
 "C",
-"count can't iterate over a list whose elements are objects"
+"`count` can't iterate over a list whose elements are objects"
 ],
 [
 "D",
@@ -37889,7 +37889,7 @@
 ],
 [
 "D",
-"The resource has been moved to a new permanent URL"
+"The resource moved; follow the new `Location` URL"
 ]
 ],
 "a": [
@@ -38009,7 +38009,7 @@
 "x": "תציע מעבר הדרגתי: קודם לקצר את חיי ה-branches, לחזק CI ו-flags, ורק אז לוותר על release branches. מעבר בבת אחת בלי CI טוב יגרום ל-main שבור.",
 "lv": 1,
 "k": "t",
-"r": "https://trunkbaseddevelopment.com/"
+"r": "https://dora.dev/capabilities/trunk-based-development/"
 },
 {
 "s": 8,
@@ -38064,7 +38064,7 @@
 ],
 [
 "D",
-"etcd lost quorum, so the API can't persist any new pods"
+"`etcd` lost quorum, so the API can't persist any new pods"
 ]
 ],
 "a": [
@@ -38114,7 +38114,7 @@
 "x": "תזכיר ש-write-back ל-Git עדיף ל-GitOps אמיתי, כי parameter override חי רק ב-Application ולא ב-Git. ובפרודקשן לרוב משתמשים ב-PR ולא ב-update אוטומטי.",
 "lv": 1,
 "k": "k",
-"r": "https://argocd-image-updater.readthedocs.io/en/stable/"
+"r": "https://argocd-image-updater.readthedocs.io/en/stable/basics/update/"
 },
 {
 "s": 16,
@@ -38367,7 +38367,7 @@
 "o": [
 [
 "A",
-"Open file limits can never be raised above 1024"
+"Open file limits (`ulimit -n`) can't go above 1024"
 ],
 [
 "B",
@@ -38375,7 +38375,7 @@
 ],
 [
 "C",
-"limits.conf is applied only to the root user's sessions"
+"`limits.conf` is applied only to the root user's sessions"
 ],
 [
 "D",
@@ -38387,7 +38387,7 @@
 ],
 "y": [
 "אפשר להעלות הרבה מעל 1024, עד fs.nr_open. 1024 הוא רק ברירת המחדל הרכה.",
-"limits.conf נאכף ע\"י pam_limits בזמן login. שירותי systemd לא עוברים דרך PAM, ולכן מקבלים את הגבולות מה-unit. מוסיפים LimitNOFILE=65536 ב-drop-in (systemctl edit), daemon-reload ו-restart.",
+"limits.conf נאכף על ידי pam_limits בזמן login. שירותי systemd לא עוברים דרך PAM, ולכן מקבלים את הגבולות מה-unit. מוסיפים LimitNOFILE=65536 ב-drop-in (systemctl edit), daemon-reload ו-restart.",
 "limits.conf חל על כל משתמש לפי הכללים בו. הבעיה היא ש-systemd לא קורא אותו בכלל.",
 "limits הם הגדרות זמן ריצה של הקרנל. אין שום צורך בקימפול מחדש כדי לשנות אותם."
 ],
@@ -38791,7 +38791,7 @@
 ],
 [
 "B",
-"Stop managing the Lambda function in Terraform at all"
+"Stop managing the Lambda function in Terraform"
 ],
 [
 "C",
@@ -38896,7 +38896,7 @@
 ],
 [
 "B",
-"A longer timeout on the deploy job in the pipeline"
+"A longer `timeout:` on the deploy job in the pipeline"
 ],
 [
 "C",
@@ -38904,7 +38904,7 @@
 ],
 [
 "D",
-"Manual deploys only, following a release calendar"
+"Manual deploys only (`when: manual`), on a calendar"
 ]
 ],
 "a": [
@@ -39032,11 +39032,11 @@
 "o": [
 [
 "A",
-"Never create ConfigMaps in charts, and mount files instead"
+"Never create ConfigMaps in charts; mount files with `hostPath`"
 ],
 [
 "B",
-"Install the charts in alphabetical order to avoid conflicts"
+"Install the charts in alphabetical order with `helmfile`"
 ],
 [
 "C",
@@ -39067,7 +39067,7 @@
 "o": [
 [
 "A",
-"Remove the plan step from the CI pipeline entirely"
+"Remove the `terraform plan` step from CI entirely"
 ],
 [
 "B",
@@ -39089,7 +39089,7 @@
 "בלי plan אין review לשינויים בתשתית. זה מחיר גבוה בשביל בעיה שיש לה פתרון.",
 "sensitive על variable ועל output גורם ל-plan להציג (sensitive value) במקום הערך. בנוסף לא מריצים state show או output -json בלוגים. הכי טוב: שהסיסמה לא תעבור דרך Terraform בכלל.",
 "אורך הסיסמה לא משנה את החשיפה בכלל. הבעיה היא שהיא מודפסת ללוג מלכתחילה.",
-"הלוגים עדיין נקראים בגלוי ע\"י כל מי שיש לו גישה ל-CI. ההצפנה לא עוזרת כאן."
+"הלוגים עדיין נקראים בגלוי על ידי כל מי שיש לו גישה ל-CI. ההצפנה לא עוזרת כאן."
 ],
 "x": "תזכיר שאם סיסמה כבר הודפסה ללוג, מסובבים אותה ומוחקים את הלוג. ותזכיר manage_master_user_password ב-RDS, שמשאיר את הסיסמה מחוץ ל-Terraform.",
 "lv": 1,
@@ -39285,11 +39285,11 @@
 ],
 [
 "C",
-"Moving the cluster into a new VPC with fresh DNS settings"
+"Upgrading the VPC's DNS resolver along with the cluster"
 ],
 [
 "D",
-"Recreating every Service so they get new ClusterIP addresses"
+"Restarting the CoreDNS pods so they pick up the new cluster DNS"
 ]
 ],
 "a": [
@@ -39298,8 +39298,8 @@
 "y": [
 "אין אפשרות כזאת, וגם אין צורך: AWS מנהלת את ה-control plane. הבעיה היא ב-add-on שנשאר ישן.",
 "שדרוג ה-control plane לא משדרג add-ons. לכל גרסת Kubernetes יש גרסאות מומלצות של CoreDNS, kube-proxy ו-VPC CNI, ומשדרגים אותן אחרי ה-control plane (aws eks update-addon).",
-"DNS בתוך ה-cluster מסופק על ידי CoreDNS, לא על ידי ה-VPC. אין סיבה להחליף VPC.",
-"ה-Services וה-ClusterIPs לא השתנו בשדרוג. ה-pods של CoreDNS, שמספקים DNS, הם שצריכים עדכון."
+"DNS בתוך ה-cluster מסופק על ידי CoreDNS, לא על ידי ה-VPC. ה-resolver של ה-VPC לא קשור לגרסת Kubernetes.",
+"restart משאיר את אותה גרסה ישנה של CoreDNS. צריך לשדרג את ה-add-on לגרסה שמתאימה ל-Kubernetes החדש."
 ],
 "x": "תזכיר: aws eks describe-addon-versions --kubernetes-version מראה את הגרסאות המתאימות. ובניהול ב-Terraform, גרסת ה-add-on צריכה להיות חלק מאותו PR של שדרוג.",
 "lv": 1,
@@ -39649,7 +39649,7 @@
 "הבלוק כבר נמחק, אז אין איפה לשים prevent_destroy. וגם הוא רק היה מכשיל את ה-plan.",
 "-target לא מוציא משאב מה-state. ה-plan הבא בלי target עדיין ירצה למחוק אותו.",
 "זה מוחק את ה-DB ויוצר downtime ואובדן נתונים מאז ה-snapshot. מיותר לגמרי.",
-"removed { from = aws_db_instance.main  lifecycle { destroy = false } } (מ-1.7) מוציא את המשאב מה-state בלי למחוק אותו. זה נכנס ל-PR ונראה ב-plan, בניגוד ל-terraform state rm שעוקף review."
+"בלוק `removed` עם `from = aws_db_instance.main` ו-`destroy = false` בתוך `lifecycle` (מ-1.7) מוציא את המשאב מה-state בלי למחוק אותו. זה נכנס ל-PR ונראה ב-plan, בניגוד ל-`terraform state rm` שעוקף review."
 ],
 "x": "תגיד ש-removed הוא הבן הזוג של import ו-moved: שלושתם שינויי state בקוד, עם review. זה מה שמשנה מ-Terraform 1.5 ואילך.",
 "lv": 1,
@@ -39732,7 +39732,7 @@
 "o": [
 [
 "A",
-"GitHub requires every workflow in the repo to run on each PR"
+"GitHub runs a required check on every PR, ignoring path filters"
 ],
 [
 "B",
@@ -39751,7 +39751,7 @@
 "D"
 ],
 "y": [
-"אין דרישה כזאת ב-GitHub. workflows רצים לפי ה-triggers שלהם, וזה תקין לגמרי.",
+"GitHub לא מתעלם מ-paths: ה-workflow באמת לא רץ. בגלל זה ה-check לא מדווח, וה-PR נשאר תקוע ב-Expected.",
 "branch protection דורש רק את ה-checks שהוגדרו. כאן הוגדר check שלא תמיד רץ.",
 "paths עובדים בדיוק כמו שתועד. הם מנעו את הריצה, וזה בדיוק מה שיצר את הבעיה כאן.",
 "required check מחכה לתוצאה מ-workflow בשם מסוים. paths גרם לו לא לרוץ בכלל, ולכן אין סטטוס, וה-PR תקוע ב-Expected. פתרון: workflow שתמיד רץ ומסנן בתוכו, או job שמדווח הצלחה כשאין שינוי."
@@ -40117,11 +40117,11 @@
 "o": [
 [
 "A",
-"It's a display bug in top that shows wrong numbers"
+"It's a display bug in `top` that shows wrong numbers"
 ],
 [
 "B",
-"top adds memory usage into the CPU percentage"
+"`top` adds memory usage into the CPU percentage"
 ],
 [
 "C",
@@ -40206,9 +40206,9 @@
 "D"
 ],
 "y": [
-"קבצים עדיין נמחקים, רק ע\"י הבעלים שלהם או ע\"י root. זה לא חסם כללי על מחיקה.",
+"קבצים עדיין נמחקים, רק על ידי הבעלים שלהם או על ידי root. זה לא חסם כללי על מחיקה.",
 "sticky bit לא משנה הרשאות של קבצים חדשים בתיקייה. זה עניין של umask, לא של התיקייה.",
-"זיכרון מול דיסק נקבע ע\"י סוג ה-mount, כמו tmpfs. sticky bit הוא הרשאה, לא מיקום.",
+"זיכרון מול דיסק נקבע על ידי סוג ה-mount, כמו tmpfs. sticky bit הוא הרשאה, לא מיקום.",
 "t ב-drwxrwxrwt אומר שגם בתיקייה שכולם יכולים לכתוב בה, משתמש מוחק רק קבצים שלו. בלי זה, כל משתמש היה יכול למחוק או להחליף קבצים זמניים של אחרים."
 ],
 "x": "תזכיר שזו ההרשאה 1777 על /tmp. ותגיד שבקונטיינרים עדיף emptyDir ל-/tmp עם readOnlyRootFilesystem, כדי שה-image עצמו יישאר לקריאה בלבד.",
@@ -40292,11 +40292,11 @@
 "o": [
 [
 "A",
-"Delete the state, then import every resource again"
+"Delete the state, then import the resources again"
 ],
 [
 "B",
-"Leave it alone and never run apply on it again"
+"Leave it alone and make changes in the console instead"
 ],
 [
 "C",
@@ -40312,7 +40312,7 @@
 ],
 "y": [
 "import מחדש לא פותר drift. הקוד עדיין שונה מהמציאות, ו-plan יראה את אותם הבדלים.",
-"תשתית שאי אפשר לשנות בבטחה מצטברת חוב. שינוי דחוף בעתיד יהיה הרבה יותר מסוכן.",
+"שינויים ידניים רק מגדילים את ה-drift. תשתית שאי אפשר לשנות בבטחה צוברת חוב, ושינוי דחוף בעתיד יהיה מסוכן יותר.",
 "מתחילים ב-plan ובסיווג כל diff: drift שצריך לחזור לקוד, או שינוי ידני נכון שהקוד צריך לאמץ. מעדכנים קוד בקבוצות קטנות, עם plan נקי לכל קבוצה, עד שה-plan המלא ריק. אחר כך drift detection קבוע.",
 "rebuild של תשתית חיה גורם להשבתה ולאובדן נתונים. וגם הקוד אולי לא משקף מה שצריך."
 ],
@@ -40436,7 +40436,7 @@
 ],
 [
 "B",
-"The preStop hook defaults to a 30-second sleep in shell-form images"
+"A `preStop` hook defaults to a 30-second sleep in shell-form images"
 ],
 [
 "C",
@@ -40874,7 +40874,7 @@
 "ל-Terraform CLI אין מפתח רישוי בכלל. serial הוא מונה של גרסאות ה-state, לא מזהה של רישיון.",
 "ה-state לא שומר account ID כשדה כזה. serial הוא מונה כתיבות שעולה בכל שמירה.",
 "מספר המשאבים לא נשמר כמונה. serial עולה בכל כתיבה, גם בלי שינוי בכמות.",
-"serial עולה בכל כתיבה של state. Terraform לא יכתוב state עם serial נמוך יותר מהקיים, וכך מונע דריסה ע\"י run ישן. lineage הוא מזהה קבוע של ההיסטוריה, ושניהם יחד מגנים על ה-state."
+"serial עולה בכל כתיבה של state. Terraform לא יכתוב state עם serial נמוך יותר מהקיים, וכך מונע דריסה על ידי run ישן. lineage הוא מזהה קבוע של ההיסטוריה, ושניהם יחד מגנים על ה-state."
 ],
 "x": "תזכיר שאפשר לראות אותו ב-terraform state pull | jq .serial. ושבשחזור ידני מ-backup צריך לפעמים להעלות את ה-serial, אחרת push יידחה.",
 "lv": 1,
@@ -40914,7 +40914,7 @@
 "x": "תזכיר להתחיל בכללים כמו SQL injection ו-hardcoded secrets, שיש להם השפעה ברורה. Semgrep ו-CodeQL תומכים ב-baselines ובסריקה של diff בלבד.",
 "lv": 1,
 "k": "t",
-"r": "https://semgrep.dev/docs/"
+"r": "https://docs.github.com/en/code-security/how-tos/manage-security-alerts/manage-code-scanning-alerts/triage-alerts-in-pull-requests"
 },
 {
 "s": 12,
@@ -41307,11 +41307,11 @@
 "o": [
 [
 "A",
-"No shared TLS version or cipher is left"
+"Client and server have no TLS version or cipher in common"
 ],
 [
 "B",
-"The server's certificate expired during the change"
+"The server's certificate expired during the hardening change"
 ],
 [
 "C",
@@ -41319,7 +41319,7 @@
 ],
 [
 "D",
-"The server ran out of memory during the handshake"
+"The server ran out of memory during each TLS handshake"
 ]
 ],
 "a": [
@@ -41801,7 +41801,7 @@
 ],
 [
 "B",
-"kubeconfig certs auto-renew daily, so a copy stays valid"
+"Client certs auto-renew daily, so a copied one stays valid"
 ],
 [
 "C",
@@ -41809,7 +41809,7 @@
 ],
 [
 "D",
-"You'd delete their ClusterRoleBinding, but it's shared with the team"
+"You'd remove them from `system:masters`, but the group is shared"
 ]
 ],
 "a": [
@@ -41819,7 +41819,7 @@
 "חברי `system:masters` עוקפים את כל ה-authorizers, ומחיקת binding לא משנה כלום. ול-Kubernetes אין רשימת ביטולים לתעודות, אז התעודה תקפה עד שפג תוקפה או שמחליפים את ה-CA.",
 "תעודות לא מתחדשות לבד בעותק אצל המשתמש. הבעיה היא שהן תקפות לשנה ואין דרך לבטל אותן.",
 "תעודות של לקוחות לא נשמרות ב-Secrets. הן בקובץ ה-kubeconfig אצל המשתמש, ולכן אי אפשר לבטל אותן ב-API.",
-"הבעיה גרועה יותר: אין binding בכלל. ההרשאה מגיעה מהקבוצה בתעודה, ו-RBAC לא נבדק."
+"אי אפשר להסיר משתמש מקבוצה שכתובה בתוך התעודה. ההרשאה מגיעה מהקבוצה שבתעודה, ו-RBAC לא נבדק בכלל."
 ],
 "x": "הפתרון הנכון: OIDC או SSO (ב-EKS: IAM ו-access entries) עם זהות אישית, קבוצות ב-RBAC, ו-break-glass בלבד לתעודת admin. כדאי להזכיר שהחלפת CA היא פרויקט, לא פקודה.",
 "lv": 1,
@@ -42151,7 +42151,7 @@
 ],
 [
 "B",
-"Every new file is encrypted at the moment it's created"
+"New files are encrypted at the moment they're created"
 ],
 [
 "C",
@@ -42761,7 +42761,7 @@
 "A"
 ],
 "y": [
-"moved { from = aws_vpc.main  to = module.network.aws_vpc.main } לכל משאב שהועבר. ה-plan מראה העברות בלי destroy. אפשר להעביר module שלם בבלוק אחד: from = module.a  to = module.b.",
+"בלוק `moved` עם `from = aws_vpc.main` ו-`to = module.network.aws_vpc.main` לכל משאב שהועבר. ה-plan מראה העברות בלי destroy. אפשר גם להעביר module שלם בבלוק אחד, מ-`module.a` ל-`module.b`.",
 "refresh לא קשור לכתובות. בלי moved, Terraform עדיין רואה משאבים ישנים שנעלמו וחדשים שנוספו.",
 "גרסת provider לא קשורה לכתובות ב-state. הבעיה היא ש-Terraform לא יודע על ההעברה.",
 "זה לא פותר כלום: אותה בעיה תחזור בכל ניסיון לארגן את הקוד מחדש, בלי moved."
@@ -42831,7 +42831,7 @@
 "B"
 ],
 "y": [
-"חתימה נעשית ע\"י ה-CA בזמן ההנפקה של התעודה. SNI רק בוחר איזו תעודה השרת יציג.",
+"חתימה נעשית על ידי ה-CA בזמן ההנפקה של התעודה. SNI רק בוחר איזו תעודה השרת יציג.",
 "ב-ClientHello הלקוח שולח את שם השרת שהוא רוצה. השרת בוחר את התעודה המתאימה, וכך IP אחד (LB, ingress) משרת אתרים רבים. בלי SNI היה צריך IP לכל תעודה.",
 "הצפנת DNS היא DoH או DoT. SNI עצמו נשלח בגלוי, ו-ECH נועד להסתיר אותו.",
 "דחיסת headers היא HPACK ב-HTTP/2 או QPACK ב-HTTP/3. SNI לא דוחס שום דבר."
@@ -42909,7 +42909,7 @@
 "x": "תזכיר שזו תשובה לבעיה שאין לה פתרון מובנה ב-Argo CD: איך מקדמים גרסה מ-staging ל-prod בצורה מבוקרת. לפני Kargo עשו את זה עם scripts ב-CI ששינו Git.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.kargo.io/"
+"r": "https://docs.kargo.io/user-guide/core-concepts/"
 },
 {
 "s": 2,
@@ -43271,7 +43271,7 @@
 ],
 [
 "B",
-"Tags aren't supported inside GitHub Actions"
+"Tags aren't supported by `actions/checkout`"
 ],
 [
 "C",
@@ -43279,7 +43279,7 @@
 ],
 [
 "D",
-"The runner's Git version is far too old"
+"The runner's `git` version is far too old"
 ]
 ],
 "a": [
@@ -43337,7 +43337,7 @@
 "o": [
 [
 "A",
-"Allow only one job per day to run on that runner"
+"Run one job per day on that runner, so builds don't overlap"
 ],
 [
 "B",
@@ -43345,7 +43345,7 @@
 ],
 [
 "C",
-"Restart the runner service once every night to reset it"
+"Restart the runner service nightly to reset its state"
 ],
 [
 "D",
@@ -43372,11 +43372,11 @@
 "o": [
 [
 "A",
-"They are both spot instances that come with a guarantee"
+"They are both Spot capacity reserved at a fixed discount"
 ],
 [
 "B",
-"Reserved Instances are always both cheaper and more flexible"
+"Reserved Instances are both cheaper and more flexible"
 ],
 [
 "C",
@@ -43504,7 +43504,7 @@
 "x": "תזכיר commitlint ב-CI או ב-hook לאכיפה, ו-squash merge עם כותרת PR בפורמט, כך שכל PR הוא commit אחד ב-main עם type נכון.",
 "lv": 1,
 "k": "k",
-"r": "https://www.conventionalcommits.org/"
+"r": "https://www.conventionalcommits.org/en/v1.0.0/"
 },
 {
 "s": 21,
@@ -43874,7 +43874,7 @@
 ],
 [
 "D",
-"The new PVC's StorageClass must be empty to bind a Released PV"
+"The new PVC's `storageClassName` must be empty to bind it"
 ]
 ],
 "a": [
@@ -43932,7 +43932,7 @@
 "o": [
 [
 "A",
-"Helm 4 removed classic chart repositories and index.yaml"
+"Helm 4 removed classic chart repositories and `index.yaml`"
 ],
 [
 "B",
@@ -43944,7 +43944,7 @@
 ],
 [
 "D",
-"Helm 4 renders only Kustomize overlays, not Go templates"
+"Helm 4 renders only `kustomization.yaml` overlays, not templates"
 ]
 ],
 "a": [
@@ -44014,7 +44014,7 @@
 ],
 [
 "D",
-"Use hooks with delete policies, or a CronJob"
+"Hooks with a `hook-delete-policy`, or a CronJob"
 ]
 ],
 "a": [
@@ -44080,11 +44080,11 @@
 ],
 [
 "C",
-"The policy is in Audit mode, so the pod was only reported"
+"The policy is in `Audit` mode, so the pod was only reported"
 ],
 [
 "D",
-"Images from Docker Hub's library are exempt from Kyverno rules"
+"Images from Docker Hub's `library/` are exempt from Kyverno"
 ]
 ],
 "a": [
@@ -44107,7 +44107,7 @@
 "o": [
 [
 "A",
-"All of them with an HPA on CPU, the controller included"
+"Each of them with an HPA on CPU, the controller included"
 ],
 [
 "B",
@@ -44115,7 +44115,7 @@
 ],
 [
 "C",
-"Redis only; the Argo CD components are fixed at one replica"
+"Redis; the Argo CD components themselves stay at one replica"
 ],
 [
 "D",
@@ -44198,7 +44198,7 @@
 "y": [
 "validation לא מצפין שום דבר. לסודות יש מנגנונים אחרים: sensitive ו-ephemeral values.",
 "credentials נבדקים כשה-provider מתחבר, לא ב-variable validation. זה מנגנון אחר לגמרי.",
-"validation { condition = contains([\"dev\",\"prod\"], var.env)  error_message = \"...\" } מכשיל plan מוקדם עם הודעה ברורה. מ-Terraform 1.9 התנאי יכול להפנות גם למשתנים אחרים.",
+"בלוק `validation` עם `condition = contains([\"dev\",\"prod\"], var.env)` ו-`error_message` מכשיל את ה-plan מוקדם עם הודעה ברורה. מ-Terraform 1.9 התנאי יכול להפנות גם למשתנים אחרים.",
 "validation רק מכשיל את ה-plan עם הודעה. הוא לא מתקן ולא משנה את הערך שהמשתמש נתן."
 ],
 "x": "תזכיר גם preconditions ו-postconditions ב-lifecycle, שבודקים הנחות על משאבים, ו-check blocks שמזהירים בלי להכשיל.",
@@ -44208,38 +44208,38 @@
 },
 {
 "s": 23,
-"q": "Why pin third-party actions to a commit SHA?",
+"q": "What security signal do you lose by pinning actions to a commit SHA instead of a version tag?",
 "o": [
 [
 "A",
-"The Marketplace rejects actions that use tags"
+"Artifact attestations, which need the action's release tag"
 ],
 [
 "B",
-"SHA references download faster than tag references"
+"Secret scanning, which can't read workflows that use SHA pins"
 ],
 [
 "C",
-"A tag can be moved to other code; a SHA can't"
+"Dependabot alerts, which don't cover actions pinned to a SHA"
 ],
 [
 "D",
-"Tags are deprecated for referencing actions now"
+"Code scanning, since CodeQL can't resolve the action's source"
 ]
 ],
 "a": [
 "C"
 ],
 "y": [
-"ה-Marketplace משתמש ב-tags לסימון גרסאות. הוא לא דוחה actions שמשתמשים בהם.",
-"מהירות ההורדה זהה בשתי הדרכים. הסיבה היא אבטחת שרשרת האספקה, לא ביצועים.",
-"tag כמו v4 הוא מצביע שהמתחזק (או תוקף שפרץ לו) יכול להזיז לקוד אחר. SHA מלא מקבע בדיוק קוד שנבדק. התקפת tj-actions/changed-files ב-2025 הזיזה tags וגנבה סודות מאלפי repos.",
-"tags עדיין נתמכים ונפוצים מאוד ב-actions. הם פשוט פחות בטוחים מהפניה ל-SHA מלא."
+"attestations נוצרות ל-artifacts שה-workflow שלך בונה, למשל עם actions/attest-build-provenance. הן לא תלויות בצורת ההפניה ל-actions אחרים.",
+"secret scanning סורק את התוכן של ה-repo, כולל קבצי workflow, בלי קשר לצורה שבה מפנים ל-action. SHA pins לא משפיעים עליו.",
+"לפי התיעוד של GitHub, Dependabot יוצר alerts רק ל-actions שמופנים לפי semantic version, ולא ל-actions שמקובעים ל-SHA. לכן מי שמקבע ל-SHA צריך לעקוב אחרי advisories בדרך אחרת ולעדכן את ה-pins באופן קבוע.",
+"CodeQL מנתח את הקוד ואת ה-workflows של ה-repo שלך. הוא לא תלוי בהפניה לפי tag, ו-SHA מלא לא מפריע לניתוח."
 ],
-"x": "תזכיר Dependabot או Renovate שמעדכנים SHAs עם הערה של הגרסה (# v4.1.0). ככה מקבלים גם בטיחות וגם עדכונים.",
+"x": "תגיד שזה tradeoff מודע: SHA מגן מפני tag שהוזז, אבל מוריד את ה-Dependabot alerts על ה-action. משלימים עם עדכון קבוע ומתוזמן של ה-pins, והערת גרסה ליד כל SHA, כמו `# v4.2.2`, כדי שיהיה ברור מה מקובע.",
 "lv": 1,
 "k": "k",
-"r": "https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions"
+"r": "https://docs.github.com/en/actions/reference/security/secure-use#monitoring-the-actions-in-your-workflows"
 },
 {
 "s": 6,
@@ -44387,7 +44387,7 @@
 "o": [
 [
 "A",
-"A wiki page telling developers never to push images by hand"
+"A wiki page telling developers not to push images by hand"
 ],
 [
 "B",
@@ -44395,7 +44395,7 @@
 ],
 [
 "C",
-"A separate private registry that only prod clusters can read"
+"A separate private registry, with pull access for prod clusters"
 ],
 [
 "D",
@@ -44496,15 +44496,15 @@
 ],
 [
 "B",
-"New key material for new data, limiting exposure"
+"It adds new key material for new data, limiting exposure"
 ],
 [
 "C",
-"It re-encrypts all of the existing data right away"
+"It re-encrypts the existing data with the new material"
 ],
 [
 "D",
-"It is required before S3 can use the key at all"
+"S3 requires rotation before it can use a customer managed key"
 ]
 ],
 "a": [
@@ -44582,7 +44582,7 @@
 ],
 "y": [
 "‏.Capabilities.APIVersions.Has \"networking.k8s.io/v1/Ingress\" מאפשר לבחור apiVersion לפי ה-cluster. כך chart אחד תומך בכמה גרסאות Kubernetes, או מדלג על משאב כשה-CRD לא מותקן.",
-"Capabilities לא יודע כלום על הרשאות. RBAC נבדק ע\"י ה-API server בזמן ההתקנה.",
+"Capabilities לא יודע כלום על הרשאות. RBAC נבדק על ידי ה-API server בזמן ההתקנה.",
 "Has רק בודק אם API מסוים קיים ב-cluster. הוא לא מתקין שום דבר בעצמו, גם לא CRDs.",
 "גרסת Helm זמינה ב-.Capabilities.HelmVersion, לא ב-APIVersions. ו-Has בודק APIs של ה-cluster."
 ],
@@ -44947,7 +44947,7 @@
 "o": [
 [
 "A",
-"Every plugin requires a separate paid licence to use"
+"Many plugins require a separate paid licence to use"
 ],
 [
 "B",
@@ -44955,11 +44955,11 @@
 ],
 [
 "C",
-"Plugins slow down every Git operation that Jenkins runs"
+"Plugins slow down the Git operations that Jenkins runs"
 ],
 [
 "D",
-"Wider attack surface and conflicts on upgrades"
+"A wider attack surface, and conflicts during upgrades"
 ]
 ],
 "a": [
@@ -45052,11 +45052,11 @@
 "o": [
 [
 "A",
-"Slices hide pod IPs from clients, which see only the ClusterIP"
+"Slices hide endpoints from clients, which see only the ClusterIP"
 ],
 [
 "B",
-"Slices hold DNS records, so CoreDNS no longer needs the API"
+"Slices store DNS records as objects, so CoreDNS skips the API"
 ],
 [
 "C",
@@ -45317,7 +45317,7 @@
 ],
 "y": [
 "symlink היה נקרא כרגיל עם ההרשאות הנכונות. ההודעה ב-audit מצביעה על SELinux.",
-"sudo לא קשור לקריאת קבצים ע\"י שירות רגיל. ההרשאות Unix כבר מאפשרות את הקריאה.",
+"sudo לא קשור לקריאת קבצים על ידי שירות רגיל. ההרשאות Unix כבר מאפשרות את הקריאה.",
 "דיסק מלא לא מונע קריאה של קובץ קיים, ולא מייצר הודעת avc: denied ב-audit.log.",
 "ב-RHEL, SELinux בודק context (type) בנוסף להרשאות Unix. קובץ שהועתק או נוצר במקום אחר מקבל type לא מתאים, והשירות נחסם (avc: denied). restorecon -Rv /srv/app מתקן, ו-semanage fcontext קובע את זה לתמיד."
 ],
@@ -45336,11 +45336,11 @@
 ],
 [
 "B",
-"Only for keeping secrets away from the shared state file"
+"For keeping secrets out of the shared state file"
 ],
 [
 "C",
-"For every long-lived environment, even in separate accounts"
+"For long-lived environments, even in separate accounts"
 ],
 [
 "D",
@@ -45476,7 +45476,7 @@
 ],
 [
 "B",
-"From the Secret it writes, which Argo CD waits for to exist"
+"From the certificate Secret, which Argo CD waits for to exist"
 ],
 [
 "C",
@@ -45484,7 +45484,7 @@
 ],
 [
 "D",
-"From cert-manager's pods, which aren't Ready in their namespace"
+"From the cert-manager pods running the challenge, not Ready"
 ]
 ],
 "a": [

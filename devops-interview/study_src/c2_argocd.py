@@ -21,7 +21,7 @@ spec:
     automated: {prune: true, selfHeal: true}
     syncOptions: [CreateNamespace=true]
 """, cap="Application: מאיפה, לאן, מה מותר, ואיך מסנכרנים."),
-    KEY("polling כל כ-3 דקות. webhook מה-Git provider מביא שינויים מיד. AppProject מגביל repos, destinations וסוגי משאבים; default מתיר הכול."),
+    KEY("polling כל 120 שניות ועוד jitter של עד 60 שניות. webhook מה-Git provider מביא שינויים מיד. AppProject מגביל repos, destinations וסוגי משאבים; default מתיר הכול."),
     ASK("Explain GitOps and how Argo CD implements it.",
         "Push-based CD vs pull-based GitOps: what changes for security?",
         "How do you structure repos for multiple environments?",
@@ -140,10 +140,10 @@ kubectl -n argocd logs statefulset/argocd-application-controller | grep shop-api
       x="PreSync hook רץ לפני phase ה-Sync. אם הוא נכשל, ה-sync נעצר."),
    QZ("What protects workloads when an ApplicationSet deletes an Application?",
       "`preserveResourcesOnDeletion: true`", "`prune: true`", "`selfHeal: true`", "A sync wave",
-      x="עם preserveResourcesOnDeletion, מחיקת Application שנוצר ע\"י ApplicationSet משאירה את המשאבים בקלאסטר."),
+      x="עם preserveResourcesOnDeletion, מחיקת Application שנוצר על ידי ApplicationSet משאירה את המשאבים בקלאסטר."),
    QZ("What is the preferred rollback in a GitOps setup?",
       "Revert the commit in Git", "kubectl edit the Deployment", "Delete the Application", "Restart the repo-server",
-      x="git revert משאיר את Git כמקור האמת, ו-Argo CD מיישם את המצב הקודם. עריכה ידנית תידרס ע\"י selfHeal."),
+      x="git revert משאיר את Git כמקור האמת, ו-Argo CD מיישם את המצב הקודם. עריכה ידנית תידרס על ידי selfHeal."),
   QZ("When do you need a hard refresh in Argo CD?",
       "When the rendered manifests are cached but the source changed under the same version", "Every time you push a commit", "To delete orphaned resources", "To rotate the admin password",
       x="hard refresh מבטל את cache הרינדור ב-repo-server. refresh רגיל מספיק לרוב השינויים ב-Git."),

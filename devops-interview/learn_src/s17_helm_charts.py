@@ -224,7 +224,7 @@ helm template api ./api -f values-prod.yaml --show-only templates/deployment.yam
      x="כל revision הוא Secret בשם `sh.helm.release.v1.<name>.v<N>`. מכאן גם `--history-max`, שמגביל כמה נשמרים."),
    F("chart-basics", "A user passes `-f base.yaml -f prod.yaml --set replicas=5`. Which replicas value wins?",
      ("5, from `--set`", "נכון. --set גובר על קבצים."),
-     ("The value in `base.yaml`", "base נדרס ע\"י prod ו---set."),
+     ("The value in `base.yaml`", "base נדרס על ידי prod ו---set."),
      ("The value in `prod.yaml`", "prod גובר על base, אבל לא על --set."),
      ("The chart default", "ה-default הוא העדיפות הנמוכה ביותר."),
      x="הסדר: defaults, קבצי -f לפי הסדר, ואז --set. לכן --set=5 קובע, גם אם שני הקבצים מגדירים ערך אחר."),

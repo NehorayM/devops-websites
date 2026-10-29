@@ -71,8 +71,11 @@ for a in range(len(QS)):
             pairs.append((a, b))
 row("bank", "#14 near-duplicate question pairs", pairs, 0)
 
-landing = [(i, q["r"]) for i, q in enumerate(QS)
-           if re.match(r"^https://[^/]+/?$", q["r"]) or re.search(r"/docs/?$|/en/stable/?$|/doc/?$", q["r"])]
+# Roots that are the document itself, checked against each site's source: the manifesto is one page,
+# Stryker's docs root is its "What is mutation testing?" page (slug '/'), conftest's root is its overview.
+ONE_PAGE = {"https://principlesofchaos.org/", "https://stryker-mutator.io/docs/", "https://www.conftest.dev/"}
+landing = [(i, q["r"]) for i, q in enumerate(QS) if q["r"] not in ONE_PAGE and
+           (re.match(r"^https://[^/]+/?$", q["r"]) or re.search(r"/docs/?$|/en/stable/?$|/doc/?$", q["r"]))]
 row("bank", "#20 doc link is a landing page", landing, 0)
 
 

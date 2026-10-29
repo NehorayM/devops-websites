@@ -236,7 +236,7 @@
    "q": "What is an Ingress, and how is it different from a LoadBalancer Service?",
    "p": [
     "Ingress מגדיר ניתוב HTTP ב-L7: לפי host ו-path, כולל TLS.",
-    "צריך Ingress controller (ingress-nginx, AWS Load Balancer Controller). בלעדיו המשאב לא עושה כלום.",
+    "צריך Ingress controller (למשל AWS Load Balancer Controller או Traefik). בלעדיו המשאב לא עושה כלום. ingress-nginx, שהיה הנפוץ, הופסק במרץ 2026.",
     "load balancer אחד לשירותים רבים, לעומת load balancer לכל Service מסוג LoadBalancer.",
     "Service מסוג LoadBalancer עובד ב-L4 (TCP/UDP), בלי הבנה של HTTP.",
     "Gateway API הוא היורש: הפרדת תפקידים (infra מול app) ויכולות ניתוב עשירות יותר."
@@ -255,7 +255,7 @@
    "p": [
     "בלי policies, כל pod יכול לדבר עם כל pod בקלאסטר.",
     "policy בוחרת pods לפי labels ומגדירה חוקי ingress ו-egress מותרים.",
-    "ברגע ש-pod נבחר ע\"י policy בכיוון מסוים, כל מה שלא מותר בכיוון הזה נחסם.",
+    "ברגע ש-pod נבחר על ידי policy בכיוון מסוים, כל מה שלא מותר בכיוון הזה נחסם.",
     "נאכף רק אם ה-CNI תומך (Calico, Cilium, VPC CNI עם network policy). ב-flannel לבד אין אכיפה.",
     "ב-default-deny egress חייבים לאפשר DNS (פורט 53 ל-kube-dns)."
    ],
@@ -397,7 +397,7 @@
    "p": [
     "ממשק שה-container runtime קורא לו כדי לחבר pod לרשת: IP מ-IPAM, veth, routes.",
     "דרישות המודל: לכל pod IP ייחודי, ותקשורת בין pods בלי NAT.",
-    "AWS VPC CNI: ה-pods מקבלים IPs מה-VPC, ולכן מספר ה-pods ל-node מוגבל ע\"י ENIs ו-IPs.",
+    "AWS VPC CNI: ה-pods מקבלים IPs מה-VPC, ולכן מספר ה-pods ל-node מוגבל על ידי ENIs ו-IPs.",
     "Calico ו-Cilium: overlay (VXLAN) או routing ישיר, ואכיפת NetworkPolicy. Cilium מבוסס eBPF."
    ],
    "f": "On EKS, why might a node stop accepting pods even though it has free CPU?",
@@ -520,7 +520,7 @@
    "p": [
     "ב-`describe` רואים volume node affinity conflict, או Multi-Attach error.",
     "EBS קשור ל-AZ אחד ו-RWO, ולכן ה-pod יכול לרוץ רק על node באותו AZ.",
-    "ה-VolumeAttachment עדיין מוחזק ע\"י ה-node המת; ה-detach הכפוי מגיע רק אחרי timeout (כ-6 דקות).",
+    "ה-VolumeAttachment עדיין מוחזק על ידי ה-node המת; ה-detach הכפוי מגיע רק אחרי timeout (כ-6 דקות).",
     "לבדוק שיש nodes עם מקום באותו AZ, ושה-node group יכול לגדול שם.",
     "ה-taint `node.kubernetes.io/out-of-service` על node שבוודאות כבוי משחרר את הדיסקים מיד."
    ],
@@ -1217,7 +1217,7 @@
    "k": "t",
    "q": "You pushed a change to Git, but Argo CD hasn't deployed it after several minutes. What do you check?",
    "p": [
-    "Argo CD בודק את Git בערך כל 3 דקות (`timeout.reconciliation`). webhook מקצר את זה למיידי.",
+    "Argo CD בודק את Git כל 120 שניות, ועוד jitter אקראי של עד 60 שניות (`timeout.reconciliation`). webhook מקצר את זה למיידי.",
     "האם automated sync מופעל? בלי זה צריך sync ידני.",
     "`targetRevision` תואם ל-branch או ל-tag שאליו דחפת, וה-path נכון.",
     "sync window שחוסם כרגע.",
@@ -1362,7 +1362,7 @@
    "p": [
     "prune כבוי (ברירת המחדל). ה-Application מראה את המשאב כ-OutOfSync, \"requires pruning\".",
     "annotation `Prune=false` על המשאב.",
-    "המשאב לא מנוהל ע\"י ה-Application (נוצר ידנית, בלי tracking).",
+    "המשאב לא מנוהל על ידי ה-Application (נוצר ידנית, בלי tracking).",
     "sync ידני עם prune מסומן מוחק אותו.",
     "finalizer שתקוע על המשאב."
    ],
@@ -1379,7 +1379,7 @@
    "q": "What is `ignoreDifferences`, and when would you use it?",
    "p": [
     "אומר ל-diff להתעלם משדות: `jsonPointers`, `jqPathExpressions`, `managedFieldsManagers`.",
-    "דוגמאות: replicas שמנוהל ע\"י HPA, `caBundle` ש-cert-manager מזריק, שדות שמשתנים ע\"י webhook.",
+    "דוגמאות: replicas שמנוהל על ידי HPA, `caBundle` ש-cert-manager מזריק, שדות שמשתנים על ידי webhook.",
     "`RespectIgnoreDifferences=true` כדי שגם ה-sync לא ידרוס את השדות האלה.",
     "אפשר להגדיר לכל המערכת ב-`argocd-cm` (`resource.customizations`)."
    ],
@@ -1402,8 +1402,8 @@
     "לא להשתמש ב-`:latest`: אין שינוי ב-Git, ולכן אין deploy."
    ],
    "f": "Why does `:latest` break GitOps?",
-   "w": "לגרום ל-CI להריץ `kubectl set image` בקלאסטר שמנוהל ע\"י Argo CD.",
-   "r": "https://argocd-image-updater.readthedocs.io/en/stable/"
+   "w": "לגרום ל-CI להריץ `kubectl set image` בקלאסטר שמנוהל על ידי Argo CD.",
+   "r": "https://argocd-image-updater.readthedocs.io/en/stable/basics/update/"
   },
   {
    "id": "a8819d24",
@@ -1666,7 +1666,7 @@
     "generator הפסיק להחזיר element (תיקייה שהשם שלה שונה, label שהוסר מקלאסטר), וה-Application נמחק.",
     "עם resources finalizer, מחיקת Application מוחקת את כל המשאבים שלו.",
     "`preserveResourcesOnDeletion: true` ב-syncPolicy של ה-ApplicationSet משאיר את המשאבים.",
-    "`applicationsSync: create-only` או `create-update` חוסם מחיקות.",
+    "`applicationsSync: create-only` או `create-update` מונע מה-controller למחוק Applications כש-generator מפסיק להחזיר אותם, אבל לא כשמוחקים את ה-ApplicationSet עצמו.",
     "לבדוק שינויים לפני merge: לראות אילו Applications ייווצרו ויימחקו."
    ],
    "f": "How would you review an ApplicationSet change safely before merging it?",
@@ -2336,7 +2336,7 @@
    ],
    "f": "How do you measure whether the security program is improving?",
    "w": "לכבות את הסורק כי \"הוא תמיד אדום\".",
-   "r": "https://semgrep.dev/docs/"
+   "r": "https://docs.github.com/en/code-security/how-tos/manage-security-alerts/manage-code-scanning-alerts/triage-alerts-in-pull-requests"
   },
   {
    "id": "fd403383",
@@ -2426,7 +2426,7 @@
    ],
    "f": "Why not share one long-lived test database across pipelines?",
    "w": "להשתמש ב-DB משותף לכל הריצות, עם state שזולג בין טסטים.",
-   "r": "https://testcontainers.com/"
+   "r": "https://java.testcontainers.org/modules/databases/"
   },
   {
    "id": "5e9a672d",
@@ -2498,7 +2498,7 @@
    ],
    "f": "What does `can-i-deploy` check?",
    "w": "לחשוב ש-contract tests בודקים לוגיקה עסקית של ה-provider.",
-   "r": "https://docs.pact.io/"
+   "r": "https://docs.pact.io/getting_started/how_pact_works"
   },
   {
    "id": "cc818d95",
@@ -2732,7 +2732,7 @@
    ],
    "f": "How do you release from trunk if a feature isn't ready?",
    "w": "לחשוב ש-trunk-based אומר לדחוף ישר ל-main בלי review.",
-   "r": "https://trunkbaseddevelopment.com/"
+   "r": "https://dora.dev/capabilities/trunk-based-development/"
   },
   {
    "id": "921bd61c",
@@ -3708,7 +3708,7 @@
    "k": "t",
    "q": "`helm install` fails with `rendered manifests contain a resource that already exists`. What do you do?",
    "p": [
-    "המשאב קיים ולא שייך ל-release הזה (נוצר ידנית, או ע\"י release אחר).",
+    "המשאב קיים ולא שייך ל-release הזה (נוצר ידנית, או על ידי release אחר).",
     "Helm בודק בעלות לפי annotations `meta.helm.sh/release-name` ו-`release-namespace`, ו-label `app.kubernetes.io/managed-by: Helm`.",
     "אימוץ: להוסיף את ה-annotations וה-label למשאב הקיים.",
     "או למחוק אותו אם זה בטוח, או לשנות שם ב-chart."
@@ -3763,7 +3763,7 @@
     "`helm list` עובד לפי namespace: צריך `-n` או `-A`.",
     "release ב-failed או pending מופיע רק עם `--all`.",
     "kube context אחר.",
-    "הותקן ע\"י Argo CD, שמשתמש ב-`helm template` ולא יוצר release.",
+    "הותקן על ידי Argo CD, שמשתמש ב-`helm template` ולא יוצר release.",
     "ה-Secrets של ה-release נמחקו."
    ],
    "f": "How can you tell whether Argo CD or Helm manages a resource?",
@@ -3835,7 +3835,7 @@
     "שדה שלא מופיע ב-chart ושונה ידנית: נשאר.",
     "שדה שה-chart מנהל ושונה ב-chart: נדרס לערך מה-chart.",
     "שדה שהוסר מה-chart: מוסר גם מה-live.",
-    "המסקנה: לא לערוך ידנית משאבים שמנוהלים ע\"י Helm."
+    "המסקנה: לא לערוך ידנית משאבים שמנוהלים על ידי Helm."
    ],
    "f": "What does `--force` change about this behaviour?",
    "w": "לחשוב ש-Helm תמיד דורס את כל המשאב.",
@@ -4430,7 +4430,7 @@
    ],
    "f": "Why give the plan step a read-only role?",
    "w": "להריץ apply מהמחשב האישי ישירות לפרודקשן.",
-   "r": "https://www.runatlantis.io/docs/"
+   "r": "https://www.runatlantis.io/docs/using-atlantis.html"
   },
   {
    "id": "1bff3089",
@@ -4567,7 +4567,7 @@
     "SIGTERM (15): בקשה מנומסת. התהליך יכול לתפוס אותה ולסיים בצורה מסודרת.",
     "SIGKILL (9): אי אפשר לתפוס. הקרנל עוצר מיד.",
     "SIGHUP משמש הרבה פעמים לטעינת קונפיגורציה מחדש.",
-    "exit code 0 = הצלחה; 128+N = נהרג ע\"י signal N (137 = SIGKILL, 143 = SIGTERM).",
+    "exit code 0 = הצלחה; 128+N = נהרג על ידי signal N (137 = SIGKILL, 143 = SIGTERM).",
     "zombie: תהליך שסיים, וההורה עוד לא אסף את ה-exit status שלו."
    ],
    "f": "A container exits with code 137. What are the likely causes?",
@@ -4805,7 +4805,7 @@
     "firewall שחוסם UDP או TCP 53, ו-search domains."
    ],
    "f": "What's the difference between `dig` and `getent hosts` when testing?",
-   "w": "לערוך את `resolv.conf` ידנית כשהוא מנוהל ע\"י systemd-resolved.",
+   "w": "לערוך את `resolv.conf` ידנית כשהוא מנוהל על ידי systemd-resolved.",
    "r": "https://man7.org/linux/man-pages/man5/resolv.conf.5.html"
   },
   {

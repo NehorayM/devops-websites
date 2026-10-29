@@ -90,7 +90,7 @@ df -h /var/lib/containerd /var/log
              ["Logs", "Fluent Bit, Loki, OpenSearch", "מה קרה בדיוק"],
              ["Traces", "OpenTelemetry, Jaeger, X-Ray", "באיזה שירות הבקשה האטה"]),
        SPLIT(("metrics-server", ["CPU וזיכרון בזמן אמת", "משמש את HPA ו-`kubectl top`", "לא שומר היסטוריה"]),
-             ("kube-state-metrics", ["מצב אובייקטים: replicas, pods ב-Pending, restarts", "נאסף ע\"י Prometheus", "בסיס להתראות על הקלאסטר"])),
+             ("kube-state-metrics", ["מצב אובייקטים: replicas, pods ב-Pending, restarts", "נאסף על ידי Prometheus", "בסיס להתראות על הקלאסטר"])),
        H("לוגים בקלאסטר"),
        P("אפליקציות כותבות ל-stdout ו-stderr, רצוי JSON. agent כ-DaemonSet (Fluent Bit או Vector) קורא את הקבצים מה-node, מוסיף metadata של Kubernetes, ושולח ל-backend. לוג שנכתב לקובץ בתוך הקונטיינר נעלם עם ה-pod."),
        KEY("מתריעים על **סימפטומים** שמשתמש מרגיש (שיעור שגיאות, latency), לא על כל restart של pod. התראה טובה היא כזאת שמישהו צריך לעשות משהו בעקבותיה, ויש לה runbook."),

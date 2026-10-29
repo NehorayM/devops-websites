@@ -7,7 +7,7 @@ SUBJECT = {
 
   MOD("iam-basics", "IAM: זהויות, policies ו-evaluation",
       "להסביר users, roles ו-policies, ואיך AWS מחליט אם בקשה מותרת.",
-      [P("כל קריאה ל-AWS API נבדקת ע\"י IAM: מי מבקש, ומה מותר לו. בעולם DevOps כמעט הכול צריך להיות **role** עם credentials זמניים, ולא user עם access keys."),
+      [P("כל קריאה ל-AWS API נבדקת על ידי IAM: מי מבקש, ומה מותר לו. בעולם DevOps כמעט הכול צריך להיות **role** עם credentials זמניים, ולא user עם access keys."),
        TABLE(["זהות", "credentials", "מתי"],
              ["IAM user", "סיסמה ו-access keys קבועים", "כמעט אף פעם; עדיף SSO לאנשים"],
              ["IAM role", "זמניים מ-STS", "EC2, Lambda, pods, CI, גישה בין חשבונות"],
