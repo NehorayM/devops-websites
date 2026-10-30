@@ -90,10 +90,14 @@ devops-interview/
   study_engine.js study_screens.html study_styles.css   Study engine, injected between STUDY: markers
   build_*.py inject_*.py  builders (validate, then write)
   gen_duel_v2.py build_duel_key.py   server-side duel answer key from the bank
-  qa_bank.js qa_learn.js audit_runtime.js audit2..8.js fuzz_exam.js audit_static.py   tests
+  qa_bank.js qa_learn.js audit_runtime.js audit2..8.js fuzz_exam.js audit_static.py   tests (page suites)
+  qa_progress.js          node test: a stored profile survives a reworded bank (BANKV_OK) and resets on an unknown stamp
   tools/                  sql_all.sh (→ supabase_all.sql), qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
                           add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz), deepstats.py (depth of a Learn subject),
-                          linkcheck.py + reffix.py (doc-link check against docs source repos, and the fixer)
+                          linkcheck.py + reffix.py (doc-link check against docs source repos, and the fixer),
+                          contentlint.py (one line per audited content defect with its allowed maximum; --strict fails on a regression),
+                          bankfix.py (show/apply edits to exam questions by bank index), ivtool.py (dump/apply interview traps, points, follow-ups),
+                          learnq.py (dump/apply/stats Learn checks and finals and Study quizzes; askdump/askapply for ASK answer outlines)
   supabase_*.sql sql_tests/          backend for stage 8 (sql_tests/run.sh needs Docker; run_local.sh needs local Postgres)
 ```
 
@@ -120,12 +124,19 @@ Each subject has 3 modules, 3 checks each `C(q, right, *wrong, x=Hebrew)`, a rec
 and 10 finals `F(module_id, q, (text, why_he), …, x=…)`. A check option may be `(text, why_he)`; the check feedback then lists
 every option with its note. A subject with `"deep": True` must have parts of **≥ 3,000 chars** and a note of **≥ 60 chars on
 every option of every check and final** (`build_learn.py` enforces it; `tools/deepstats.py learn_src/sNN.py` shows the numbers).
+**Every** Learn check and final (deep or not) must also pass the balance rules in `build_learn.py`: 4 options, each with a
+Hebrew note of ≥ 60 chars; no distractor under 55% of the right option's length; the right option at most 1.15× the longest
+distractor; per subject the right option longest in ≤ 40% and shortest in ≤ 40% of questions (aim near 23% / 15%); and no stem
+copied from the bank. `python3 tools/learnq.py stats learn_src/sNN.py` shows the numbers; `dump`/`apply` rewrite questions.
 
 **Study chapter**: `CHAPTER = {nm, em, sub(he), dom 0–3, secs:[sector ids], topics:[{nm, blocks}], quiz:[QZ(q, right, *wrong, x=he)]}`.
-Every sector must belong to exactly one chapter.
+Every sector must belong to exactly one chapter. Each `QZ` option is `(text, why_he)`; the quiz feedback lists every option
+with its note (`stuWhyEach`), and `build_study.py` applies the same balance rules per chapter (`learnq.py` edits quizzes as `z0, z1…`).
 
 **Blocks** (`_h.py`): `H P UL STEPS KEY TRAP NOTE TABLE FLOW SPLIT CODE TREE ASK`. Inline markdown: `**bold**`
 and `` `code` ``. Keep `**` and backticks balanced; the validators check.
+`ASK(("English question", "Hebrew answer outline"), …)` renders each item as a tap-to-open `<details>`; both builders require an
+outline of ≥ 120 chars with Hebrew in it. Put commands in backticks so they render as isolated LTR code.
 
 ## 6. Build
 
@@ -140,7 +151,9 @@ python3 build_study.py && python3 inject_study.py          # study_src → #stud
 ```
 
 **Never hand-edit a blob, or anything between `LEARN:` / `STUDY:` markers.** The next build overwrites it.
-A bank change also changes `BANKV`, which resets users' seen, wrong and marks on purpose.
+`BANKV` identifies the bank by sector + stem per slot. `inject_bank.py` keeps the last build's slots in `qsrc/bankv.json`;
+when ≥ 95% of stems are unchanged in place, older stamps stay valid (`BANKV_OK`), so rewording options or explanations keeps
+users' seen, wrong and marks. Inserting, deleting or reordering questions still resets them.
 
 ## 7. Test (all green before every push)
 
@@ -168,21 +181,23 @@ await load('qa_bank.js'); await QA_BANK();   // likewise qa_learn.js, audit_runt
 ```
 After a rebuild, reload the page and confirm the `#data` blob holds a new string before trusting a run.
 
-| Suite | File | Last green (after the cleanup) |
+| Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,977 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,990 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
-| `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules; end of stage 10) |
+| `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
 | `AUDIT()`, `AUDIT2()`…`AUDIT8()` | audit_runtime.js, audit2..8.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
+| `tools/contentlint.py --strict` | — | 34 / 34 lines within limits (run after any content change) |
+| `qa_progress.js` (node) | — | 6 / 6 |
 
 Notes:
 - Run `node --check` on a harness file first. One syntax error makes the whole suite look missing.
 - Every `QA_BANK` group runs inside `step()`, so a crash is reported and the run goes on.
 - `authoredChecks` enforces the explanation rules, requires zero terse wrong-option lines (was 1,558 before stage 7b) and caps
-  questions whose right option is the longest at `<=303` (was 1,096), and shortest at `<=376`. Keep them there or lower.
+  questions whose right option is the longest at `<=294` (was 1,096), and shortest at `<=373`. Keep them there or lower.
 - Run `FUZZ_EXAM` on a freshly loaded page. Run after the audits on the same page, it once reported
   "two sheets open" (leftover state); on a fresh page the same build was clean.
 - When a check fails, decide whether it's a real bug or an old Skyforge assumption (AWS counts, SAA wording).
@@ -194,7 +209,8 @@ Notes:
 |---|---|
 | Answer panel | `renderExplain` → `authoredExplain(q,picked)` (Hebrew per option, tip, doc link, 🔊 Read); duels: `duelWhy` (the right option's Hebrew line) |
 | Read aloud | `ttsSpeak` (splits Hebrew and English chunks, `he-IL` via `ttsVoiceHe()`), `exReadText` |
-| Briefing (papers 1–10) | `buildBriefing`, `CODEX` (102 Hebrew terms; also the flashcards), `learnCallouts(sec,kind)` |
+| Briefing (papers 1–10) | `buildBriefing`, `CODEX` (312 Hebrew terms, each < 120 chars; also the flashcards), `conceptsFor` (whole-word match), `learnCallouts(sec,kind)` |
+| Doc link label | `docLabel(url)` ("Kubernetes docs", "Terraform docs" …), in the answer panel and interview mode |
 | Papers / exam | `startPaper`, `paperQs`, `PAPER_LEN=65`, `SIM_QSEC=90`, `simBudget` |
 | Score | `DOMAINS`, `domainOf`, `examDomainOf`, `scoreOf`, `scoreScaled`, `SCORE_PASS=720`, `SCORE_SHRINK` (renamed from `saa*` in the cleanup) |
 | Interview mode | `IV`, `openInterview`, `ivPick`, `ivNext`, `ivReveal`, `ivMark`; progress `P.iv[id]=[mark,times,when]` |
@@ -219,8 +235,9 @@ Notes:
 - Terse-line rewrites: "לא." appears hundreds of times, so never search-and-replace the text. Replace the string literal
   at its exact position (`ast` gives `lineno`/`col_offset` of each `Q(...)` option tuple; `col_offset` is in UTF-8 bytes),
   key each line by question index and option index within its file, and re-parse the file before writing.
-- Changing a question's stem, options or answer changes `BANKV` and resets everyone's seen/wrong/marks. Explanation
-  lines (`y`) and tips don't. Ask before touching an option's text (stage 9 has that approval).
+- Changing a question's options or answer, or a few stems, keeps progress (`BANKV_OK`, see section 6); adding, removing or
+  reordering questions, or rewording most stems, resets everyone's seen/wrong/marks. Run `qa_progress.js` after a bank change.
+  Ask before touching an option's text (stage 9 and the October 2026 audit have that approval).
 - In Bash heredocs, quote the delimiter (`<<'EOF'`): backticks in Hebrew content otherwise run as command substitution.
 - The cloud proxy blocks the docs hosts, so `ref` links can't be fetched there. Verify them from a normal browser.
 
@@ -242,6 +259,7 @@ Notes:
 | 11 (partial) | Deep Learn pass: check options explain themselves (`C()` with `(text, why)`), `deep` subjects enforced by the builder; Argo CD s06–s09 rewritten in depth |
 | Links | 822 doc pages checked against source repos; 154 refs fixed (moved pages, dead anchors, wrong paths); `LINKS.md` lists what needs a browser. Ship It rocket icon replaces the AWS badge |
 | Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
+| Audit (Oct 2026) | 30 content improvements, each guarded by a `contentlint.py` line (34/34 green). Progress survives a reworded bank (`BANKV_OK`). Bank: answer tells removed (`code` only on the right option 73 → 0, absolute-word distractors 31 → 0, stem echo 33 → 0), a duplicate reworded, landing-page refs replaced. Interview: 294 short traps and 256 short points rewritten. 8 facts fixed across bank, interview, Learn and Study (seccomp default, `kubectl debug node` + chroot, Argo CD polling, Ingress NGINX retirement, `create-only`, hook delete policy, `helm --wait`, `Replace=true`). Briefing: CODEX 102 → 312 terms, questions with no term 259 → 18. Learn: all 528 checks and finals rebalanced (right option longest 73–95% per subject → ≤ 27%; 976 throwaway distractors, 1,698 short notes → 0), 96 ASK answers. Study: 46 quiz questions with notes per option (longest 31 → 10), 165 ASK answers. Builders enforce all of it |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -261,7 +279,7 @@ Notes:
    in ≤ 40%** of questions. (Fixing the first tell created the second: after the first pass the right answer was the
    shortest in up to 56% of a file. Aim for both near 25%: the right answer should sit mid-pack by length.)
    `qa_bank.js` `authoredChecks` holds the bank-wide line: right option longest in ≤ **303** questions, shortest in ≤ **376**,
-   and **zero** terse wrong-option lines. Keep them there (or lower) when you edit questions.
+   and **zero** terse wrong-option lines (lowered to **294** / **373** in the October 2026 audit). Keep them there (or lower) when you edit questions.
    **Done (HARD = True):** Kubernetes (`k8s_pods`, `k8s_net`, `k8s_config`, `k8s_sched`, `k8s_sec`, `k8s_debug`, 265 q) and
    Argo CD (`argo_core`, `argo_sync`, `argo_scale`, `argo_ops`, 212 q), CI (`ci_docker`, `ci_sec`, `ci_test`, `ci_deploy`, 186 q),
    AWS (`aws_eks`, `aws_net`, `aws_ops`, 159 q), Helm (`helm_charts`, `helm_ops`, 133 q), Terraform (`tf_core`, `tf_state`, 133 q),
@@ -331,3 +349,8 @@ Notes:
 6. **Deploy — live.** GitHub Pages builds from branch `ccr-19c6e368-wdrow7` (also the repo's default branch), repo root:
    https://nehoraym.github.io/devops-websites/ redirects to `/devops-interview/`. Push to that branch to deploy. In Supabase,
    set Authentication → URL Configuration → Site URL to that address so sign-up emails link back to the site.
+7. **October 2026 content audit — DONE (30 points).** `tools/contentlint.py` holds one line per point with its allowed
+   maximum (34/34 green); run it with `--strict` after any content change. **Left, found on the way:**
+   18 Junior–Mid questions still get no glossary term in the briefing (limit 65); about 70 Hebrew lines in Learn and Study
+   list English words outside backticks (`ב-if, changes ו-exists`), which bidi can reorder on screen. Wrap such words in
+   backticks when you touch those lines (done for the GitLab `rules` notes).
