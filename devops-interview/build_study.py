@@ -27,6 +27,9 @@ sys.path.insert(0, str(HERE / "learn_src"))     # the block shorthand (_h.py)
 BLOCKS = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree", "ask"}
 VISUAL = {"table", "flow", "split", "dtree", "code"}
 HEB = re.compile(r"[֐-׿]")
+# Quiz balance, as in build_learn.py: four options, each with a note of 60+ chars, and lengths that
+# don't give the answer away. Before this the right option was the longest in 33 of 46 checks.
+NOTE_MIN, SPREAD_MAX, THROWAWAY, RIGHT_MAX, ASK_MIN = 60, 0.40, 0.55, 1.15, 120
 
 
 def text_of(b):
@@ -110,6 +113,10 @@ def main():
                     for r in b["rows"]:
                         if len(r) != len(b["head"]):
                             errs.append(f"{tw} block{i}: ragged row {r}")
+                if b["t"] == "ask":
+                    for ask_q, ask_a in b["x"]:
+                        if len(ask_a.strip()) < ASK_MIN or not HEB.search(ask_a):
+                            errs.append(f"{tw} block{i}: {ask_q[:40]!r} needs a Hebrew answer outline of >= {ASK_MIN} chars")
                 txt = text_of(b)
                 if b["t"] != "code":            # code is shown verbatim, so `**` there is a glob
                     check_md(f"{tw} block{i}", txt, errs)
@@ -119,7 +126,7 @@ def main():
             if len(body) < 700:
                 errs.append(f"{tw}: {len(body)} chars, want >= 700")
             words += len(body.split())
-        quiz = []
+        quiz, tells = [], {"long": 0, "short": 0}
         if len(c["quiz"]) < 3:
             errs.append(f"{w}: {len(c['quiz'])} checks, want >= 3")
         for j, q in enumerate(c["quiz"]):
@@ -130,14 +137,33 @@ def main():
                 errs.append(f"{qw}: needs 3-5 distinct options")
             if not HEB.search(q.get("x", "")) or len(q.get("x", "")) < 40:
                 errs.append(f"{qw}: needs a Hebrew explanation of 40+ chars")
-            for t in [q["q"], q["x"]] + q["o"]:
+            notes = q.get("w") or [""] * len(q["o"])
+            for t in [q["q"], q["x"]] + q["o"] + notes:
                 check_md(qw, t, errs)
-            # the right answer is authored first; spread it across positions
-            rest = q["o"][1:]
+            if len(q["o"]) != 4:
+                errs.append(f"{qw}: {len(q['o'])} options, want 4")
+            for k, n in enumerate(notes):
+                if len(n.strip()) < NOTE_MIN or not HEB.search(n):
+                    errs.append(f"{qw} opt{k}: needs a Hebrew note of >= {NOTE_MIN} chars")
+            right, wrong = len(q["o"][0]), [len(o) for o in q["o"][1:]]
+            if wrong:
+                if right > RIGHT_MAX * max(wrong):
+                    errs.append(f"{qw}: right option is {right} chars, over {RIGHT_MAX}x the longest distractor")
+                if min(wrong) < THROWAWAY * right:
+                    errs.append(f"{qw}: a {min(wrong)}-char distractor is under {THROWAWAY:.0%} of the right option")
+                tells["long"] += right > max(wrong)
+                tells["short"] += right < min(wrong)
+            # the right answer is authored first; spread it across positions (notes move with it)
+            pairs = list(zip(q["o"], notes))
+            rest = pairs[1:]
             random.Random(zlib.crc32(q["q"].encode())).shuffle(rest)
             at = qn % len(q["o"])
             qn += 1
-            quiz.append({"q": q["q"], "o": rest[:at] + [q["o"][0]] + rest[at:], "a": at, "x": q["x"]})
+            order = rest[:at] + [pairs[0]] + rest[at:]
+            quiz.append({"q": q["q"], "o": [o for o, _ in order], "w": [n for _, n in order], "a": at, "x": q["x"]})
+        for tell, n in tells.items():
+            if n > SPREAD_MAX * len(c["quiz"]):
+                errs.append(f"{w}: the right option is the {tell}est in {n}/{len(c['quiz'])} checks (max {SPREAD_MAX:.0%})")
         chapters.append({"nm": c["nm"], "em": c["em"], "sub": c["sub"], "dom": c["dom"], "secs": c["secs"],
                          "min": max(3, round(words / 90)),     # tables and commands read slower than prose
                          "topics": [{"nm": t["nm"], "blocks": t["blocks"]} for t in c["topics"]],

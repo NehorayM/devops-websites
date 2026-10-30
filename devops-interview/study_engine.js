@@ -123,6 +123,14 @@ function stuJumpSync(){
     bar.scrollTo({left:Math.max(0,want),behavior:'smooth'});
   }
 }
+// Every option's note after the reader answers, in the same rows Learn uses (.lrnwhy).
+function stuWhyEach(q,picked){
+  if(!q.w||!q.w.some(Boolean)) return '';
+  return '<div class="lrnwhy">'+q.o.map((o,i)=>'<div class="lwi '+(i===q.a?'good':'bad')+(i===picked?' mine':'')+'">'+
+    '<span class="k">'+String.fromCharCode(65+i)+(i===q.a?' ✓':' ✗')+'</span>'+
+    '<span><b dir="ltr">'+qtx(o)+'</b>'+(i===picked?'<em>הבחירה שלך</em>':'')+
+    '<i dir="rtl" lang="he">'+qtx(q.w[i]||'')+'</i></span></div>').join('')+'</div>';
+}
 function stuRenderQuiz(c){
   const box=$('stuQuiz'); box.innerHTML='';
   const state={done:0,right:0};
@@ -142,7 +150,7 @@ function stuRenderQuiz(c){
           else if(i2===picked) b2.classList.add('no');
         });
         feed.innerHTML=(ok?'✓ Correct. ':'✗ The answer is '+qtx(q.o[q.a])+'. ')+
-          (q.x?'<span class="stux">'+qtx(q.x)+'</span>':hebHTML(ok?'right':'wrong'));
+          (q.x?'<span class="stux">'+qtx(q.x)+'</span>':hebHTML(ok?'right':'wrong'))+stuWhyEach(q,picked);
         state.done++; if(ok){ state.right++; sfx.right(); } else sfx.wrong();
         if(state.done===c.quiz.length){
           const pct=Math.round(state.right/c.quiz.length*100);

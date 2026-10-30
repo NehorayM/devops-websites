@@ -70,8 +70,11 @@ def F(m, q, right, *wrong, x):
 
 
 def QZ(q, right, *wrong, x):
-    """A Study-mode check: options are plain strings, the right one first; x is Hebrew."""
-    return {"q": q, "o": [right] + list(wrong), "x": x}
+    """A Study-mode check: the right option first; x is Hebrew. An option may be (text, why_he):
+    the page then shows every option's note after the reader answers."""
+    opts = [right] + list(wrong)
+    return {"q": q, "o": [o[0] if isinstance(o, tuple) else o for o in opts],
+            "w": [o[1] if isinstance(o, tuple) else "" for o in opts], "x": x}
 
 
 def ASK(*qs):

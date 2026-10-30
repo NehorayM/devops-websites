@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """learnq.py dump <learn_src/sNN.py> | apply <learn_src/sNN.py> <fixes.json> | stats <learn_src/sNN.py ...>
 
-Edits a Learn subject's questions: the checks after each module (C) and the final exam (F).
+Edits a Learn subject's questions: the checks after each module (C) and the final exam (F),
+or a Study chapter's quiz (QZ, keys z0, z1, ...).
 dump prints one JSON object per question, in source order:
     {"k": "c3" or "f7", "m": module id (finals only), "q": stem, "o": [[text, why], ...], "x": explanation}
 with the right option first, as the source writes it.
@@ -22,7 +23,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
 def calls(src):
     tree = ast.parse(src)
-    out = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "id", "") in ("C", "F")]
+    out = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, "id", "") in ("C", "F", "QZ")]
     return sorted(out, key=lambda n: (n.lineno, n.col_offset))
 
 
@@ -46,8 +47,8 @@ def dump(path):
     out, nc, nf = [], 0, 0
     for c in calls(src):
         m, q, opts, x = parse(c)
-        if c.func.id == "C":
-            k, nc = f"c{nc}", nc + 1
+        if c.func.id in ("C", "QZ"):
+            k, nc = f"{'c' if c.func.id == 'C' else 'z'}{nc}", nc + 1
         else:
             k, nf = f"f{nf}", nf + 1
         it = {"k": k, "q": q, "o": opts, "x": x}
@@ -74,8 +75,8 @@ def apply(path, fixes_path):
     by_key = {}
     nc = nf = 0
     for c in calls(src):
-        if c.func.id == "C":
-            by_key[f"c{nc}"] = c
+        if c.func.id in ("C", "QZ"):
+            by_key[f"{'c' if c.func.id == 'C' else 'z'}{nc}"] = c
             nc += 1
         else:
             by_key[f"f{nf}"] = c

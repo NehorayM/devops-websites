@@ -220,7 +220,8 @@ for f in sorted(os.listdir(os.path.join(ROOT, "study_src"))):
         lens = [len(o) for o in opts]
         if lens[0] == max(lens) and lens.count(max(lens)) == 1:
             n_long += 1
-        st_notes += [(f, q["q"][:40]) for o in q["o"] if not (isinstance(o, dict) and len(o.get("w", "")) >= 60)]
+        notes = q.get("w") or [""] * len(q["o"])
+        st_notes += [(f, q["q"][:40]) for w in notes if len(w) < 60]
     if n_long > 0.4 * len(quiz):
         st_long.append((f, f"{n_long}/{len(quiz)}"))
     for t in m.CHAPTER["topics"]:
