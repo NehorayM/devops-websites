@@ -3785,6 +3785,19 @@ function authoredChecks(){
   eq(t.docLabel('https://kubernetes.io/docs/concepts/'),'Kubernetes docs','a doc link names its site');
   eq(t.docLabel('https://developer.hashicorp.com/terraform/language'),'Terraform docs','a Terraform link says Terraform');
   eq(t.QS.filter(q=>!t.docLabel(q.r)||t.docLabel(q.r)==='Documentation').length,0,'every bank doc link gets a site name');
+  // An English list inside Hebrew gets one bidi isolate per item; nothing else changes.
+  eq(t.qtx('ב-if, changes ו-exists'),'ב-<bdi>if</bdi>, <bdi>changes</bdi> ו-exists','English list items in Hebrew are isolated one by one');
+  eq(t.qtx('אישור ב-GitHub, when: manual ו-x'),'אישור ב-<bdi>GitHub</bdi>, <bdi>when: manual</bdi> ו-x','"key: value" stays one item');
+  eq(t.qtx('Pods, Services and Jobs'),'Pods, Services and Jobs','English-only text is untouched');
+  eq(t.qtx('בקוד `a, b` כן'),'בקוד <code>a, b</code> כן','code keeps its commas');
+  const esc0=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const plainMd=s=>esc0(s).replace(/`([^`]+)`/g,(m,x)=>'<code>'+x+'</code>').replace(/\*\*([^*]+)\*\*/g,(m,x)=>'<strong>'+x+'</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,(m,pre,x)=>pre+'<em>'+x+'</em>');
+  let isoN=0, isoBad=0;
+  t.QS.forEach(q=>(q.y||[]).concat(q.x||[]).forEach(s=>{ const h=t.mdInline(s); if(/<bdi>/.test(h)) isoN++;
+    if(h.replace(/<\/?bdi>/g,'')!==plainMd(s)) isoBad++; }));
+  eq(isoBad,0,'isolating list items never changes the text of a bank explanation');
+  ok(isoN>300,'bank explanations with English lists get isolated items ('+isoN+')');
   const enC=Object.keys(t.CODEX).filter(k=>!HEB.test(t.CODEX[k]));
   eq(enC.join(', '),'','every glossary definition is Hebrew');
   ['explaindata','subjectdata','coursedata'].forEach(id=>ok(!$(id),'the retired '+id+' blob is gone'));

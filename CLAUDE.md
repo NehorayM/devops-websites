@@ -183,7 +183,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 
 | Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,990 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,996 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
@@ -224,6 +224,9 @@ Notes:
 - `inject_learn.py` replaces the whole `LEARN:JS` band, and the `STUDY:JS` block is nested inside it. The script
   carries it over; if it ever stops, the page throws "STUDY_T is not defined".
 - RTL goes on the Hebrew element, never on a shared selector (English punctuation jumps). Code inside Hebrew needs `unicode-bidi:isolate`.
+- An English list inside Hebrew (`ב-if, changes ו-exists`) would render as one LTR block with the Hebrew prefix against the
+  last item. `qtx`/`mdInline` wrap each item in `<bdi>` (`heLists`, only in strings with Hebrew, never inside backticks);
+  `QA_BANK` checks the text is otherwise unchanged. Text rendered some other way doesn't get this.
 - Backtick text renders as `<code>` through `qtx()`. Tests compare the stripped text.
 - `fmtClock` takes milliseconds.
 - In tests, drive exams by tapping a real `.opt`. `submitAnswer()` and `qConfirm.click()` run the practice path.
@@ -351,6 +354,5 @@ Notes:
    set Authentication → URL Configuration → Site URL to that address so sign-up emails link back to the site.
 7. **October 2026 content audit — DONE (30 points).** `tools/contentlint.py` holds one line per point with its allowed
    maximum (34/34 green); run it with `--strict` after any content change. **Left, found on the way:**
-   18 Junior–Mid questions still get no glossary term in the briefing (limit 65); about 70 Hebrew lines in Learn and Study
-   list English words outside backticks (`ב-if, changes ו-exists`), which bidi can reorder on screen. Wrap such words in
-   backticks when you touch those lines (done for the GitLab `rules` notes).
+   18 Junior–Mid questions still get no glossary term in the briefing (limit 65). English lists inside Hebrew (1,448 in
+   1,272 strings) now render item by item through `heLists` (see section 9).

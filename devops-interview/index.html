@@ -10953,13 +10953,31 @@ renderBetRow('bjBets',bjBet,v=>{bjBet=v;});
 // ================= INLINE MARKDOWN =================
 // Question stems and options mark commands and fields with backticks, the way they would be
 // written in a runbook; this shows them as code and escapes everything else.
-function qtx(s){ return esc(s).replace(/`([^`\n]+)`/g,(m,t)=>'<code>'+t+'</code>'); }
+function qtx(s){ return bdiOut(esc(heLists(s)).replace(/`([^`\n]+)`/g,(m,t)=>'<code>'+t+'</code>')); }
 function mdInline(s){
-  return esc(s)
+  return bdiOut(esc(heLists(s))
     .replace(/`([^`]+)`/g,(m,t)=>'<code>'+t+'</code>')
     .replace(/\*\*([^*]+)\*\*/g,(m,t)=>'<strong>'+t+'</strong>')
-    .replace(/(^|[^*])\*([^*\n]+)\*/g,(m,pre,t)=>pre+'<em>'+t+'</em>');
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,(m,pre,t)=>pre+'<em>'+t+'</em>'));
 }
+// An English list inside Hebrew ("ב-if, changes ו-exists") renders as one left-to-right block,
+// so the Hebrew prefix sits against the wrong word and the items read out of order. Each item
+// gets its own isolate instead. Only lists (two or more items split by ", ") in strings that
+// contain Hebrew, never inside backticks; "when: manual" or "Pending → Running" stay one item.
+// Marks go in as \u0001/\u0002 before escaping and become <bdi> after. The patterns are built on
+// first use: qtx can run before this point of the script is reached.
+function heLists(s){
+  s=String(s==null?'':s);
+  if(!/[֐-׿]/.test(s)) return s;
+  if(!heLists.re){
+    const t="[A-Za-z](?:[\\w.\\/+#@=:'-]*[A-Za-z0-9])?";
+    const p=t+"(?:(?::?\\s+|\\s*(?:→|->|=>|\\/|\\+|=|&|\\|)\\s*)"+t+")*";
+    heLists.re={run:new RegExp(p+"(?:,\\s+"+p+")+","g"), one:new RegExp(p,"g")};
+  }
+  const {run,one}=heLists.re;
+  return s.split('`').map((seg,i)=>i%2?seg:seg.replace(run,r=>r.replace(one,x=>'\u0001'+x+'\u0002'))).join('`');
+}
+function bdiOut(h){ return h.indexOf('\u0001')<0?h:h.replace(/\u0001/g,'<bdi>').replace(/\u0002/g,'</bdi>'); }
 function fmtMS(ms){
   const s=Math.max(0,Math.round(ms/1000));
   return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
