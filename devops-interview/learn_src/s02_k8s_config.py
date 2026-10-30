@@ -165,7 +165,7 @@ kubectl get pvc data-db-0 -w   # status.capacity מתעדכן כשהדיסק ו�
          ("The PVC can't be deleted while Retain is set", "Retain לא חוסם מחיקה של ה-PVC. הוא קובע מה קורה ל-PV ולדיסק אחרי שה-PVC נמחק."),
          ("The disk is moved to a backup tier automatically", "Kubernetes לא מעביר דיסקים לגיבוי. Retain פשוט משאיר את ה-PV במצב Released עם הנתונים."),
          x="Retain משאיר את הדיסק ואת ה-PV במצב Released. זה מגן על נתונים, אבל דורש ניקוי ידני."),
-       C("What does a StorageClass define?",
+       C("What is a StorageClass responsible for?",
          ("Which provisioner creates disks, and with what parameters", "נכון. StorageClass מגדיר provisioner (למשל ebs.csi.aws.com), פרמטרים כמו סוג דיסק, reclaimPolicy ו-volumeBindingMode."),
          ("Which pods are allowed to mount a given volume", "StorageClass לא קובע הרשאות. מי משתמש בדיסק נקבע לפי ה-PVC שה-pod מפנה אליו."),
          ("How much storage each namespace may request in total", "מגבלה על סך האחסון ב-namespace היא ResourceQuota, לא StorageClass."),

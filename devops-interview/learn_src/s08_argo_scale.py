@@ -202,7 +202,7 @@ spec:
            ("Argo CD gets slow with 2,000 Applications. What do you tune?",
             "קודם מודדים: metrics של Argo CD (עומק ה-workqueue ומשך reconcile של ה-controller, זמני תשובה של ה-repo-server). אחר כך לפי הצוואר: sharding של ה-application-controller בין כמה replicas לפי קלאסטר; עוד replicas ל-repo-server ו-parallelism limit; resource.exclusions למשאבים רועשים שלא מנוהלים ב-Git (Events, Leases); webhooks במקום polling, עם timeout.reconciliation ארוך יותר; manifest-generate-paths ב-monorepo; Redis HA."),
            ("How do you promote a change from staging to prod with GitOps?",
-            "promotion הוא commit, לא לחיצה. כל סביבה מצביעה על values או overlay משלה (או על tag), והקידום הוא PR שמעתיק את גרסת ה-image או את השינוי מ-staging ל-prod, אחרי שהבדיקות ב-staging עברו. ה-PR הוא שער האישור, וה-git log הוא ההיסטוריה. בפרודקשן לא משתמשים ב-targetRevision צף כמו HEAD. אפשר גם RollingSync של ApplicationSet כדי שהשינוי יעבור dev, staging ו-prod בשלבים עם המתנה ל-health.")),
+            "promotion הוא commit, לא לחיצה. כל סביבה מצביעה על values או overlay משלה (או על tag), והקידום הוא PR שמעתיק את גרסת ה-image או את השינוי מ-staging ל-prod, אחרי שהבדיקות ב-staging עברו. ה-PR הוא שער האישור, וה-`git log` הוא ההיסטוריה. בפרודקשן לא משתמשים ב-targetRevision צף כמו HEAD. אפשר גם RollingSync של ApplicationSet כדי שהשינוי יעבור dev, staging ו-prod בשלבים עם המתנה ל-health.")),
       ],
       [C("What does a matrix generator do?",
          ("Combines two generators, producing one Application per pair", "נכון. matrix מחזיר את המכפלה של שני generators, למשל כל תיקיית שירות עם כל קלאסטר, ושני סטי הפרמטרים זמינים בתבנית."),

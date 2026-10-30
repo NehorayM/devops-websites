@@ -183,7 +183,7 @@ kubectl debug api-7d9f8c6b5-9tlmn -it --copy-to=api-debug --container=api -- sh"
            ("איך מבטיחים שאפליקציה לא מאבדת בקשות בזמן rolling update?",
             "readiness probe אמיתי, כדי שתנועה תגיע רק ל-pods מוכנים. maxUnavailable: 0 עם maxSurge, כדי שתמיד תהיה קיבולת מלאה. preStop עם sleep קצר, כי ההוצאה מה-endpoints וה-SIGTERM קורים במקביל, ואפליקציה שמסיימת בקשות פתוחות כשהיא מקבלת SIGTERM. terminationGracePeriodSeconds ארוך מה-sleep ומהבקשה הארוכה, ו-PDB לשדרוגי nodes."),
            ("איך מדבגים container שה-image שלו לא כולל shell?",
-            "kubectl debug מוסיף ephemeral container עם image שיש בו כלים (busybox או netshoot), ו---target משתף את ה-process namespace כדי לראות את התהליכים של הקונטיינר. --copy-to יוצר עותק של ה-pod עם image או פקודה אחרים, בלי לגעת במקור. בנוסף: logs, describe ו-port-forward. לא בונים מחדש image עם shell רק בשביל דיבאג.")),
+            "`kubectl debug` מוסיף ephemeral container עם image שיש בו כלים (busybox או netshoot), ו-`--target` משתף את ה-process namespace כדי לראות את התהליכים של הקונטיינר. `--copy-to` יוצר עותק של ה-pod עם image או פקודה אחרים, בלי לגעת במקור. בנוסף: logs, describe ו-port-forward. לא בונים מחדש image עם shell רק בשביל דיבאג.")),
       ],
       [C("A pod has no requests and no limits at all. What is its QoS class?",
          ("BestEffort, so it is evicted before others", "נכון. בלי requests ובלי limits ה-pod הוא BestEffort, והוא הראשון שה-kubelet מפנה כשה-node בלחץ זיכרון."),

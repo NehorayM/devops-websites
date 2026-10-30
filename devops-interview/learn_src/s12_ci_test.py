@@ -146,7 +146,7 @@ static void props(DynamicPropertyRegistry r) {
        TRAP("אחוז coverage גבוה לא אומר שהבדיקות טובות: בדיקה בלי assert מכסה שורות ולא בודקת כלום. diff coverage ו-mutation testing קרובים יותר למה שרוצים למדוד."),
        P("בדיקה שבירה (flaky) מטופלת כך: מזהים אותה מהיסטוריית ריצות, מעבירים ל-quarantine עם ticket ובעלים, ומתקנים את הסיבה (זמן, סדר, מצב משותף, רשת). retry אוטומטי בלי מעקב רק מסתיר את הבעיה."),
        ASK(("Your test suite takes 40 minutes. How do you speed it up?",
-            "קודם מודדים כמה זמן לוקח כל שלב וכל בדיקה, כדי לא לנחש. אחר כך: sharding בין כמה runners במקביל (jest --shard, matrix); cache לתלויות ול-Docker layers; path filters או כלי monorepo שמריצים רק את מה שהשתנה; העברת ה-E2E הכבדים ל-nightly עם smoke set קטן ב-PR; והחלפת sleep קבועים בהמתנה לתנאי. היעד המקובל הוא פידבק ב-PR תוך כעשר דקות."),
+            "קודם מודדים כמה זמן לוקח כל שלב וכל בדיקה, כדי לא לנחש. אחר כך: sharding בין כמה runners במקביל (`jest --shard`, matrix); cache לתלויות ול-Docker layers; path filters או כלי monorepo שמריצים רק את מה שהשתנה; העברת ה-E2E הכבדים ל-nightly עם smoke set קטן ב-PR; והחלפת sleep קבועים בהמתנה לתנאי. היעד המקובל הוא פידבק ב-PR תוך כעשר דקות."),
            ("Mocks or real dependencies for integration tests?",
             "ל-unit tests mocks מצוינים: מהירים ומבודדים. ל-integration tests עדיפה תלות אמיתית, למשל Testcontainers עם אותה גרסת Postgres כמו בפרודקשן, כי mock או DB בזיכרון מתנהגים אחרת (dialect, נעילות, טיפוסים) ומסתירים באגים. DB משותף ל-staging קרוב לפרודקשן, אבל בדיקות מתנגשות ו-state זולג. Testcontainers נותן אמיתי ומבודד לכל ריצה, במחיר Docker ב-runner וכמה שניות התחלה."),
            ("What coverage gate would you set on PRs?",

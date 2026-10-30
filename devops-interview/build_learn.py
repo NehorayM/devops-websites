@@ -177,6 +177,38 @@ def validate_question(where, q, errs, *, need_w, min_x):
 # right or wrong in a sentence or two.
 DEEP_BODY, DEEP_W = 3000, 60
 
+# Every subject, deep or not: four options, each with a note that explains it, and option lengths
+# that don't give the answer away. Before this rule the right option was the longest in 73-95% of
+# each subject's questions and one distractor in three was a throwaway ("Restart the cluster").
+NOTE_MIN, SPREAD_MAX, THROWAWAY, RIGHT_MAX = 60, 0.40, 0.55, 1.15
+ASK_MIN = 120
+HEBREW = re.compile(r"[֐-׿]")
+BANK = ROOT / "qsrc" / "bank.json"
+BANK_STEMS = ({re.sub(r"\W+", "", q["q"].lower()) for q in json.loads(BANK.read_text(encoding="utf-8"))["questions"]}
+              if BANK.exists() else set())
+
+
+def balance(where, q, errs):
+    """Option count, notes and length tells for one question; returns 'long', 'short' or ''."""
+    if len(q["o"]) != 4:
+        errs.append(f"{where}: {len(q['o'])} options, want 4")
+    for i, o in enumerate(q["o"]):
+        if len(o["w"].strip()) < NOTE_MIN:
+            errs.append(f"{where} opt{i}: note is {len(o['w'].strip())} chars, want >= {NOTE_MIN}")
+    if re.sub(r"\W+", "", q["q"].lower()) in BANK_STEMS:
+        errs.append(f"{where}: stem is copied from the exam bank — ask it differently")
+    if len(q["a"]) != 1 or len(q["o"]) < 2:
+        return ""
+    r = q["a"][0]
+    right = len(q["o"][r]["t"])
+    wrong = [len(o["t"]) for i, o in enumerate(q["o"]) if i != r]
+    if right > RIGHT_MAX * max(wrong):
+        errs.append(f"{where}: right option is {right} chars, more than {RIGHT_MAX}x the longest distractor ({max(wrong)})")
+    for n in wrong:
+        if n < THROWAWAY * right:
+            errs.append(f"{where}: a {n}-char distractor is under {THROWAWAY:.0%} of the right option ({right})")
+    return "long" if right > max(wrong) else "short" if right < min(wrong) else ""
+
 
 def validate(s, sections, shorts, errs):
     deep = bool(s.get("deep"))
@@ -193,6 +225,7 @@ def validate(s, sections, shorts, errs):
         errs.append(f"{pre}: duplicate module id")
     qtexts = collections.Counter()
     answer_pos = collections.Counter()
+    tells = collections.Counter()
     total_checks = 0
 
     for m in mods:
@@ -234,6 +267,10 @@ def validate(s, sections, shorts, errs):
                 for r in b["x"]:
                     if len(r) != 2:
                         errs.append(f"{mp} block{i}: dtree rows are [condition, verdict]")
+            if b["t"] == "ask":
+                for ask_q, ask_a in b["x"]:
+                    if len(ask_a.strip()) < ASK_MIN or not HEBREW.search(ask_a):
+                        errs.append(f"{mp} block{i}: {ask_q[:40]!r} needs a Hebrew answer outline of >= {ASK_MIN} chars")
         if not (set(kinds) & VISUAL):
             errs.append(f"{mp}: no table/flow/split/dtree — every module needs something visual")
         if not (set(kinds) & CALLOUT):
@@ -252,6 +289,7 @@ def validate(s, sections, shorts, errs):
             total_checks += 1
             where = f"{mp} check{j}"
             validate_question(where, q, errs, need_w=deep, min_x=40)
+            tells[balance(where, q, errs)] += 1
             if deep:
                 for i, o in enumerate(q["o"]):
                     if len(o["w"].strip()) < DEEP_W:
@@ -296,6 +334,7 @@ def validate(s, sections, shorts, errs):
     for j, q in enumerate(final):
         where = f"{pre} final{j}"
         validate_question(where, q, errs, need_w=True, min_x=80)
+        tells[balance(where, q, errs)] += 1
         if deep:
             for i, o in enumerate(q["o"]):
                 if len(o["w"].strip()) < DEEP_W:
@@ -312,6 +351,12 @@ def validate(s, sections, shorts, errs):
         missed = [i for i in ids if i not in covered]
         if missed:
             errs.append(f"{pre}: final exam never touches module(s) {missed}")
+
+    nq = sum(tells.values())
+    for tell in ("long", "short"):
+        if nq and tells[tell] > SPREAD_MAX * nq:
+            errs.append(f"{pre}: the right option is the {tell}est in {tells[tell]}/{nq} questions "
+                        f"(max {SPREAD_MAX:.0%}) — length gives the answer away")
 
     dupes = [q for q, n in qtexts.items() if n > 1]
     if dupes:

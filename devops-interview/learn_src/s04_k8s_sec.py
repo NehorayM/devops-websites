@@ -153,7 +153,7 @@ spec:
        H("Audit logs"),
        P("audit log של ה-API server מתעד מי עשה מה ומתי: מי קרא secrets, מי מחק Deployment. ב-EKS מפעילים את סוג הלוג `audit` ל-CloudWatch. בחקירה זה המקור הראשון."),
        ASK(("איך תבדוק אם ServiceAccount מסוים יכול למחוק pods?",
-            "kubectl auth can-i delete pods -n <ns> --as=system:serviceaccount:<ns>:<name> מחזיר yes או no, ו---list מציג את כל ההרשאות. אם התשובה מפתיעה, מחפשים את ה-RoleBindings וה-ClusterRoleBindings שמפנים ל-ServiceAccount ולקבוצות שלו (system:serviceaccounts). כדאי להזכיר שגם create pods נותן בפועל את ההרשאות של כל ServiceAccount ב-namespace."),
+            "`kubectl auth can-i delete pods -n <ns> --as=system:serviceaccount:<ns>:<name>` מחזיר yes או no, ו-`--list` מציג את כל ההרשאות. אם התשובה מפתיעה, מחפשים את ה-RoleBindings וה-ClusterRoleBindings שמפנים ל-ServiceAccount ולקבוצות שלו (system:serviceaccounts). כדאי להזכיר שגם create pods נותן בפועל את ההרשאות של כל ServiceAccount ב-namespace."),
            ("אילו הרשאות RBAC מסוכנות יותר ממה שהן נראות?",
             "create על pods: אפשר להריץ pod עם כל ServiceAccount ולהרכיב כל Secret. get, list או watch על secrets: list מחזיר את הערכים עצמם. pods/exec ו-pods/attach: גישה מלאה לקונטיינר. escalate, bind ו-impersonate: עקיפה של RBAC עצמו. ו-wildcards (*) שמכסים גם משאבים שיתווספו בעתיד. בביקורת RBAC מחפשים את כולן."),
            ("מה השתנה ב-ServiceAccount tokens בגרסאות האחרונות?",
