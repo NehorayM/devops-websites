@@ -113,6 +113,10 @@
 /* three-column tables wrap on a phone instead of scrolling sideways */
 #lrnReadBody table.wide,#lrnRecapBody table.wide{min-width:0}
 #lrnReadBody table.wide th,#lrnRecapBody table.wide th{white-space:normal}
+/* a long identifier in a cell (revisionHistoryLimit, resources.requests.storage) would set the column's
+   minimum width and push the table sideways. Code may break inside a cell, except in the first column, which
+   names the thing (breaking it there squeezed the column to a few letters); Hebrew words never break */
+#lrnReadBody .mdxtable td:not(:first-child) code,#lrnRecapBody .mdxtable td:not(:first-child) code{overflow-wrap:anywhere}
 
 /* per-option notes after a check (deep subjects) */
 .lrnwhy{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:7px}

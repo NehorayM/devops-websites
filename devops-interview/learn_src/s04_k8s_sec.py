@@ -3,26 +3,56 @@ from _h import *
 
 SUBJECT = {
  "sec": 4, "nm": "Kubernetes: RBAC & Security", "tag": "Who can do what, and how pods are locked down",
+ "deep": True,
  "modules": [
 
   MOD("rbac", "RBAC ו-ServiceAccounts",
       "להסביר Role, ClusterRole ו-bindings, ולבדוק מה זהות מסוימת מורשית לעשות.",
-      [P("כל בקשה ל-API server עוברת שלושה שלבים: **authentication** (מי אתה), **authorization** (מה מותר לך, בדרך כלל RBAC), ו-**admission** (האם הבקשה עומדת במדיניות). RBAC הוא השלב האמצעי."),
+      [H("שלושה שערים לכל בקשה"),
+       P("כל בקשה ל-API server עוברת שלושה שלבים לפי הסדר. **authentication** קובע מי אתה: תעודת client, token של ServiceAccount, או OIDC מספק זהויות. ל-Kubernetes אין אובייקט User: שם המשתמש והקבוצות מגיעים מהתעודה או מה-token. **authorization** קובע מה מותר לך, וכמעט תמיד זה RBAC. **admission** בודק אם הבקשה עומדת במדיניות, ויכול גם לשנות אותה. רק בקשה שעברה את שלושתם נשמרת ב-etcd."),
        FLOW("בקשה ל-API", "Authentication", "Authorization (RBAC)", "Admission", "נשמר ב-etcd"),
+       H("ארבעת האובייקטים של RBAC"),
        TABLE(["אובייקט", "היקף", "מה הוא עושה"],
              ["Role", "namespace", "רשימת הרשאות: verbs על resources"],
-             ["ClusterRole", "קלאסטר", "הרשאות ברמת הקלאסטר, או תבנית לשימוש חוזר"],
-             ["RoleBinding", "namespace", "נותן Role או ClusterRole ל-subject בתוך namespace"],
+             ["ClusterRole", "קלאסטר", "הרשאות ברמת הקלאסטר, או תבנית לשימוש חוזר בכל namespace"],
+             ["RoleBinding", "namespace", "נותן Role או ClusterRole ל-subject בתוך namespace אחד"],
              ["ClusterRoleBinding", "קלאסטר", "נותן ClusterRole בכל הקלאסטר"]),
-       KEY("RBAC הוא **רק allow**. אין חוקי deny. הרשאה ניתנת אם binding כלשהו נותן אותה."),
+       P("כל חוק ב-Role הוא שילוב של `apiGroups`, `resources` ו-`verbs` (`get`, `list`, `watch`, `create`, `update`, `patch`, `delete`). אפשר לצמצם לאובייקטים מסוימים עם `resourceNames`, ול-subresources כמו `pods/log` או `pods/exec`. subject הוא User, Group או ServiceAccount. הדפוס הנפוץ הוא ClusterRole אחד (למשל \"מפתח\") ו-RoleBinding שלו בכל namespace של צוות: הגדרה אחת, היקף מוגבל."),
+       CODE("""
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata: {name: deployer, namespace: shop}
+rules:
+- apiGroups: [apps]
+  resources: [deployments]
+  verbs: [get, list, watch, update, patch]
+- apiGroups: [""]
+  resources: [pods, pods/log]
+  verbs: [get, list, watch]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata: {name: ci-deployer, namespace: shop}
+subjects: [{kind: ServiceAccount, name: ci, namespace: shop}]
+roleRef: {kind: Role, name: deployer, apiGroup: rbac.authorization.k8s.io}
+""", cap="CI יכול לעדכן Deployments ולקרוא pods ולוגים ב-shop, ותו לא"),
+       KEY("RBAC הוא **רק allow**. אין חוקי deny. הרשאה ניתנת אם binding כלשהו נותן אותה, ולכן כדי להסיר הרשאה צריך למצוא את כל ה-bindings שנותנים אותה."),
+       H("הרשאות שנראות תמימות"),
+       UL("`list` ו-`watch` על `secrets` חושפים את התוכן של כל ה-Secrets, לא רק את השמות. אין דבר כזה \"לראות רק את הרשימה\".",
+          "`create` על `pods` מאפשר להריץ pod עם כל ServiceAccount ב-namespace ולחבר כל Secret שלו.",
+          "`pods/exec` נותן shell בקונטיינר, כולל גישה לסודות ול-token שלו.",
+          "הפעלים `escalate`, `bind` ו-`impersonate` עוקפים את ההגנה של RBAC: בלעדיהם אי אפשר ליצור Role עם הרשאות שאין לך בעצמך.",
+          "הקבוצה `system:masters` עוקפת את RBAC לגמרי, ומחיקת bindings לא מבטלת את זה. לא מכניסים אליה משתמשים."),
+       P("ל-Kubernetes יש ClusterRoles מוכנים לשימוש: `view` (קריאה, בלי Secrets), `edit` (שינוי רוב המשאבים), `admin` (כולל RBAC בתוך ה-namespace) ו-`cluster-admin`. אחרי יצירת binding אי אפשר לשנות את ה-`roleRef` שלו: מוחקים ויוצרים מחדש."),
        H("ServiceAccount"),
-       P("ServiceAccount הוא הזהות של pod מול ה-API server. ה-pod מקבל projected token: קשור ל-pod, עם audience, ופג תוקף. אם האפליקציה לא מדברת עם ה-API, מגדירים `automountServiceAccountToken: false`. ב-EKS אותו token משמש גם לקבלת הרשאות AWS (IRSA או Pod Identity)."),
+       P("ServiceAccount הוא הזהות של pod מול ה-API server. לכל namespace יש `default`, וכל pod בלי הגדרה מקבל אותו. ה-kubelet מחבר ל-pod **projected token**: קשור ל-pod הספציפי, עם audience, ופג תוקף תוך כשעה (ה-kubelet מחדש אותו לפני כן). tokens ארוכי טווח ב-Secret כבר לא נוצרים אוטומטית מ-1.24. אם האפליקציה לא מדברת עם ה-API, מגדירים `automountServiceAccountToken: false`. ב-EKS אותו token משמש גם לקבלת הרשאות AWS (IRSA או Pod Identity)."),
        CODE("""
 kubectl auth can-i list pods -n shop --as system:serviceaccount:shop:api
+kubectl auth can-i --list -n shop --as system:serviceaccount:shop:ci
 kubectl auth whoami
-kubectl get rolebindings -n shop -o wide
-""", cap="איך בודקים מה מותר לזהות מסוימת."),
-       TRAP("`pods/exec` נותן גישה מלאה לקונטיינר, כולל לסודות שלו. מי שיכול לעשות exec יכול לקרוא כל Secret שה-pod רואה. לא לתת exec קבוע לכולם בפרודקשן."),
+kubectl get rolebindings,clusterrolebindings -A -o wide | grep shop:ci
+""", cap="איך בודקים מה מותר לזהות מסוימת, ומאיפה זה מגיע"),
+       TRAP("לתת לאפליקציה את ה-ServiceAccount `default` עם הרשאות, כי \"ככה היה יותר מהר\". כל pod ב-namespace שלא הגדיר SA מקבל אותן הרשאות. לכל אפליקציה שצריכה גישה ל-API יש ServiceAccount משלה."),
       ],
       [C("Can you write a deny rule in Kubernetes RBAC?",
          ("No; RBAC rules only add permissions", "נכון. RBAC הוא additive: אין deny, ולכן הדרך להגביל היא לא לתת את ההרשאה מלכתחילה, ולהסיר bindings רחבים."),
@@ -46,21 +76,49 @@ kubectl get rolebindings -n shop -o wide
 
   MOD("pod-security", "אבטחת pods: securityContext ו-Pod Security Standards",
       "להקשיח קונטיינר עם securityContext, ולאכוף רמת אבטחה על namespace.",
-      [P("ברירות המחדל של קונטיינר מתירניות: הוא יכול לרוץ כ-root, לכתוב לכל מערכת הקבצים, ולקבל capabilities של Linux. **securityContext** מצמצם את זה."),
-       TABLE(["הגדרה", "מה היא עושה"],
-             ["`runAsNonRoot: true`", "הקונטיינר לא יעלה אם הוא מנסה לרוץ כ-root"],
-             ["`readOnlyRootFilesystem: true`", "אי אפשר לכתוב למערכת הקבצים של ה-image"],
-             ["`allowPrivilegeEscalation: false`", "תהליך לא יקבל יותר הרשאות מההורה שלו"],
-             ["`capabilities: drop: [ALL]`", "מוריד את כל ה-capabilities; מוסיפים רק מה שצריך"],
-             ["`seccompProfile: RuntimeDefault`", "מגביל syscalls מסוכנים"]),
-       H("Pod Security Standards"),
+      [H("למה ברירות המחדל מסוכנות"),
+       P("קונטיינר הוא תהליך רגיל על ה-node, מבודד ב-namespaces וב-cgroups של ה-kernel. הבידוד הזה חלש יותר ממכונה וירטואלית: כל הקונטיינרים חולקים kernel אחד. ברירות המחדל מתירניות: קונטיינר יכול לרוץ כ-root (UID 0, אותו root של ה-node אם הוא בורח), לכתוב לכל מערכת הקבצים של ה-image, ולקבל סט של Linux capabilities. **securityContext** מצמצם את זה, ברמת ה-pod (לכל הקונטיינרים) או ברמת קונטיינר בודד."),
+       TABLE(["הגדרה", "מה היא עושה, וממה היא מגינה"],
+             ["`runAsNonRoot:` `true`", "הקונטיינר לא יעלה אם הוא מנסה לרוץ כ-root. מגן מפריצה שמגיעה עם הרשאות root"],
+             ["`runAsUser` / `runAsGroup`", "UID ו-GID מפורשים לתהליך, גם כשה-image לא הגדיר USER"],
+             ["`readOnlyRoot` `Filesystem: true`", "אי אפשר לכתוב למערכת הקבצים של ה-image. תוקף לא יכול להוריד כלים או לשנות בינאריים"],
+             ["`allowPrivilege` `Escalation: false`", "תהליך לא יקבל יותר הרשאות מההורה שלו. חוסם הסלמה דרך בינארי עם setuid"],
+             ["`capabilities:` `drop: [ALL]`", "מוריד את כל ה-capabilities; מוסיפים רק מה שצריך"],
+             ["`seccompProfile:` `RuntimeDefault`", "מגביל syscalls מסוכנים לפי הפרופיל של ה-runtime, נגד ניצול חולשות kernel"]),
+       P("seccomp לא מופעל לבד: ברירת המחדל של pod היא `Unconfined`, אלא אם ה-kubelet הוגדר עם `seccompDefault`. לכן כותבים `RuntimeDefault` במפורש. ה-capability היחידה שאפליקציה רגילה צריכה בדרך כלל היא `NET_BIND_SERVICE`, להאזנה על פורט מתחת ל-1024, וגם אותה אפשר לחסוך אם מאזינים על 8080."),
+       CODE("""
+spec:
+  securityContext:                       # pod level: every container
+    runAsNonRoot: true
+    runAsUser: 10001
+    fsGroup: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: api
+    securityContext:                     # container level
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities: {drop: [ALL]}
+    volumeMounts: [{name: tmp, mountPath: /tmp}]
+  volumes: [{name: tmp, emptyDir: {}}]   # a writable /tmp for the app
+""", cap="pod שעובר את רמת restricted, עם /tmp כתיב דרך emptyDir"),
+       H("ההגדרות שפותחות את ה-node"),
+       P("חלק מההגדרות לא מצמצמות אלא פותחות, והן מה שתוקף מחפש: `privileged: true` נותן לקונטיינר גישה כמעט מלאה ל-node (כל ה-devices וכל ה-capabilities). `hostPath` מחבר קבצים של ה-node, ו-hostPath ל-`/` או ל-socket של ה-runtime שווה ל-root על ה-node. `hostNetwork`, `hostPID` ו-`hostIPC` משתפים את ה-namespaces של ה-node, כך שהקונטיינר רואה את כל התהליכים או את כל התנועה. כלים מערכתיים (CNI, agents) צריכים חלק מאלה. אפליקציות לא."),
+       H("Pod Security Standards ו-Pod Security Admission"),
        TABLE(["רמה", "מה היא אוסרת"],
-             ["privileged", "כלום. לכלים מערכתיים"],
-             ["baseline", "privileged, hostPath, hostNetwork, capabilities מסוכנים"],
-             ["restricted", "בנוסף: root, privilege escalation, חייב seccomp ו-drop ALL"]),
-       P("**Pod Security Admission** אוכף את הרמות עם labels על namespace, בשלושה מצבים: `enforce` (חוסם), `audit` (רושם), `warn` (מזהיר). PodSecurityPolicy הישן הוסר בגרסה 1.25."),
-       KEY("כדי להחמיר בלי לשבור: קודם `warn` ו-`audit` ל-restricted, מתקנים את מה שמופיע, ורק אז `enforce`."),
-       TRAP("`readOnlyRootFilesystem` שובר אפליקציות שכותבות ל-`/tmp`. הפתרון הוא emptyDir על הנתיבים האלה, לא לוותר על ההגדרה."),
+             ["privileged", "כלום. לכלים מערכתיים ב-namespaces מבודדים"],
+             ["baseline", "privileged, hostPath, hostNetwork והחלקים המסוכנים של capabilities"],
+             ["restricted", "בנוסף: root, privilege escalation; חובה seccomp ו-drop ALL"]),
+       P("**Pod Security Admission** הוא admission controller מובנה שאוכף את הרמות לפי labels על ה-namespace, בשלושה מצבים: `enforce` חוסם, `audit` רושם ב-audit log, ו-`warn` מחזיר אזהרה למשתמש. אפשר לנעול את גרסת הכללים עם `enforce-version`, כדי ששדרוג של Kubernetes לא יחמיר אותם פתאום. PodSecurityPolicy הישן הוסר בגרסה 1.25."),
+       CODE("""
+kubectl label ns shop \\
+  pod-security.kubernetes.io/enforce=baseline \\
+  pod-security.kubernetes.io/warn=restricted \\
+  pod-security.kubernetes.io/audit=restricted
+""", cap="אוכפים baseline, ומקבלים אזהרות על כל מה שלא יעבור restricted"),
+       KEY("כדי להחמיר בלי לשבור: קודם `warn` ו-`audit` ל-restricted, מתקנים את מה שמופיע, ורק אז `enforce`. `kubectl label --dry-run=server` על ה-namespace מראה מראש אילו pods קיימים יפרו את הרמה."),
+       TRAP("`enforce` חל רק על pods, לא על Deployments. Deployment שמפר את הרמה נוצר בהצלחה (עם אזהרה), אבל ה-ReplicaSet לא מצליח ליצור pods. ה-pods פשוט לא מופיעים, והשגיאה נמצאת ב-Events של ה-ReplicaSet."),
+       TRAP("`readOnlyRootFilesystem` שובר אפליקציות שכותבות ל-`/tmp` או ל-cache. הפתרון הוא emptyDir על הנתיבים האלה, לא לוותר על ההגדרה."),
       ],
       [C("Which securityContext setting stops a process from gaining more privileges than its parent?",
          ("`allowPrivilegeEscalation: false`", "נכון. allowPrivilegeEscalation: false מפעיל no_new_privs, ומונע מ-setuid וממנגנונים דומים להעלות הרשאות בתוך הקונטיינר."),
@@ -84,20 +142,28 @@ kubectl get rolebindings -n shop -o wide
 
   MOD("admission-supply", "Admission, policy ו-supply chain",
       "להסביר מה admission webhooks עושים, ואיך מוודאים שרק images בטוחים רצים בקלאסטר.",
-      [P("**Admission controllers** בודקים בקשות אחרי RBAC ולפני שהן נשמרות. **mutating** משנה את הבקשה (מזריק sidecar, מוסיף labels), ו-**validating** מאשר או דוחה."),
-       SPLIT(("Mutating", ["הזרקת sidecar של service mesh", "ברירות מחדל ל-resources", "הוספת labels"]),
-             ("Validating", ["חסימת `:latest`", "חובת requests ו-limits", "רק registries מאושרים"])),
-       TABLE(["כלי", "איך הוא עובד"],
-             ["Kyverno", "policies כ-YAML, כולל אימות חתימות של images"],
-             ["OPA Gatekeeper", "policies ב-Rego"],
-             ["ValidatingAdmissionPolicy", "חוקי CEL בתוך ה-API server, בלי webhook חיצוני"]),
-       TRAP("webhook עם `failurePolicy: Fail` שנפל חוסם יצירת משאבים בכל מקום שהוא חל עליו, לפעמים גם את התיקון שלו עצמו. מחריגים את ה-namespace שלו ואת kube-system, ומריצים כמה replicas."),
-       H("אבטחת images"),
-       UL("סריקה ב-CI (Trivy, Grype) ועצירה על חולשות קריטיות עם תיקון זמין.",
-          "base image מינימלי (distroless) ו-pin לפי digest.",
-          "חתימה עם cosign, ואימות ב-admission (Kyverno `verifyImages`).",
-          "רק registries מאושרים, וסריקה חוזרת של images שכבר רצים."),
-       KEY("אם pod נפרץ: מבודדים עם NetworkPolicy, אוספים ראיות לפני מחיקה, בודקים מה ה-ServiceAccount שלו יכול היה לגשת אליו, ומבצעים רוטציה לסודות האלה."),
+      [H("מה admission עושה"),
+       P("**Admission controllers** בודקים בקשות אחרי RBAC ולפני שהן נשמרות ב-etcd. RBAC עונה על \"מותר לך ליצור Deployment?\", ו-admission עונה על \"מותר ליצור **את ה-Deployment הזה**?\": עם image מ-registry לא מאושר, בלי requests, או כ-root. הם רצים בשני שלבים לפי סדר קבוע: קודם **mutating**, שמשנים את הבקשה (מזריקים sidecar, מוסיפים labels או ברירות מחדל), ואחר כך **validating**, שמאשרים או דוחים את התוצאה הסופית. הסדר הזה הוא הסיבה ש-validating רואה גם את מה שה-mutating הוסיפו."),
+       SPLIT(("Mutating", ["הזרקת sidecar של service mesh", "ברירות מחדל ל-resources (LimitRanger)", "הוספת labels ו-tolerations"]),
+             ("Validating", ["חסימת `:latest`", "חובת requests ו-limits", "רק registries מאושרים", "Pod Security Admission"])),
+       P("חלק מה-admission controllers מובנים ב-API server ופועלים כל הזמן: `NamespaceLifecycle` (לא יוצרים משאבים ב-namespace שנמחק), `LimitRanger`, `ResourceQuota`, `ServiceAccount` ו-`PodSecurity`. מעבר לזה אפשר להוסיף מדיניות משלך בשתי דרכים: **webhooks** שה-API server קורא להם ב-HTTPS, או **policies ב-CEL** שרצות בתוך ה-API server עצמו."),
+       TABLE(["כלי", "איך הוא עובד", "מתי לבחור בו"],
+             ["Kyverno", "webhook; policies כ-YAML, כולל mutate, generate ואימות חתימות של images", "צוות שרוצה מדיניות קריאה בלי שפה חדשה"],
+             ["OPA Gatekeeper", "webhook; policies ב-Rego", "ארגון שכבר משתמש ב-OPA גם מחוץ ל-Kubernetes"],
+             ["ValidatingAdmissionPolicy", "חוקי CEL בתוך ה-API server, בלי webhook חיצוני (GA ב-1.30)", "חוקים פשוטים בלי רכיב נוסף שיכול ליפול"]),
+       H("webhooks: הכוח והסיכון"),
+       P("webhook מוגדר ב-`ValidatingWebhookConfiguration` או `MutatingWebhookConfiguration`: לאילו משאבים ופעולות הוא חל, לאיזה Service לשלוח, ו-`namespaceSelector` או `objectSelector` כדי לצמצם את ההיקף. `timeoutSeconds` קובע כמה לחכות (10 שניות כברירת מחדל), ו-`failurePolicy` קובע מה קורה כשה-webhook לא עונה: `Fail` דוחה את הבקשה, ו-`Ignore` מעביר אותה בלי בדיקה. זו בחירה בין אבטחה לזמינות: מדיניות אבטחה צריכה `Fail`, ואז ה-webhook הופך לרכיב קריטי."),
+       TRAP("webhook עם `failurePolicy: Fail` שנפל חוסם יצירת משאבים בכל מקום שהוא חל עליו, לפעמים גם את ה-pods של ה-webhook עצמו, כך שהוא לא יכול לעלות. מחריגים את ה-namespace שלו ואת kube-system, מריצים כמה replicas עם PDB, ומנטרים את זמני התגובה שלו."),
+       H("אבטחת images: שרשרת האספקה"),
+       P("ה-image הוא הקוד שבאמת רץ, ולכן מאבטחים את כל הדרך שלו: מה נכנס אליו, מי בנה אותו, ומה מוודא שזה אותו image שנבדק. tag כמו `v1.4` הוא מצביע שאפשר להזיז; **digest** (`@sha256:...`) מזהה את התוכן עצמו, ולכן pin לפי digest מבטיח שמה שנסרק הוא מה שרץ."),
+       UL("סריקה ב-CI (Trivy, Grype) ועצירה על חולשות קריטיות שיש להן תיקון, וסריקה חוזרת של images שכבר רצים, כי CVEs חדשים מתפרסמים כל יום.",
+          "base image מינימלי (distroless, או scratch לבינארי סטטי): פחות חבילות זה פחות חולשות ובלי shell לתוקף.",
+          "SBOM לכל image, כדי לדעת תוך דקות איפה רצה ספרייה פגיעה כשמתפרסם CVE.",
+          "חתימה עם cosign (גם keyless דרך OIDC של ה-CI), ואימות ב-admission עם Kyverno `verifyImages`: image שלא נחתם על ידי ה-pipeline שלך לא רץ.",
+          "רק registries מאושרים, ובעדיפות registry פרטי (ECR) שמשכפל images חיצוניים אחרי סריקה."),
+       H("כשיש חשד לפריצה"),
+       P("הדחף הראשון הוא למחוק את ה-pod, וזה בדיוק מה שלא עושים. מחיקה מעלימה את הראיות (תהליכים, קבצים, חיבורים), וה-controller יעלה pod זהה שאותה חולשה פתוחה בו."),
+       KEY("אם pod נפרץ: מבודדים אותו עם NetworkPolicy ומורידים ממנו את ה-labels של ה-Service כדי שיצא מהתנועה, אוספים ראיות לפני מחיקה, בודקים מה ה-ServiceAccount שלו יכול היה לגשת אליו (גם ב-AWS דרך IRSA), ומבצעים רוטציה לכל הסודות האלה. רק אז מתקנים את החולשה ופורסים מחדש."),
       ],
       [C("A validating webhook is down with `failurePolicy: Fail`. What is the effect?",
          ("Requests it covers are rejected until it recovers", "נכון. עם Fail, ה-API server דוחה בקשות כשה-webhook לא עונה. זה בטוח מבחינת policy, אבל יכול לעצור את כל הקלאסטר."),

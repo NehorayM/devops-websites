@@ -551,7 +551,7 @@ Q(S, MS, K,
    "שניהם נשענים על conntrack. IPVS שומר גם מצב חיבור משלו, ולכן ההבדל הוא לא כאן."),
   ("IPVS skips NAT, so pods see real client IPs; iptables always SNATs",
    "שני ה-modes עושים DNAT ל-Services, וגם SNAT לפי externalTrafficPolicy. אין הבדל בשמירת IP של הלקוח."),
-  tip="תוסיף שהיום יש גם nftables mode (GA ב-1.33), שמשלב חיפוש מהיר עם עדכונים יעילים, וכלים מבוססי eBPF כמו Cilium שמחליפים את kube-proxy לגמרי. תזכיר שבאלפי Services זה הבדל מורגש.",
+  tip="תוסיף ש-IPVS הוא deprecated מ-1.35 (ויכובה כברירת מחדל ב-1.40), והיורש הוא nftables mode (GA ב-1.33), שמשלב חיפוש מהיר עם עדכונים יעילים ומתוכנן להיות ברירת המחדל. כלים מבוססי eBPF כמו Cilium מחליפים את kube-proxy לגמרי. באלפי Services זה הבדל מורגש.",
   ref=D+"reference/networking/virtual-ips/#proxy-modes"),
 
 Q(S, JM, T,

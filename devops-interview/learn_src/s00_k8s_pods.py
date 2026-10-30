@@ -3,31 +3,63 @@ from _h import *
 
 SUBJECT = {
  "sec": 0, "nm": "Kubernetes: Pods & Workloads", "tag": "Pods, controllers, and why a pod is not running",
+ "deep": True,
  "modules": [
 
   MOD("pod-basics", "ה-Pod ומחזור החיים שלו",
       "להסביר מה זה Pod, אילו phases יש לו, ומה ההבדל בין liveness, readiness ו-startup probes.",
-      [P("**Pod** הוא היחידה הקטנה ביותר ש-Kubernetes מריץ: קונטיינר אחד או יותר שחולקים את אותה רשת (IP אחד, localhost משותף) ואת אותם volumes. "
-         "לא מריצים pods ישירות בפרודקשן: controller כמו Deployment יוצר אותם ומחליף אותם כשהם מתים."),
-       H("ה-phases של Pod"),
+      [H("למה Pod ולא קונטיינר"),
+       P("**Pod** הוא היחידה הקטנה ביותר ש-Kubernetes מתזמן ומריץ. הוא לא קונטיינר, אלא עטיפה סביב קונטיינר אחד או יותר שחייבים לרוץ יחד: הם משובצים תמיד לאותו node, חולקים **network namespace** אחד (כתובת IP אחת, אותו מרחב פורטים ו-`localhost` משותף), ויכולים לחלוק volumes. לכן שני קונטיינרים באותו pod לא יכולים להאזין על אותו פורט, ומדברים זה עם זה דרך `localhost` בלי Service."),
+       P("את ה-namespaces המשותפים מחזיק ה-**pod sandbox**, שה-container runtime יוצר לפני הקונטיינרים (ב-containerd זה קונטיינר זעיר בשם `pause`). הקונטיינרים של האפליקציה מצטרפים אליו. בגלל זה restart של קונטיינר לא משנה את ה-IP של ה-pod: ה-sandbox נשאר."),
+       P("ה-pod הוא **זמני**. אין לו self-healing משלו: אם ה-node נופל או שה-pod נמחק, אף אחד לא מחזיר אותו, ו-pod חדש מקבל שם חדש ו-IP חדש. לכן לא יוצרים pods ישירות בפרודקשן. controller (Deployment, StatefulSet, Job) יוצר אותם לפי template ומחליף אותם כשהם נעלמים, ו-Service נותן כתובת יציבה מעל ה-IPs שמשתנים."),
+       H("קונטיינרים בתוך ה-pod"),
+       TABLE(["סוג", "מתי רץ", "שימוש טיפוסי"],
+             ["init containers", "אחד אחרי השני, לפני הקונטיינרים הראשיים. כל אחד חייב להסתיים בהצלחה לפני הבא", "לחכות ל-DB, להריץ migration, להכין קבצים ב-volume משותף"],
+             ["קונטיינר ראשי", "אחרי שכל ה-init containers הצליחו", "האפליקציה עצמה"],
+             ["sidecar: init container עם `restartPolicy: Always`", "עולה לפני הראשיים ונשאר לרוץ לצידם עד הכיבוי. מופעל כברירת מחדל מ-1.29, GA ב-1.33", "proxy של service mesh, log shipper"]),
+       P("init container שנכשל מאותחל לפי ה-restartPolicy של ה-pod, וה-pod נשאר בסטטוס `Init:0/2` או `Init:CrashLoopBackOff` עד שהוא מצליח. זה מקום נפוץ לחפש בו כש-pod \"לא עולה\" אבל הקונטיינר הראשי בכלל לא התחיל."),
+       H("phase, מצב קונטיינר ו-conditions"),
+       P("ל-pod יש שלוש שכבות של סטטוס, ובראיון מבלבלים ביניהן הרבה. ה-**phase** הוא סיכום גס של כל ה-pod. לכל קונטיינר יש **state** משלו: `Waiting`, `Running` או `Terminated`, עם `reason` כמו `CrashLoopBackOff` או `OOMKilled`. ו-**conditions** הן בדיקות כן/לא שמראות כמה רחוק ה-pod הגיע בדרך לקבל תנועה."),
        TABLE(["Phase", "מה זה אומר"],
-             ["`Pending`", "ה-pod התקבל, אבל עוד לא שובץ ל-node או שה-images עוד יורדים."],
-             ["`Running`", "שובץ ל-node, ולפחות קונטיינר אחד רץ."],
-             ["`Succeeded`", "כל הקונטיינרים סיימו עם exit code 0 (נפוץ ב-Jobs)."],
+             ["`Pending`", "ה-pod התקבל, אבל עוד לא שובץ ל-node, או ש-images עוד יורדים."],
+             ["`Running`", "שובץ ל-node וכל הקונטיינרים נוצרו. לפחות אחד רץ, עולה או עושה restart."],
+             ["`Succeeded`", "כל הקונטיינרים סיימו עם exit code 0 ולא יאותחלו (נפוץ ב-Jobs)."],
              ["`Failed`", "כל הקונטיינרים הסתיימו, ולפחות אחד נכשל."],
-             ["`Unknown`", "אין קשר ל-node, בדרך כלל node שנפל."]),
-       P("`CrashLoopBackOff` ו-`ImagePullBackOff` הם לא phases. הם **סיבות** (reason) של קונטיינר במצב Waiting, ומופיעים בעמודת STATUS של `kubectl get pods`."),
+             ["`Unknown`", "אין קשר ל-node, בדרך כלל node שנפל או נותק."]),
+       TABLE(["Condition", "True כאשר"],
+             ["`PodScheduled`", "ה-scheduler בחר node"],
+             ["`PodReadyToStartContainers`", "ה-sandbox והרשת של ה-pod מוכנים"],
+             ["`Initialized`", "כל ה-init containers הסתיימו בהצלחה"],
+             ["`ContainersReady`", "כל הקונטיינרים עוברים readiness"],
+             ["`Ready`", "ה-pod מוכן לתנועה ונכנס ל-endpoints של ה-Service"]),
+       P("`CrashLoopBackOff` ו-`ImagePullBackOff` הם לא phases. הם ה-reason של קונטיינר במצב Waiting, ו-`kubectl get pods` מציג אותם בעמודת STATUS כי שם הם הכי שימושיים. pod שהקונטיינר שלו ב-CrashLoopBackOff נמצא בדרך כלל ב-phase `Running`."),
        H("שלושת ה-probes"),
        TABLE(["Probe", "כשהוא נכשל", "בשביל מה"],
-             ["liveness", "kubelet עושה restart לקונטיינר", "תהליך תקוע שלא יתאושש לבד"],
-             ["readiness", "ה-pod יוצא מה-endpoints של ה-Service, בלי restart", "לא לשלוח תנועה עד שהאפליקציה מוכנה"],
-             ["startup", "מחזיק את שני האחרים עד שהאפליקציה עלתה", "אפליקציות שעולות לאט"]),
+             ["liveness", "kubelet עושה restart לקונטיינר", "תהליך תקוע שלא יתאושש לבד (deadlock)"],
+             ["readiness", "ה-pod יוצא מה-endpoints של ה-Service, בלי restart", "לא לשלוח תנועה עד שהאפליקציה מוכנה, או בזמן עומס זמני"],
+             ["startup", "מחזיק את שני האחרים עד שהוא מצליח פעם אחת", "אפליקציות שעולות לאט"]),
+       P("כל probe משתמש במנגנון אחד: `httpGet` (קוד 200 עד 399 הוא הצלחה), `tcpSocket` (מספיק שהפורט מקבל חיבור), `exec` (פקודה בתוך הקונטיינר, exit 0 הוא הצלחה) או `grpc`. ברירות המחדל: `periodSeconds` 10, `timeoutSeconds` 1 ו-`failureThreshold` 3. לכן liveness הורג קונטיינר תקוע אחרי כ-30 שניות, ותקציב העלייה של startup probe הוא `failureThreshold × periodSeconds`."),
+       CODE("""
+containers:
+- name: api
+  image: shop/api:1.4.2
+  startupProbe:
+    httpGet: {path: /healthz, port: 8080}
+    periodSeconds: 10
+    failureThreshold: 30        # up to 300 s to boot
+  livenessProbe:
+    httpGet: {path: /healthz, port: 8080}   # the process itself
+  readinessProbe:
+    httpGet: {path: /ready, port: 8080}     # can it serve requests now?
+    periodSeconds: 5
+""", cap="startup נותן עד 300 שניות לעלייה; liveness בודק את התהליך, readiness את המוכנות לתנועה"),
        KEY("liveness שבודק תלויות (DB, API חיצוני) הוא מתכון לאסון: ה-DB מאט, כל ה-pods נכשלים ב-liveness, וכולם עושים restart באותו רגע. liveness בודק רק את התהליך עצמו."),
-       H("restartPolicy"),
-       UL("`Always` — ברירת המחדל, ומה ש-Deployment משתמש בו.",
-          "`OnFailure` — restart רק כשה-exit code שונה מ-0. נפוץ ב-Jobs.",
-          "`Never` — אף פעם לא מפעיל מחדש."),
-       P("בין restarts יש backoff שגדל אקספוננציאלית (10 שניות, 20, 40 ועד 5 דקות). זה ה-BackOff שרואים ב-CrashLoopBackOff."),
+       H("restartPolicy ו-backoff"),
+       UL("`Always` היא ברירת המחדל, ומה ש-Deployment דורש.",
+          "`OnFailure` עושה restart רק כשה-exit code שונה מ-0. נפוץ ב-Jobs.",
+          "`Never` אף פעם לא מפעיל מחדש, וה-pod מסתיים כ-Succeeded או Failed."),
+       P("בין restarts ה-kubelet מחכה זמן שגדל אקספוננציאלית: 10 שניות, 20, 40, וכן הלאה עד תקרה של 5 דקות. אם הקונטיינר רץ 10 דקות בלי בעיה, הטיימר מתאפס. זה ה-BackOff שב-`CrashLoopBackOff`: ה-kubelet מחכה לפני הניסיון הבא. ה-restart קורה בתוך אותו pod ועל אותו node, ולכן עמודת `RESTARTS` עולה בזמן שה-pod עצמו לא מתחלף."),
+       TRAP("restart של קונטיינר לא מנקה את כל מה שה-pod כתב. volume מסוג `emptyDir` שורד קריסה של קונטיינר ונמחק רק כשה-pod נמחק, ומה שנכתב לשכבת הקונטיינר עצמו (לא ל-volume) נעלם בכל restart."),
       ],
       [C("What happens when a readiness probe fails?",
          ("The pod leaves the Service endpoints, but is not restarted", "נכון. כשה-readiness נכשל, ה-pod יוצא מה-EndpointSlices ולא מקבל בקשות, אבל הקונטיינר ממשיך לרוץ. כשה-probe עובר, הוא חוזר לתנועה."),
@@ -51,27 +83,45 @@ SUBJECT = {
 
   MOD("controllers", "Controllers: Deployment, StatefulSet, DaemonSet, Job",
       "לבחור את ה-controller הנכון לכל עומס עבודה, ולהסביר איך rolling update עובד.",
-      [P("controller הוא לולאה שמשווה בין המצב הרצוי (ה-spec) למצב בפועל, ומתקנת. כל workload controller יוצר pods לפי template, אבל כל אחד עם הבטחות אחרות."),
+      [H("מה controller עושה"),
+       P("**controller** הוא לולאה שרצה ב-`kube-controller-manager`, צופה ב-API server, ומשווה כל הזמן בין המצב הרצוי (ה-`spec`) למצב בפועל (ה-`status`). כשיש פער הוא פועל: יוצר pod חסר, מוחק עודף, או מעדכן. זה ה-**reconcile loop**, והוא הסיבה ש-Kubernetes \"מתקן את עצמו\": אף אחד לא מריץ פקודה כש-pod מת, ה-controller פשוט רואה שחסר אחד."),
+       P("ה-controllers מחוברים בשרשרת של בעלות. Deployment יוצר ReplicaSet, ו-ReplicaSet יוצר pods. כל אובייקט שנוצר מקבל `ownerReferences` שמצביע על מי שיצר אותו, ולכן מחיקה של Deployment מוחקת גם את ה-ReplicaSets וה-pods שלו (cascading delete). ה-controller מוצא את ה-pods \"שלו\" לפי **label selector**, ובגרסת `apps/v1` ה-selector של Deployment לא ניתן לשינוי אחרי היצירה."),
        TABLE(["Controller", "מה הוא מבטיח", "דוגמה"],
-             ["Deployment", "N עותקים זהים וניתנים להחלפה, ו-rolling update", "API, frontend"],
+             ["Deployment", "N עותקים זהים וניתנים להחלפה, ו-rolling update עם היסטוריה", "API, frontend, worker בלי state"],
              ["StatefulSet", "שם יציב (`db-0`), PVC לכל pod, סדר עלייה וירידה", "PostgreSQL, Kafka, ZooKeeper"],
-             ["DaemonSet", "pod אחד על כל node (או על קבוצה)", "log agent, CNI, node-exporter"],
-             ["Job", "הרצה עד הצלחה, עם ניסיונות חוזרים", "migration, batch"],
-             ["CronJob", "יוצר Job לפי לוח זמנים", "גיבוי לילי"]),
+             ["DaemonSet", "pod אחד על כל node, או על קבוצת nodes", "log agent, CNI, node-exporter"],
+             ["Job", "הרצה עד שמספיק pods הצליחו, עם ניסיונות חוזרים", "migration, batch"],
+             ["CronJob", "יוצר Job לפי לוח זמנים", "גיבוי לילי, ניקוי"]),
        H("איך Deployment מבצע rolling update"),
        FLOW("משנים את ה-pod template", "נוצר ReplicaSet חדש", "החדש גדל, הישן קטן", "מתקדמים רק כשה-pods Ready", "הישן נשאר עם 0 replicas"),
-       TABLE(["הגדרה", "משמעות"],
-             ["`maxSurge`", "כמה pods מעבר ל-replicas מותר להוסיף בזמן העדכון"],
-             ["`maxUnavailable`", "כמה pods מותר שיחסרו בזמן העדכון"],
-             ["`progressDeadlineSeconds`", "אחרי כמה זמן בלי התקדמות ה-rollout מסומן כתקוע"],
-             ["`revisionHistoryLimit`", "כמה ReplicaSets ישנים לשמור בשביל rollback"]),
+       P("רק שינוי ב-**pod template** (image, env, resources, labels של ה-pod) יוצר revision חדש. שינוי של `replicas` לבד הוא scale ולא rollout. כל ReplicaSet מזוהה ב-label בשם `pod-template-hash`, וכך ה-Deployment יודע איזה ReplicaSet שייך לאיזו גרסה."),
+       UL("`maxSurge` (ברירת מחדל 25%, מעוגל למעלה): כמה pods מעבר ל-replicas מותר להוסיף בזמן העדכון.",
+          "`maxUnavailable` (25%, מעוגל למטה): כמה pods מותר שיחסרו בזמן העדכון.",
+          "`minReadySeconds` (0): כמה זמן pod צריך להיות Ready לפני שהוא נחשב available.",
+          "`progressDeadlineSeconds` (600): אחרי כמה זמן בלי התקדמות ה-rollout מסומן כתקוע, עם ProgressDeadlineExceeded.",
+          "`revisionHistoryLimit` (10): כמה ReplicaSets ישנים לשמור בשביל rollback."),
+       P("דוגמה: 4 replicas עם ברירות המחדל. 25% מ-4 הוא 1, כך שבכל רגע יש בין 3 ל-5 pods: ה-Deployment מוסיף pod חדש, מחכה שיהיה Ready, מוריד ישן, וחוזר. עם `maxSurge: 0` ו-`maxUnavailable: 1` העדכון לא צורך משאבים נוספים, אבל כל רגע חסר pod אחד. האסטרטגיה השנייה, `Recreate`, מוחקת את כל הישנים לפני שהחדשים עולים, וזה נדרש רק כששתי גרסאות לא יכולות לרוץ במקביל."),
        TRAP("בלי readiness probe, pod חדש נחשב Ready ברגע שהקונטיינר עלה, וה-rollout ממשיך ושולח תנועה לאפליקציה שעוד לא מוכנה. readiness הוא מה שהופך rolling update לבטוח."),
-       P("rollback: `kubectl rollout undo deployment/api` מחזיר את ה-ReplicaSet הקודם. בעולם GitOps עדיף `git revert`, כך ש-Git נשאר מקור האמת."),
-       H("Job ו-CronJob בקצרה"),
-       UL("`backoffLimit` — כמה פעמים לנסות לפני שה-Job נכשל.",
-          "`activeDeadlineSeconds` — זמן מקסימלי לכל ה-Job.",
-          "`concurrencyPolicy` ב-CronJob — Allow, Forbid או Replace כשהרצה קודמת עדיין רצה.",
-          "`ttlSecondsAfterFinished` — ניקוי אוטומטי של Jobs שסיימו."),
+       CODE("""
+kubectl rollout status deploy/api        # waits; fails after progressDeadlineSeconds
+kubectl rollout history deploy/api       # revisions (one per ReplicaSet)
+kubectl rollout undo deploy/api          # back to the previous ReplicaSet
+kubectl rollout restart deploy/api       # new pods, same spec (a restartedAt annotation)
+""", cap="פקודות ה-rollout. בעולם GitOps מעדיפים git revert על undo, כדי ש-Git יישאר מקור האמת."),
+       H("StatefulSet: זהות שנשארת"),
+       P("StatefulSet נותן לכל pod מספר סידורי ושם קבוע (`db-0`, `db-1`), ו-PVC משלו מתוך `volumeClaimTemplates`. כש-`db-1` נמחק, ה-pod החדש מקבל שוב את השם `db-1` ומתחבר לאותו PVC, כך שהנתונים חוזרים איתו. ברירת המחדל (`OrderedReady`) מעלה pods לפי הסדר, כל אחד רק אחרי שהקודם Ready, ומורידה בסדר הפוך."),
+       P("כדי שלכל pod תהיה כתובת DNS משלו, StatefulSet דורש **headless Service** (`clusterIP: None`) שאתה יוצר. כך `db-0.db.shop.svc.cluster.local` תמיד מגיע ל-`db-0`, וזה מה ש-replica של DB צריך כדי למצוא את ה-primary. עדכון רץ בסדר הפוך (מהמספר הגבוה לנמוך), ו-`partition` מאפשר לעדכן רק pods עם מספר גבוה מערך מסוים, כמו canary."),
+       KEY("מחיקה או scale down של StatefulSet לא מוחקים את ה-PVCs כברירת מחדל, כדי לא לאבד נתונים. `persistentVolumeClaimRetentionPolicy` (GA ב-1.32) קובע אם למחוק אותם, בנפרד למחיקה (`whenDeleted`) ול-scale down (`whenScaled`)."),
+       H("DaemonSet, Job ו-CronJob"),
+       P("**DaemonSet** מריץ pod על כל node שמתאים ל-selector שלו, ומוסיף pod אוטומטית כשמצטרף node חדש. הוא מקבל tolerations אוטומטיות לחלק מה-taints של מצב ה-node, כדי ש-agents כמו CNI ימשיכו לרוץ גם על node בעייתי."),
+       P("**Job** מריץ pods עד ש-`completions` מהם הצליחו, עם `parallelism` במקביל. ה-pod template חייב `restartPolicy` של `OnFailure` או `Never`."),
+       UL("`backoffLimit`: כמה כישלונות לפני שה-Job כולו נכשל. ברירת המחדל 6.",
+          "`activeDeadlineSeconds`: זמן מקסימלי לכל ה-Job. גובר על backoffLimit.",
+          "`ttlSecondsAfterFinished`: ניקוי אוטומטי של Jobs שסיימו.",
+          "ב-CronJob, `concurrencyPolicy`: `Allow` (ברירת מחדל), `Forbid` שמדלג על הרצה בזמן שהקודמת רצה, או `Replace` שמחליף אותה.",
+          "ב-CronJob, `startingDeadlineSeconds`: כמה מותר לאחר בהרצה שהתפספסה. `timeZone` קובע אזור זמן ללוח הזמנים.",
+          "ב-CronJob, `successfulJobsHistoryLimit` ו-`failedJobsHistoryLimit`: כמה Jobs שהסתיימו לשמור (3 ו-1)."),
+       TRAP("CronJob לא מבטיח הרצה אחת בדיוק: במקרים נדירים נוצרים שני Jobs לאותו זמן, או אף אחד. התיעוד דורש שה-Jobs יהיו idempotent, כלומר שהרצה כפולה לא תזיק."),
       ],
       [C("Which controller gives each pod a stable name and its own PersistentVolumeClaim?",
          ("A StatefulSet using `volumeClaimTemplates` for each pod", "נכון. StatefulSet נותן לכל pod שם קבוע (`db-0`, `db-1`) ו-PVC משלו דרך volumeClaimTemplates, שנשאר גם כשה-pod מתחלף."),
@@ -95,32 +145,54 @@ SUBJECT = {
 
   MOD("pod-states", "למה ה-Pod לא רץ: CrashLoopBackOff, ImagePullBackOff, OOMKilled",
       "לזהות את המצבים הנפוצים של pod תקוע, ולדעת איזו פקודה מראה את הסיבה לכל אחד.",
-      [P("רוב התקלות ב-pods מתחלקות לכמה מצבים מוכרים. בראיון מצפים שתדע מה כל אחד אומר, ומה הפקודה הראשונה שתריץ. הכלל: **קודם `kubectl describe pod`**, כי ה-Events בסוף הפלט אומרים בדרך כלל מה קרה."),
-       TABLE(["מצב", "מה קרה", "איפה רואים את הסיבה"],
-             ["`Pending`", "ה-scheduler לא מצא node: חסרים CPU או זיכרון, taint, affinity, PVC", "Events ב-describe"],
-             ["`ImagePullBackOff`", "image או tag לא קיים, אין הרשאות ל-registry, rate limit", "Events ב-describe"],
-             ["`CrashLoopBackOff`", "הקונטיינר עולה ונופל שוב ושוב", "`kubectl logs --previous`"],
-             ["`OOMKilled`", "הקונטיינר עבר את ה-memory limit", "Last State ב-describe, exit code 137"],
-             ["`CreateContainerConfigError`", "ConfigMap או Secret שה-pod מפנה אליו לא קיים", "Events ב-describe"]),
-       H("exit codes שכדאי להכיר"),
-       TABLE(["Exit code", "פירוש"],
-             ["0", "הסתיים בהצלחה"],
-             ["1", "שגיאה כללית של האפליקציה"],
-             ["137", "נהרג ב-SIGKILL (128+9). בדרך כלל OOMKilled"],
-             ["143", "נהרג ב-SIGTERM (128+15). כיבוי רגיל"]),
-       TREE(["ה-pod ב-Pending?", "describe: למה ה-scheduler לא מצא node"],
-            ["ImagePullBackOff?", "שם ה-image, ה-tag והרשאות ה-registry"],
-            ["CrashLoopBackOff?", "`logs --previous` ו-exit code"],
-            ["Running אבל לא Ready?", "readiness probe, ואם האפליקציה מאזינה על הפורט הנכון"],
-            cap="סדר הבדיקה לפי מה שרואים ב-STATUS."),
-       TRAP("`kubectl logs` בלי `--previous` מראה את הלוג של הקונטיינר שבדיוק עלה, ולא של זה שקרס. ב-CrashLoopBackOff כמעט תמיד צריך `--previous`."),
+      [P("רוב התקלות ב-pods מתחלקות לכמה מצבים מוכרים, ולכל אחד יש \"בעלים\": רכיב אחר ב-Kubernetes שנכשל, ומקום אחר שבו הוא כותב למה. בראיון מצפים שתדע מה כל מצב אומר, מי אחראי עליו, ומה הפקודה הראשונה שתריץ. הכלל: **קודם `kubectl describe pod`**. ה-Events בסוף הפלט, וה-`Last State` של כל קונטיינר, אומרים בדרך כלל מה קרה."),
+       TABLE(["מצב", "מי נכשל, מה קרה, ואיפה רואים את הסיבה"],
+             ["`Pending`", "ה-scheduler: לא נמצא node (חסר CPU או זיכרון, taint, affinity, PVC שלא נקשר). רואים ב-Event בשם `FailedScheduling`."],
+             ["`ImagePullBackOff`", "ה-kubelet וה-runtime: image או tag לא קיים, אין הרשאה ל-registry, rate limit. רואים ב-Events: `ErrImagePull` והודעת ה-registry."],
+             ["`CreateContainer` `ConfigError`", "ה-kubelet: ConfigMap, Secret או מפתח שה-pod מפנה אליו לא קיים. רואים ב-Events של describe."],
+             ["`CrashLoopBackOff`", "האפליקציה: הקונטיינר עולה ויוצא שוב ושוב. רואים ב-`logs --previous` וב-exit code."],
+             ["`OOMKilled`", "ה-kernel: הקונטיינר עבר את ה-memory limit. רואים ב-`Last State` עם exit code 137."],
+             ["`Evicted`", "ה-kubelet: ה-node במחסור (זיכרון, דיסק) ופינה pods. רואים ב-message של ה-pod וב-conditions של ה-node."]),
+       H("Pending: ה-scheduler מסביר בעצמו"),
+       P("pod ב-Pending בלי node עוד לא הגיע ל-kubelet, ולכן אין לו לוגים. ה-scheduler כותב Event עם סיכום לכל ה-nodes, למשל `0/3 nodes are available: 1 node(s) had untolerated taint, 2 Insufficient memory`. קוראים אותו מילה במילה: Insufficient אומר שה-**requests** לא נכנסים (לא השימוש בפועל), taint אומר שחסרה toleration, ו-`unbound immediate PersistentVolumeClaims` אומר שה-PVC לא נקשר ל-volume."),
+       H("ImagePullBackOff: קודם ErrImagePull"),
+       P("ה-kubelet מנסה למשוך את ה-image, נכשל ומסמן `ErrImagePull`, ואז מחכה עם backoff ומסמן `ImagePullBackOff`. ההודעה ב-Events מבחינה בין הסיבות: `not found` או `manifest unknown` הם שם או tag שגוי, `unauthorized` או `pull access denied` הם registry פרטי בלי `imagePullSecrets` (או node בלי הרשאה ל-ECR), `toomanyrequests` הוא rate limit של Docker Hub, ו-`no match for platform` הוא image שנבנה רק לארכיטקטורה אחרת, למשל amd64 על node של arm64."),
+       H("CrashLoopBackOff ו-exit codes"),
+       P("כאן Kubernetes עשה את שלו: הקונטיינר עלה, והאפליקציה יצאה. לכן הסיבה נמצאת בלוג של ההרצה **הקודמת** וב-exit code. סיבות נפוצות: משתנה סביבה חסר, קובץ קונפיגורציה שגוי, DB שלא זמין בעלייה, פקודה שגויה ב-`command`, או liveness probe שהורג את האפליקציה לפני שעלתה."),
+       TABLE(["Exit code", "פירוש", "מה בודקים"],
+             ["0", "יציאה תקינה. בקונטיינר של Deployment זה עדיין restart, כי הוא אמור לרוץ לתמיד", "האם התהליך רץ ברקע ו-PID 1 יצא"],
+             ["1", "שגיאה כללית של האפליקציה", "הלוג של ההרצה הקודמת"],
+             ["126 / 127", "הפקודה לא ניתנת להרצה / לא נמצאה (בדרך כלל shell שמריץ פקודה שלא קיימת ב-image)", "`command` ו-`args`, וה-image עצמו"],
+             ["137", "נהרג ב-SIGKILL (128+9). עם reason `OOMKilled` זו מגבלת זיכרון", "`Last State` וה-memory limit"],
+             ["143", "נהרג ב-SIGTERM (128+15). כיבוי רגיל", "האם מישהו מחק את ה-pod או ש-liveness נכשל"]),
        CODE("""
-kubectl get pods -n shop
-kubectl describe pod api-7d9f -n shop      # Events, Last State, exit code
-kubectl logs api-7d9f -n shop --previous   # the container that crashed
+$ kubectl describe pod api-7d9f -n shop
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       OOMKilled
+      Exit Code:    137
+    Restart Count:  6
+    Limits:         memory: 256Mi
+Events:
+  Warning  BackOff  kubelet  Back-off restarting failed container api
+""", cap="State הוא עכשיו, Last State הוא למה הקונטיינר הקודם מת: כאן זיכרון, לא באג בקוד"),
+       TRAP("`kubectl logs` בלי `--previous` מראה את הלוג של הקונטיינר שבדיוק עלה, ולא של זה שקרס. ב-CrashLoopBackOff כמעט תמיד צריך `--previous`."),
+       H("Evicted ו-Terminating"),
+       P("**Evicted** הוא pod שה-kubelet פינה כי ה-node הגיע ל-memory pressure או disk pressure. ה-pod נשאר כאובייקט ב-phase `Failed`, וה-controller יוצר pod חלופי במקום אחר. ה-pods הראשונים שמפונים הם אלה שצורכים מעבר ל-requests שלהם, ולכן requests נכונים מגינים מפינוי. pod שתקוע ב-**Terminating** הוא בדרך כלל pod על node שלא עונה (ה-kubelet לא יכול לאשר שהקונטיינרים נעצרו), או pod עם finalizer שה-controller שלו לא מסיר."),
+       TREE(["ה-pod ב-Pending?", "describe: Event של FailedScheduling"],
+            ["ImagePullBackOff?", "שם ה-image, ה-tag, imagePullSecrets והודעת ה-registry"],
+            ["CreateContainerConfigError?", "איזה ConfigMap, Secret או מפתח חסר"],
+            ["CrashLoopBackOff?", "`logs --previous` ו-exit code ב-Last State"],
+            ["Running אבל לא Ready?", "readiness probe, והאם האפליקציה מאזינה על הפורט הנכון"],
+            cap="סדר הבדיקה לפי מה שרואים ב-STATUS."),
+       CODE("""
+kubectl get pods -n shop -o wide            # STATUS, RESTARTS, node
+kubectl describe pod api-7d9f -n shop       # Events, Last State, exit code
+kubectl logs api-7d9f -n shop --previous    # the container that crashed
 kubectl get events -n shop --sort-by=.lastTimestamp
 """, cap="ארבע הפקודות הראשונות כמעט בכל תקלה של pod."),
-       P("קונטיינר בלי shell (distroless) מדבגים עם `kubectl debug`, שמוסיף ephemeral container עם כלים ומשתף את ה-process namespace."),
+       P("קונטיינר בלי shell (distroless) מדבגים עם `kubectl debug`, שמוסיף ephemeral container עם כלים ומשתף את ה-process namespace של הקונטיינר הבעייתי. ל-Events יש זמן חיים קצר (שעה כברירת מחדל), ולכן בתקלה ישנה צריך לחפש בלוגים של המערכת, לא ב-describe."),
       ],
       [C("A container shows exit code 137 and reason OOMKilled. What happened?",
          ("It went over its memory limit, so the kernel killed it", "נכון. 137 הוא 128+9 (SIGKILL), ו-OOMKilled אומר שהקונטיינר עבר את ה-memory limit של ה-cgroup שלו וה-kernel הרג אותו."),

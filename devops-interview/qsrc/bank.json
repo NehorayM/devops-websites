@@ -29606,7 +29606,7 @@
 "שני ה-modes עושים DNAT ל-Services, וגם SNAT לפי externalTrafficPolicy. אין הבדל בשמירת IP של הלקוח.",
 "שני ה-modes עובדים ב-L4. IPVS מוסיף אלגוריתמים כמו least-connection, אבל לא מבין HTTP."
 ],
-"x": "תוסיף שהיום יש גם nftables mode (GA ב-1.33), שמשלב חיפוש מהיר עם עדכונים יעילים, וכלים מבוססי eBPF כמו Cilium שמחליפים את kube-proxy לגמרי. תזכיר שבאלפי Services זה הבדל מורגש.",
+"x": "תוסיף ש-IPVS הוא deprecated מ-1.35 (ויכובה כברירת מחדל ב-1.40), והיורש הוא nftables mode (GA ב-1.33), שמשלב חיפוש מהיר עם עדכונים יעילים ומתוכנן להיות ברירת המחדל. כלים מבוססי eBPF כמו Cilium מחליפים את kube-proxy לגמרי. באלפי Services זה הבדל מורגש.",
 "lv": 1,
 "k": "k",
 "r": "https://kubernetes.io/docs/reference/networking/virtual-ips/#proxy-modes"

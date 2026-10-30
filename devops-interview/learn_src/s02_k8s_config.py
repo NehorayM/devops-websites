@@ -3,22 +3,43 @@ from _h import *
 
 SUBJECT = {
  "sec": 2, "nm": "Kubernetes: Config, Secrets & Storage", "tag": "ConfigMaps, Secrets, volumes and PVCs",
+ "deep": True,
  "modules": [
 
   MOD("configmaps", "ConfigMap ו-Secret",
       "להעביר קונפיגורציה וסודות ל-pod בדרך הנכונה, ולהסביר למה base64 הוא לא הצפנה.",
-      [P("**ConfigMap** ו-**Secret** שומרים key/value מחוץ ל-image, כך שאותו image רץ בכל סביבה עם קונפיגורציה אחרת. Secret מיועד לערכים רגישים, אבל ההבדל בפועל קטן ממה שנדמה."),
+      [H("למה קונפיגורציה מחוץ ל-image"),
+       P("**ConfigMap** ו-**Secret** שומרים key/value מחוץ ל-image, כך שאותו image בדיוק רץ ב-dev, ב-staging ובפרודקשן עם קונפיגורציה אחרת. זה העיקרון של build once, deploy many: ה-image שנבדק הוא ה-image שיוצא, ורק הקונפיגורציה משתנה. שניהם אובייקטים ב-namespace, מוגבלים ל-1 MiB כל אחד, ולא מתאימים לקבצים גדולים."),
+       H("שלוש דרכים להעביר ערכים ל-pod"),
        TABLE(["דרך", "איך", "מתעדכן בלי restart?"],
-             ["env", "`env.valueFrom` או `envFrom`", "לא. נקרא רק בעליית הקונטיינר"],
-             ["volume", "כל מפתח הוא קובץ בתיקייה", "כן, אחרי כדקה (לא עם `subPath`)"],
-             ["args", "`$(VAR)` בתוך `args`", "לא"]),
-       KEY("Secret מקודד ב-**base64**. זה קידוד, לא הצפנה: כל מי שיכול לקרוא את ה-Secret ב-API רואה את הערך. ההגנה האמיתית היא RBAC על `secrets`, encryption at rest של etcd (עם KMS), ומקור חיצוני כמו Secrets Manager."),
+             ["env", "`env.valueFrom` למפתח אחד, או `envFrom` לכל המפתחות", "לא. נקרא רק בעליית הקונטיינר"],
+             ["volume", "כל מפתח הופך לקובץ בתיקייה; `items` בוחר מפתחות ושמות קבצים", "כן, בדרך כלל תוך כדקה (לא עם `subPath`)"],
+             ["args", "`$(VAR)` בתוך `command` או `args`, מתוך env", "לא"]),
+       CODE("""
+containers:
+- name: api
+  envFrom:
+  - configMapRef: {name: api-config}            # every key becomes an env var
+  env:
+  - name: DB_PASSWORD
+    valueFrom: {secretKeyRef: {name: db, key: password}}
+  volumeMounts:
+  - {name: tls, mountPath: /etc/tls, readOnly: true}
+volumes:
+- name: tls
+  secret: {secretName: api-tls}                 # tls.crt and tls.key as files
+""", cap="env לערכים פשוטים, volume לקבצים ולערכים שצריכים להתעדכן"),
+       P("pod שמפנה ל-ConfigMap או Secret שלא קיים לא עולה: דרך env הוא נכשל ב-`CreateContainerConfigError`, ודרך volume הוא נשאר ב-ContainerCreating עם Event של `FailedMount`. אם הערך באמת אופציונלי מסמנים `optional: true`. ConfigMap או Secret עם `immutable: true` לא ניתנים לשינוי אחרי היצירה, וזה מגן משינוי בטעות ומוריד עומס מה-API server, כי ה-kubelet לא צריך לעקוב אחריהם. כדי לשנות יוצרים אובייקט חדש בשם חדש."),
+       TRAP("שינוי ב-ConfigMap לא מפעיל rollout. env vars נשארים עם הערך הישן עד restart. פתרונות: `kubectl rollout restart`, checksum annotation ב-Helm, או `configMapGenerator` של Kustomize שמוסיף hash לשם, כך שכל שינוי משנה את ה-pod template."),
+       H("Secret: מה הוא כן ומה לא"),
+       P("ל-Secret יש types שקובעים אילו מפתחות חובה: `Opaque` הכללי, `kubernetes.io/tls` עם `tls.crt` ו-`tls.key`, ו-`kubernetes.io/dockerconfigjson` לגישה ל-registry דרך `imagePullSecrets`. בכתיבה אפשר להשתמש ב-`stringData` עם טקסט רגיל, וה-API שומר אותו כ-base64 בשדה `data`."),
+       KEY("Secret מקודד ב-**base64**. זה קידוד, לא הצפנה: כל מי שיכול לקרוא את ה-Secret ב-API רואה את הערך. ויותר מזה: מי שרשאי ליצור pod ב-namespace יכול לקרוא כל Secret שם, פשוט על ידי mount שלו. ההגנה האמיתית היא RBAC על `secrets` ועל יצירת pods, encryption at rest של etcd (עם KMS), ומקור חיצוני כמו Secrets Manager."),
+       P("מה ש-Secret כן נותן: ה-kubelet שומר Secrets שמחוברים כ-volume ב-`tmpfs`, כך שהם לא נכתבים לדיסק של ה-node, ו-Secret מגיע רק ל-nodes שיש עליהם pod שצריך אותו. עדיף להעביר סודות כקבצים ולא כ-env vars: env vars מודפסים בטעות בלוגים ובדוחות קריסה, ועוברים לכל תהליך בן."),
        H("סודות בפרודקשן"),
-       UL("**External Secrets Operator** מסנכרן מ-AWS Secrets Manager, Vault ועוד ל-Secret בקלאסטר. ב-Git נשמר רק ה-ExternalSecret.",
-          "**Secrets Store CSI Driver** מחבר סודות ישירות כקבצים, בלי Secret ב-etcd.",
-          "**Sealed Secrets** ו-SOPS מאפשרים לשמור ב-Git גרסה מוצפנת."),
-       TRAP("שינוי ב-ConfigMap לא מפעיל rollout. env vars נשארים עם הערך הישן עד restart. פתרונות: `kubectl rollout restart`, checksum annotation ב-Helm, או `configMapGenerator` של Kustomize שמוסיף hash לשם."),
-       P("Downward API מעביר ל-pod מידע על עצמו: שם, namespace, labels ו-limits, כ-env או כקבצים."),
+       UL("**External Secrets Operator** מסנכרן מ-AWS Secrets Manager, Vault ועוד ל-Secret בקלאסטר, ומרענן לפי `refreshInterval`. ב-Git נשמר רק ה-ExternalSecret, שאומר מאיפה למשוך.",
+          "**Secrets Store CSI Driver** מחבר סודות ישירות כקבצים מתוך המקור החיצוני, בלי לשמור Secret ב-etcd (אלא אם מבקשים סנכרון).",
+          "**Sealed Secrets** ו-SOPS מאפשרים לשמור ב-Git גרסה מוצפנת, שרק הקלאסטר או מי שמחזיק את המפתח יכול לפתוח."),
+       P("**Downward API** מעביר ל-pod מידע על עצמו: שם, namespace, labels, ה-IP של ה-pod וה-requests וה-limits שלו, כ-env או כקבצים. כך אפליקציה יודעת כמה זיכרון יש לה בלי לקודד את זה פעמיים."),
       ],
       [C("Is a Kubernetes Secret encrypted because it is base64-encoded?",
          ("No; base64 is an encoding anyone can reverse", "נכון. base64 רק מקודד. הגנה אמיתית היא RBAC על secrets, encryption at rest ב-etcd, ומקור סודות חיצוני."),
@@ -42,24 +63,49 @@ SUBJECT = {
 
   MOD("volumes", "Volumes, PV, PVC ו-StorageClass",
       "להסביר את ההבדל בין סוגי volumes, ואיך dynamic provisioning יוצר דיסק בשביל pod.",
-      [P("מערכת הקבצים של קונטיינר נמחקת כשהוא מת. **volume** שורד restart של קונטיינר, ו-**PersistentVolume** שורד גם את מחיקת ה-pod."),
+      [H("מה שורד ומה לא"),
+       P("מערכת הקבצים של קונטיינר היא שכבה זמנית מעל ה-image: כל מה שנכתב אליה נעלם ב-restart. **volume** הוא תיקייה שמחוברת לקונטיינר ממקור אחר, וזמן החיים שלה נקבע לפי הסוג: חלק חיים כמו ה-pod, חלק כמו ה-node, וחלק הם דיסקים שחיים בנפרד מכל pod. **PersistentVolume** הוא הסוג האחרון: נתונים ששורדים restart, מחיקת pod, ואפילו מעבר ל-node אחר."),
        TABLE(["Volume", "חי כמו", "שימוש"],
-             ["emptyDir", "ה-pod", "קבצים זמניים, שיתוף בין קונטיינרים באותו pod"],
-             ["hostPath", "ה-node", "כלים מערכתיים בלבד. סיכון אבטחה"],
-             ["configMap / secret", "האובייקט", "קבצי קונפיגורציה"],
-             ["PVC", "ה-PVC עצמו", "נתונים קבועים: DB, uploads"]),
-       FLOW("PVC עם storageClassName", "CSI driver יוצר דיסק", "נוצר PV ומחובר ל-PVC", "ה-pod מחבר את ה-volume"),
+             ["emptyDir", "ה-pod: שורד restart של קונטיינר, נמחק עם ה-pod", "קבצים זמניים, cache, שיתוף בין קונטיינרים באותו pod"],
+             ["emptyDir עם `medium: Memory`", "ה-pod, אבל ב-RAM (tmpfs)", "מהיר; הנפח נספר בזיכרון של הקונטיינר"],
+             ["hostPath", "ה-node", "כלים מערכתיים בלבד (agents). סיכון אבטחה: גישה לקבצי ה-node"],
+             ["configMap / secret / projected", "האובייקט ב-API", "קבצי קונפיגורציה, תעודות, tokens"],
+             ["PVC", "ה-PVC עצמו, בנפרד מה-pod", "נתונים קבועים: DB, uploads"]),
+       H("PV, PVC ו-StorageClass"),
+       P("ההפרדה היא בין מי שמבקש לבין מי שמספק. מפתח האפליקציה כותב **PVC**: \"אני צריך 20Gi, ReadWriteOnce, מסוג gp3\". **StorageClass** מתאר סוג אחסון: איזה CSI driver יוצר את הדיסק ובאילו פרמטרים. ה-**PV** הוא הדיסק בפועל. ב-**dynamic provisioning**, הנפוץ היום, ה-CSI driver יוצר PV חדש לכל PVC, ושניהם נקשרים 1:1."),
+       FLOW("PVC עם storageClassName", "CSI driver יוצר דיסק", "נוצר PV ונקשר ל-PVC", "ה-pod מחבר את ה-volume"),
+       CODE("""
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: gp3}
+provisioner: ebs.csi.aws.com
+parameters: {type: gp3, encrypted: "true"}
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: data, namespace: shop}
+spec:
+  storageClassName: gp3
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 20Gi}}
+""", cap="StorageClass ל-EBS gp3 מוצפן, ו-PVC שמבקש ממנו 20Gi"),
        TABLE(["מושג", "מה זה"],
-             ["PVC", "בקשה: כמה מקום ואיזה access mode"],
-             ["PV", "הדיסק בפועל"],
-             ["StorageClass", "ה-provisioner והפרמטרים (למשל gp3 ב-EBS)"],
-             ["`reclaimPolicy`", "Delete מוחק את הדיסק עם ה-PVC; Retain משאיר"],
-             ["`volumeBindingMode`", "WaitForFirstConsumer יוצר את הדיסק ב-AZ של ה-pod"]),
-       TRAP("`reclaimPolicy: Delete` אומר שמחיקת ה-PVC מוחקת את הדיסק ואת כל הנתונים. לנתונים חשובים משתמשים ב-Retain או מגבים."),
+             ["PVC", "בקשה: כמה מקום, איזה access mode ואיזה StorageClass"],
+             ["PV", "הדיסק בפועל, עם `claimRef` שמצביע על ה-PVC שלו"],
+             ["StorageClass", "ה-provisioner והפרמטרים (למשל gp3 מוצפן ב-EBS)"],
+             ["`reclaimPolicy`", "Delete מוחק את הדיסק עם ה-PVC; Retain משאיר אותו"],
+             ["`volumeBindingMode`", "WaitForFirstConsumer יוצר את הדיסק רק כשיש pod, ב-AZ שה-scheduler בחר"]),
+       P("PVC בלי `storageClassName` מקבל את ה-StorageClass שמסומן כ-default (annotation `storageclass.kubernetes.io/is-default-class`). כדי לקשור PVC ל-PV שנוצר ידנית, בלי provisioning, כותבים `storageClassName: \"\"` במפורש. למה WaitForFirstConsumer חשוב? דיסק EBS שייך ל-AZ אחד. ב-`Immediate` הדיסק נוצר מיד, אולי ב-us-east-1a, ואז ה-scheduler לא יכול לשים את ה-pod ב-node של us-east-1b. כשמחכים ל-pod, הדיסק נוצר איפה שה-pod כבר שובץ."),
+       TRAP("`reclaimPolicy: Delete`, ברירת המחדל ב-dynamic provisioning, אומר שמחיקת ה-PVC מוחקת את הדיסק ואת כל הנתונים. עם `Retain` ה-PV עובר למצב Released ולא נקשר אוטומטית ל-PVC חדש: צריך לנקות את ה-`claimRef` ידנית או ליצור PV חדש שמצביע על אותו דיסק."),
        H("Access modes"),
-       UL("`ReadWriteOnce` (RWO) — node אחד כותב. EBS.",
-          "`ReadWriteMany` (RWX) — הרבה nodes. EFS או NFS.",
-          "`ReadOnlyMany` (ROX) ו-`ReadWriteOncePod` (RWOP, pod אחד בלבד)."),
+       UL("`ReadWriteOnce` (RWO): node אחד יכול לחבר לכתיבה. EBS. שימו לב: node אחד, לא pod אחד, כך שכמה pods על אותו node יכולים לכתוב.",
+          "`ReadWriteOncePod` (RWOP): pod אחד בלבד בכל הקלאסטר. מה שרוב האנשים חושבים ש-RWO עושה.",
+          "`ReadWriteMany` (RWX): הרבה nodes כותבים במקביל. EFS או NFS, לא EBS.",
+          "`ReadOnlyMany` (ROX): הרבה nodes קוראים."),
+       P("ה-CSI driver עצמו רץ בשני חלקים: controller (Deployment) שמדבר עם ה-API של הענן, יוצר דיסקים ומחבר אותם ל-instances, ו-node plugin (DaemonSet) שמבצע mount בפועל על כל node. כשמשהו נכשל, הלוגים של שני החלקים אומרים איפה."),
       ],
       [C("Which object asks for storage, and which one is the actual disk?",
          ("The PVC is the request; the PV is the disk", "נכון. PVC הוא הבקשה של האפליקציה, ו-PV הוא הדיסק שנוצר או הוקצה. StorageClass מגדיר איך יוצרים אותו."),
@@ -83,22 +129,31 @@ SUBJECT = {
 
   MOD("storage-trouble", "תקלות אחסון נפוצות",
       "לדבג PVC שתקוע ב-Pending ו-pod שלא מצליח לחבר volume.",
-      [P("רוב תקלות האחסון נראות דומה: ה-pod נשאר ב-Pending או ב-ContainerCreating. ההבדל הוא במה שכתוב ב-Events של ה-pod ושל ה-PVC."),
-       TABLE(["תסמין", "סיבה נפוצה", "מה עושים"],
-             ["PVC ב-Pending, אין pod", "WaitForFirstConsumer. זה תקין", "מחכים שיהיה pod"],
-             ["PVC ב-Pending עם pod", "אין StorageClass, CSI driver חסר, הרשאות IAM", "describe pvc ולוגים של ה-CSI controller"],
-             ["Multi-Attach error", "דיסק RWO עדיין מחובר ל-node אחר", "לחכות ל-detach או לטפל ב-node המת"],
-             ["volume node affinity conflict", "הדיסק ב-AZ אחר מה-node", "node באותו AZ"],
-             ["Permission denied בכתיבה", "UID של הקונטיינר לא בעלים של התיקייה", "`fsGroup` או `runAsUser` מתאים"]),
+      [P("רוב תקלות האחסון נראות דומה מבחוץ: ה-pod נשאר ב-Pending או ב-ContainerCreating. ההבדל הוא במה שכתוב ב-Events של ה-pod ושל ה-PVC, ובשלב שבו התהליך נעצר. כדאי לחשוב על שלושה שלבים נפרדים, ולכל אחד יש רכיב אחראי משלו: **provisioning** (ה-CSI controller יוצר דיסק), **attach** (הדיסק מחובר ל-instance של ה-node), ו-**mount** (ה-kubelet וה-CSI node plugin מחברים אותו לתיקייה בקונטיינר)."),
+       TABLE(["תסמין", "שלב וסיבה נפוצה", "מה עושים"],
+             ["PVC ב-Pending, אין pod", "provisioning: `WaitForFirstConsumer`. זה תקין", "מחכים שיהיה pod"],
+             ["PVC ב-Pending עם pod", "provisioning: אין StorageClass, CSI driver חסר, הרשאות IAM", "describe pvc ולוגים של ה-CSI controller"],
+             ["`Multi-Attach error`", "attach: דיסק RWO עדיין מחובר ל-node אחר", "לחכות ל-detach, או לטפל ב-node המת"],
+             ["`volume node` `affinity conflict`", "scheduling: הדיסק ב-AZ אחר מכל node זמין", "node באותו AZ, או `WaitForFirstConsumer` מלכתחילה"],
+             ["`FailedMount` עם timeout", "mount: ה-node plugin לא רץ, או filesystem פגום", "pods של ה-CSI node, ו-Events של ה-pod"],
+             ["`Permission denied` בכתיבה", "אחרי mount: ה-UID של הקונטיינר לא בעלים של התיקייה", "`fsGroup` או `runAsUser` מתאים"]),
        TRAP("למחוק PVC כדי \"לשחרר\" pod תקוע מוחק את הנתונים (עם reclaimPolicy Delete). קודם מבינים את הסיבה ב-Events."),
+       H("PVC שלא נמחק"),
+       P("PVC שנשאר ב-Terminating אחרי `kubectl delete` הוא בדרך כלל לא תקלה. Kubernetes מוסיף ל-PVC את ה-finalizer `kubernetes.io/pvc-protection`, ולא מוחק אותו כל עוד pod כלשהו משתמש בו. זו הגנה מכוונת: למחוק דיסק מתחת ל-DB שרץ זה אובדן נתונים. ברגע שה-pod האחרון שמשתמש ב-PVC נמחק, גם ה-PVC נמחק. מסירים finalizer ידנית רק אחרי שמבינים מי מחזיק."),
        H("StatefulSet אחרי שה-node מת"),
-       P("pod של StatefulSet עם דיסק EBS יכול לרוץ רק ב-AZ של הדיסק. אם ה-node מת, ה-VolumeAttachment נשאר עד timeout של כמה דקות. ה-taint `node.kubernetes.io/out-of-service` על node שבוודאות כבוי משחרר את הדיסק מיד."),
-       KEY("ב-EKS ה-EBS CSI driver צריך הרשאות IAM (דרך IRSA או Pod Identity). AccessDenied בלוגים של ה-controller אומר שה-PVC לא ייווצר לעולם."),
+       P("pod של StatefulSet עם דיסק EBS יכול לרוץ רק ב-AZ של הדיסק, ורק על node אחד בכל פעם. כש-node מת בלי כיבוי מסודר, Kubernetes לא יכול לדעת אם הקונטיינרים באמת נעצרו, ולכן הוא לא יוצר את `db-0` במקום אחר: שני pods עם אותה זהות שכותבים לאותו דיסק גרועים יותר מ-downtime. ה-pod נשאר Terminating וה-VolumeAttachment נשאר מחובר."),
+       P("אחרי שמוודאים שה-node באמת כבוי, מוסיפים לו את ה-taint `node.kubernetes.io/out-of-service` (GA ב-1.28). Kubernetes מוחק את ה-pods בכוח, מנתק את ה-volumes מיד, וה-pod עולה מחדש על node אחר באותו AZ. זה עדיף על `kubectl delete pod --force`, שמוחק רק את האובייקט: הניתוק של הדיסק עדיין מחכה ל-timeout של ה-attach/detach controller."),
+       KEY("ב-EKS ה-EBS CSI driver צריך הרשאות IAM (דרך IRSA או Pod Identity). AccessDenied בלוגים של ה-controller אומר שה-PVC לא ייווצר לעולם, וה-pod יישאר ב-Pending בלי שום שגיאה ב-pod עצמו."),
+       H("הרשאות בתוך ה-volume"),
+       P("דיסק חדש מגיע עם תיקייה בבעלות root, ואפליקציה שרצה כ-non-root לא יכולה לכתוב אליה. `securityContext.fsGroup` אומר ל-kubelet לשנות את ה-group של הקבצים ב-volume ל-GID שלך בזמן ה-mount, וכל הקונטיינרים ב-pod מקבלים את ה-group הזה. ב-volume גדול עם מיליוני קבצים השינוי הזה יכול לקחת דקות בכל עלייה, ו-`fsGroupChangePolicy: OnRootMismatch` מדלג עליו כשהבעלות כבר נכונה."),
+       H("כשהדיסק מתמלא"),
+       P("`No space left on device` בתוך הקונטיינר אומר שה-volume מלא, לא ה-node. אם ל-StorageClass יש `allowVolumeExpansion: true`, מגדילים את ה-`resources.requests.storage` ב-PVC, וה-CSI driver מגדיל את הדיסק ואת ה-filesystem. אי אפשר להקטין PVC. אם הדיסק של ה-node עצמו מתמלא (logs, images, emptyDir), ה-kubelet מסמן DiskPressure ומתחיל לפנות pods."),
        CODE("""
-kubectl describe pvc data-db-0 -n data
-kubectl get storageclass
+kubectl describe pvc data-db-0 -n data            # Events: provisioning errors
+kubectl get storageclass                           # which one is (default)?
+kubectl get volumeattachment | grep <pv-name>      # attached to which node?
 kubectl logs -n kube-system deploy/ebs-csi-controller -c csi-provisioner
-""", cap="שלוש הפקודות הראשונות ל-PVC תקוע."),
+""", cap="ארבע הפקודות הראשונות ל-PVC או volume תקועים."),
       ],
       [C("A PVC is Pending and no pod uses it yet; the StorageClass uses WaitForFirstConsumer. Is something broken?",
          ("No; it binds once a pod that uses it is scheduled", "נכון. עם WaitForFirstConsumer, PVC נשאר Pending עד שיש pod שמשתמש בו. זה מכוון, כדי שהדיסק ייווצר ב-AZ הנכון."),
@@ -138,7 +193,7 @@ s3cr3t-pass""", cap="כל מי שיש לו get secrets רואה את הערך"),
        TABLE(["הגדרה", "מה היא קובעת"],
              ["`reclaimPolicy: Delete`", "מחיקת ה-PVC מוחקת גם את הדיסק (ברירת המחדל ב-StorageClass דינמי)"],
              ["`reclaimPolicy: Retain`", "הדיסק נשאר אחרי מחיקת ה-PVC; צריך לנקות או לחבר ידנית"],
-             ["`volumeBindingMode: WaitForFirstConsumer`", "הדיסק נוצר רק כשה-pod משובץ, באותו AZ"],
+             ["`volumeBindingMode:` `WaitForFirstConsumer`", "הדיסק נוצר רק כשה-pod משובץ, באותו AZ"],
              ["`allowVolumeExpansion: true`", "אפשר להגדיל PVC על ידי עריכת `resources.requests.storage`"]),
        TRAP("StorageClass עם `Immediate` binding יוצר EBS ב-AZ אקראי. אם ה-pod משובץ ל-AZ אחר, הוא נתקע ב-Pending עם `volume node affinity conflict`. ב-EBS משתמשים ב-WaitForFirstConsumer."),
        CODE("""# הגדלת PVC (רק להגדיל, לא להקטין)

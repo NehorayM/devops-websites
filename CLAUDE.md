@@ -95,6 +95,7 @@ devops-interview/
   tools/                  sql_all.sh (→ supabase_all.sql), qtool.py (dump/write/stats questions), brief.py, merge_apply.sh, short.py, longest.py, shortest.py, fitcheck.py, repl.py, partcheck.py, patch.py, stubs.py,
                           add_part.py (append a Learn module + replace the last final), add_topic.py (append Study pages + quiz), deepstats.py (depth of a Learn subject),
                           linkcheck.py + reffix.py (doc-link check against docs source repos, and the fixer),
+                          modblocks.py (dump/replace the blocks of one Learn module in place; the deep-pass workhorse),
                           contentlint.py (one line per audited content defect with its allowed maximum; --strict fails on a regression),
                           bankfix.py (show/apply edits to exam questions by bank index), ivtool.py (dump/apply interview traps, points, follow-ups),
                           learnq.py (dump/apply/stats Learn checks and finals and Study quizzes; askdump/askapply for ASK answer outlines)
@@ -183,7 +184,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 
 | Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,996 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 22,998 assertions / 0 fail (runs about 10 minutes) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
@@ -259,7 +260,8 @@ Notes:
 | 9 | Hard distractors + full explanations for all 1,300 MCQs (24 files): right-is-longest 84% → 23%, shortest 29%, every option explained in Hebrew, fuller tips; validator rules for `HARD = True` files; QA caps (longest ≤ 303, shortest ≤ 376, no terse lines); tf_core `user_data` and helm_ops hook-policy facts fixed |
 | 10 | Deeper Learn and Study: a 4th "in practice" module in every Learn subject (24 new parts: real command output, troubleshooting tables, edge cases; 3 checks each, one final replaced so each subject still has 10) and 15 new Study pages across c1–c9 (cheat sheets, review drills, checklists) with 15 quiz checks. Facts checked against docs via raw.githubusercontent.com where unsure (e.g. S3 backend `use_lockfile`). Users who finished a subject see the new part as unfinished |
 | 8 | Supabase on: own project, `supabase_all.sql`, publishable key in `SUPA`; casino, duel, tournament and leaderboard visible; duel SQL suite moved to the DevOps bank; Docker-free `sql_tests/run_local.sh`; SQL comments renamed to Ship It |
-| 11 (partial) | Deep Learn pass: check options explain themselves (`C()` with `(text, why)`), `deep` subjects enforced by the builder; Argo CD s06–s09 rewritten in depth |
+| 11 (partial) | Deep Learn pass: check options explain themselves (`C()` with `(text, why)`), `deep` subjects enforced by the builder; Argo CD s06–s09 rewritten in depth; Kubernetes s00–s05 parts 1–3 rewritten (each ~1,000–1,600 → 3,000–4,800 chars), all six `deep`. Facts fixed on the way: kube-proxy IPVS is deprecated since 1.35 (Learn, bank tip, interview point) |
+| Bidi | English lists inside Hebrew render item by item (`heLists` in `qtx`/`mdInline`, 1,448 lists); Learn table cells let code break except in the first column |
 | Links | 822 doc pages checked against source repos; 154 refs fixed (moved pages, dead anchors, wrong paths); `LINKS.md` lists what needs a browser. Ship It rocket icon replaces the AWS badge |
 | Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
 | Audit (Oct 2026) | 30 content improvements, each guarded by a `contentlint.py` line (34/34 green). Progress survives a reworded bank (`BANKV_OK`). Bank: answer tells removed (`code` only on the right option 73 → 0, absolute-word distractors 31 → 0, stem echo 33 → 0), a duplicate reworded, landing-page refs replaced. Interview: 294 short traps and 256 short points rewritten. 8 facts fixed across bank, interview, Learn and Study (seccomp default, `kubectl debug node` + chroot, Argo CD polling, Ingress NGINX retirement, `create-only`, hook delete policy, `helm --wait`, `Replace=true`). Briefing: CODEX 102 → 312 terms, questions with no term 259 → 18. Learn: all 528 checks and finals rebalanced (right option longest 73–95% per subject → ≤ 27%; 976 throwaway distractors, 1,698 short notes → 0), 96 ASK answers. Study: 46 quiz questions with notes per option (longest 31 → 10), 165 ASK answers. Builders enforce all of it |
@@ -326,7 +328,13 @@ Notes:
    docs source (`/tmp/docsrc` clones; see `tools/linkcheck.py`). **Done:** Argo CD s06–s09 (each ~23K → ~46K chars).
    Corrections found on the way: polling is 120 s + up to 60 s jitter (not 180 s); with no hook-delete-policy Argo CD assumes
    BeforeHookCreation; `create-only`/`create-update` don't protect Applications when the ApplicationSet itself is deleted;
-   progressive syncs are Beta since 3.3. **Next:** Kubernetes s00–s05, then CI, AWS, Helm, Terraform, Linux, Networking, CI tools.
+   progressive syncs are Beta since 3.3. **Also done:** Kubernetes s00–s05 (parts 1–3 rewritten; part 4 and all notes already met
+   the bar). Workflow: `python3 tools/modblocks.py dump learn_src/sNN.py <module id>`, write the new blocks list to a file,
+   `modblocks.py replace learn_src/sNN.py <module id> blocks.py`, then `PYTHONPATH=. python3 tools/deepstats.py learn_src/sNN.py`
+   (each part >= 3,000) and add `"deep": True`. Check every new part at 390px: no table wider than the screen (keep tables
+   to 2–3 columns, put long identifiers in the first column or in a list, not in a narrow middle column).
+   **Next:** CI s10–s13, then AWS, Helm, Terraform, Linux, Networking, CI tools. Argo CD s07–s09 still have 4–5 column tables
+   that scroll sideways on a phone.
 3. **Stage 8: games and multiplayer — DONE.** Nehoray created the project and ran `supabase_all.sql` (all nine SQL files
    in order; rebuilt by `tools/sql_all.sh`). `SUPA` holds the URL and the **publishable** key (never `sb_secret_`).
    `sql_tests/duel_v2_suite.sql` moved from the AWS bank (1,201 q, 19 exams) to the DevOps bank (1,300 q, 20 exams);

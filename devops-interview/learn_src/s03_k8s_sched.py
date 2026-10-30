@@ -3,23 +3,42 @@ from _h import *
 
 SUBJECT = {
  "sec": 3, "nm": "Kubernetes: Scheduling, Resources & Autoscaling", "tag": "Requests, limits, placement and scaling",
+ "deep": True,
  "modules": [
 
   MOD("resources", "Requests, limits ו-QoS",
       "להסביר איך requests ו-limits משפיעים על שיבוץ, על throttling ועל OOMKilled.",
-      [P("לכל קונטיינר אפשר להגדיר **requests** (כמה הוא צריך) ו-**limits** (כמה מותר לו). שני המספרים עושים דברים שונים לגמרי."),
+      [H("שני מספרים, שני תפקידים"),
+       P("לכל קונטיינר אפשר להגדיר **requests** (כמה הוא צריך) ו-**limits** (כמה מותר לו). שני המספרים נקראים על ידי רכיבים שונים, בזמנים שונים, ועושים דברים שונים לגמרי. requests משמשים את ה-**scheduler** בזמן השיבוץ, ואת ה-kubelet כשהוא צריך לבחור את מי לפנות. limits נאכפים על ידי ה-**kernel** (cgroups) כל הזמן שהקונטיינר רץ."),
+       P("יחידות: CPU נמדד בליבות, ו-`500m` הוא חצי ליבה. זיכרון נמדד בבתים: `512Mi` הוא 512 mebibytes, ו-`512M` הוא קצת פחות. אם מגדירים רק limit בלי request, Kubernetes מעתיק את ה-limit ומשתמש בו כ-request."),
        TABLE(["", "requests", "limits"],
-             ["מי משתמש בזה", "ה-scheduler", "ה-kernel (cgroups) בזמן ריצה"],
-             ["CPU", "מובטח; משמש לשיבוץ", "מעבר = throttling (האטה)"],
-             ["זיכרון", "מובטח; משמש לשיבוץ", "מעבר = OOMKilled"]),
-       KEY("ה-scheduler מחליט לפי **requests**, לא לפי שימוש בפועל. node יכול להיראות פנוי בגרפים ועדיין לא לקבל pods, כי סכום ה-requests כבר מלא."),
+             ["מי משתמש בזה", "ה-scheduler, וה-kubelet בפינוי", "ה-kernel (cgroups) בזמן ריצה"],
+             ["CPU", "מובטח: חלוקה יחסית של CPU כשיש תחרות", "מעבר = throttling (האטה), לא הריגה"],
+             ["זיכרון", "מובטח לשיבוץ; מי שעובר אותו מפונה ראשון", "מעבר = OOMKilled"]),
+       H("איך ה-scheduler סופר"),
+       P("לכל node יש **allocatable**: הקיבולת פחות מה שנשמר למערכת (kubelet, runtime, ספי eviction). ה-scheduler מחבר את ה-requests של כל ה-pods שכבר על ה-node, ומשבץ pod חדש רק אם ה-requests שלו נכנסים בשארית. השימוש בפועל לא נכנס לחישוב בכלל."),
+       KEY("ה-scheduler מחליט לפי **requests**, לא לפי שימוש בפועל. node יכול להיראות פנוי בגרפים ועדיין לא לקבל pods, כי סכום ה-requests כבר מלא. ולהפך: requests נמוכים מדי נותנים node שנראה פנוי ל-scheduler, אבל בפועל עמוס עד הסוף."),
+       CODE("""
+$ kubectl describe node ip-10-0-1-23
+Allocatable:
+  cpu:     1930m
+  memory:  7220Mi
+Allocated resources:
+  Resource  Requests      Limits
+  cpu       1850m (95%)   4 (207%)
+  memory    5100Mi (70%)  9Gi (127%)
+""", cap="95% מה-CPU כבר הובטח ב-requests: pod שמבקש 100m לא ייכנס, גם אם השימוש בפועל 20%. limits מעל 100% הם overcommit"),
+       H("CPU מול זיכרון: למה ההתנהגות שונה"),
+       P("CPU הוא משאב שאפשר לחלק בזמן: כשקונטיינר מגיע ל-limit, ה-kernel פשוט לא נותן לו לרוץ עד החלון הבא. זיכרון לא אפשר \"להאט\": זיכרון שהוקצה תפוס. לכן קונטיינר שעובר את ה-memory limit נהרג ב-OOM, ולא מואט. וכשה-node כולו נגמר לו הזיכרון, ה-kubelet מפנה pods לפי הסדר: קודם אלה שצורכים מעבר ל-requests שלהם, לפי priority."),
+       TRAP("CPU limit גורם ל-throttling גם כשהממוצע נמוך: ה-quota נמדד בחלונות של 100ms, ו-burst קצר נחסם. אפליקציות עם הרבה threads (JVM, Go) נפגעות במיוחד, והתסמין הוא latency גבוה בלי CPU גבוה בגרפים. הרבה צוותים מגדירים memory limit שווה ל-request, ו-CPU request בלי CPU limit."),
        H("QoS classes"),
        TABLE(["Class", "מתי", "סדר פינוי"],
-             ["Guaranteed", "requests שווים ל-limits בכל הקונטיינרים", "אחרונים"],
-             ["Burstable", "יש requests, אבל לא שווים ל-limits", "באמצע"],
-             ["BestEffort", "אין requests ואין limits", "ראשונים"]),
-       TRAP("CPU limit גורם ל-throttling גם כשהממוצע נמוך: ה-quota נמדד בחלונות של 100ms, ו-burst קצר נחסם. אפליקציות עם הרבה threads (JVM, Go) נפגעות במיוחד. הרבה צוותים מגדירים memory limit ולא CPU limit."),
-       P("ResourceQuota מגביל את סכום המשאבים ב-namespace, ו-LimitRange נותן ברירות מחדל ל-pods שלא הגדירו requests. כשיש quota על CPU, pod בלי requests נדחה."),
+             ["Guaranteed", "בכל קונטיינר: requests שווים ל-limits, גם ל-CPU וגם לזיכרון", "אחרונים"],
+             ["Burstable", "לפחות קונטיינר אחד עם request או limit, אבל לא Guaranteed", "באמצע"],
+             ["BestEffort", "אין requests ואין limits באף קונטיינר", "ראשונים"]),
+       P("ה-QoS class לא מוגדר ישירות: Kubernetes מחשב אותו מה-requests וה-limits, ורושם אותו ב-`status.qosClass`. הוא משפיע גם על ה-OOM killer של ה-kernel, שמקבל ציון שמעדיף להרוג BestEffort קודם."),
+       H("שינוי בלי restart, ושמירה על ה-namespace"),
+       P("מ-1.35, in-place pod resize הוא GA: אפשר לשנות requests ו-limits של CPU וזיכרון ב-pod רץ דרך ה-subresource `resize`, בלי ליצור pod חדש. **ResourceQuota** מגביל את סכום המשאבים ב-namespace, ו-**LimitRange** נותן ברירות מחדל ומינימום ומקסימום ל-pods שלא הגדירו requests. כשיש quota על CPU, pod בלי requests נדחה כבר ביצירה, וה-ReplicaSet מדווח על כך ב-Events שלו, לא ה-pod."),
       ],
       [C("What does the scheduler use to decide whether a pod fits on a node?",
          ("The sum of the pods' resource requests on it", "נכון. ה-scheduler מחבר את ה-requests של ה-pods על כל node ומשווה ל-allocatable. שימוש בפועל לא נכנס לחישוב."),
@@ -43,19 +62,38 @@ SUBJECT = {
 
   MOD("placement", "שיבוץ: taints, affinity ו-topology spread",
       "לשלוט על איפה pods רצים: להרחיק, למשוך ולפזר.",
-      [P("ה-scheduler מסנן nodes שלא מתאימים, ואז מדרג את מי שנשאר. שלושה כלים משפיעים על הסינון והדירוג."),
+      [H("איך ה-scheduler בוחר node"),
+       P("לכל pod חדש בלי node, ה-scheduler עובר שני שלבים. **סינון** (filtering) מוריד כל node שלא יכול להריץ את ה-pod: requests שלא נכנסים, taint בלי toleration, affinity שלא מתקיים, volume ב-AZ אחר. **דירוג** (scoring) נותן ציון לכל node שנשאר, למשל לפי פיזור, איזון משאבים והעדפות affinity, וה-pod נקשר (bind) ל-node עם הציון הגבוה. אם אחרי הסינון לא נשאר אף node, ה-pod נשאר Pending, וה-scheduler כותב Event עם הסיבה לכל קבוצת nodes."),
        TABLE(["כלי", "מה הוא עושה", "דוגמה"],
              ["taint + toleration", "node דוחה pods בלי toleration", "nodes של GPU או spot"],
              ["nodeSelector / node affinity", "pod נמשך ל-nodes עם labels", "רק על nodes מסוג arm64"],
-             ["pod anti-affinity", "pod מתרחק מ-pods אחרים", "לא שני replicas על אותו node"],
+             ["pod affinity / anti-affinity", "pod מתקרב ל-pods אחרים, או מתרחק מהם", "לא שני replicas על אותו node"],
              ["topology spread", "פיזור שווה בין zones או nodes", "replicas בשלושה AZs"]),
+       H("node affinity: required מול preferred"),
+       P("`nodeSelector` הוא הצורה הפשוטה: התאמה מדויקת של labels. **node affinity** מוסיף אופרטורים (`In`, `NotIn`, `Exists`, `Gt`) ושתי עוצמות. `requiredDuringSchedulingIgnoredDuringExecution` הוא תנאי חובה בסינון. `preferredDuringSchedulingIgnoredDuringExecution` רק מוסיף ניקוד, וה-pod ישובץ גם אם אין node מתאים. ה-`IgnoredDuringExecution` בשם אומר ששינוי labels של node אחרי השיבוץ לא מפנה pods שכבר רצים."),
+       H("taints ו-tolerations"),
        KEY("toleration רק **מתיר** ל-pod לרוץ על node עם taint. הוא לא מושך אותו לשם. ל-nodes ייעודיים צריך את שניהם: taint כדי להרחיק אחרים, ו-affinity כדי למשוך את הנכונים."),
        TABLE(["Taint effect", "מה קורה"],
-             ["NoSchedule", "pods חדשים בלי toleration לא ישובצו"],
-             ["PreferNoSchedule", "ה-scheduler ינסה להימנע"],
-             ["NoExecute", "גם pods קיימים בלי toleration מפונים"]),
-       TRAP("required anti-affinity עם יותר replicas מ-nodes משאיר את העודפים ב-Pending. topology spread עם `whenUnsatisfiable: ScheduleAnyway` גמיש יותר."),
-       P("pod ב-Pending: ה-scheduler כותב ב-Events למה אף node לא התאים, למשל `0/5 nodes are available: 3 Insufficient cpu, 2 node(s) had untolerated taint`."),
+             ["NoSchedule", "pods חדשים בלי toleration לא ישובצו. pods קיימים נשארים"],
+             ["PreferNoSchedule", "ה-scheduler ינסה להימנע, אבל לא חובה"],
+             ["NoExecute", "גם pods קיימים בלי toleration מפונים, אחרי `tolerationSeconds` אם הוגדר"]),
+       P("Kubernetes משתמש ב-taints בעצמו. כש-node מפסיק לדווח, ה-node controller מוסיף לו `node.kubernetes.io/unreachable` או `not-ready` עם NoExecute, וכל pod מקבל כברירת מחדל toleration לשניהם עם `tolerationSeconds: 300`. זו הסיבה ש-pods מ-node שנפל מפונים ונוצרים מחדש במקום אחר רק אחרי כחמש דקות, ולא מיד."),
+       H("פיזור: anti-affinity ו-topology spread"),
+       P("pod anti-affinity אומר \"אל תשים אותי ליד pods עם label כזה\", ביחס ל-`topologyKey`: `kubernetes.io/hostname` הוא node, ו-`topology.kubernetes.io/zone` הוא AZ. זה כלי חזק אבל יקר: התיעוד לא ממליץ על inter-pod affinity בקלאסטרים של יותר מכמה מאות nodes, כי החישוב כבד. **topologySpreadConstraints** הוא הכלי המודרני לפיזור: הוא מגביל את ההפרש (`maxSkew`) בין ה-zone העמוס ביותר לזה הריק ביותר."),
+       CODE("""
+topologySpreadConstraints:
+- maxSkew: 1
+  topologyKey: topology.kubernetes.io/zone
+  whenUnsatisfiable: DoNotSchedule      # or ScheduleAnyway: a preference only
+  labelSelector: {matchLabels: {app: api}}
+- maxSkew: 1
+  topologyKey: kubernetes.io/hostname
+  whenUnsatisfiable: ScheduleAnyway
+  labelSelector: {matchLabels: {app: api}}
+""", cap="פיזור קשיח בין AZs ופיזור רך בין nodes: 6 replicas יהיו 2-2-2 בשלושה AZs"),
+       TRAP("required anti-affinity עם יותר replicas מ-nodes משאיר את העודפים ב-Pending, וגם חוסם rolling update עם `maxUnavailable: 0`, כי ה-pod החדש לא יכול לעלות ליד הישן. topology spread עם `whenUnsatisfiable: ScheduleAnyway` גמיש יותר."),
+       H("לקרוא את ה-Event של Pending"),
+       P("ה-Event מסכם את כל ה-nodes לפי סיבה, למשל `0/5 nodes are available: 3 Insufficient cpu, 2 node(s) had untolerated taint {dedicated: gpu}`. קוראים כל חלק בנפרד: 3 nodes נפסלו על requests, ו-2 על taint. אם הסיבה היא requests, אפשר להקטין requests או להוסיף nodes. אם taint, חסרה toleration. אם `didn't match pod's node affinity/selector`, ה-labels לא תואמים. `kubectl get nodes --show-labels` ו-`kubectl describe node` מראים מה באמת יש על כל node."),
       ],
       [C("Does a toleration attract a pod to a tainted node?",
          ("No; it only allows the pod to run there", "נכון. toleration מבטל את הדחייה של ה-taint. כדי למשוך את ה-pod דווקא לשם צריך node affinity או nodeSelector."),
@@ -79,21 +117,41 @@ SUBJECT = {
 
   MOD("autoscaling", "HPA, Cluster Autoscaler ו-Karpenter",
       "להבדיל בין סקיילינג של pods לסקיילינג של nodes, ולדבג HPA שלא עובד.",
-      [P("יש שתי שכבות של autoscaling: מספר ה-pods, ומספר ה-nodes שמריצים אותם. הן עובדות יחד."),
+      [P("יש שתי שכבות של autoscaling, והן עובדות בשרשרת: שכבת ה-**pods** משנה כמה replicas רצים או כמה משאבים כל אחד מבקש, ושכבת ה-**nodes** מוסיפה ומורידה מכונות כדי שה-pods ייכנסו. אף שכבה לא מחליפה את השנייה. HPA בלי node autoscaler ייתקע עם pods ב-Pending, ו-node autoscaler בלי HPA לא יקבל אף פעם סיבה לגדול."),
        FLOW("עומס עולה", "HPA מוסיף pods", "pods חדשים ב-Pending", "Cluster Autoscaler או Karpenter מוסיפים node", "ה-pods משובצים"),
        TABLE(["כלי", "מה הוא משנה", "לפי מה"],
-             ["HPA", "replicas של Deployment", "CPU, זיכרון, או custom metrics"],
+             ["HPA", "replicas של Deployment או StatefulSet", "CPU, זיכרון, או custom ו-external metrics"],
              ["VPA", "requests של pods", "שימוש היסטורי"],
-             ["Cluster Autoscaler", "גודל node group", "pods שלא נכנסו"],
-             ["Karpenter", "instances חדשים לפי הצורך", "pods שלא נכנסו, ו-consolidation"],
-             ["KEDA", "replicas, כולל לאפס", "אירועים: אורך תור, lag"]),
-       KEY("אחוז ה-CPU ב-HPA מחושב **ביחס ל-requests**. pod בלי CPU requests לא יכול להיות מנוהל על ידי HPA לפי CPU."),
-       P("הנוסחה של HPA: `desired = ceil(current × currentMetric / target)`. ירידה מחכה stabilization window (5 דקות כברירת מחדל) כדי לא לקפוץ למעלה ולמטה."),
+             ["Cluster Autoscaler", "גודל node group (ASG)", "pods שלא נכנסו, ו-nodes שלא בשימוש"],
+             ["Karpenter", "instances חדשים, בגודל שמתאים ל-pods", "pods שלא נכנסו, ו-consolidation"],
+             ["KEDA", "replicas, כולל לאפס", "אירועים: אורך תור, lag של Kafka, cron"]),
+       H("HPA מבפנים"),
+       P("ה-HPA הוא controller שרץ כל 15 שניות. הוא קורא metrics (CPU וזיכרון מ-metrics-server דרך ה-Metrics API, ו-custom metrics דרך adapter כמו Prometheus Adapter), ומחשב: `desired = ceil(current × currentMetric / target)`. 4 pods ב-90% CPU עם יעד של 60% נותנים `ceil(4 × 90/60) = 6`. אם היחס קרוב ל-1 בטווח של 10% (ה-tolerance), הוא לא משנה כלום, כדי לא להגיב לרעש. עם כמה metrics הוא מחשב כל אחד בנפרד ולוקח את המספר הגבוה."),
+       KEY("אחוז ה-CPU ב-HPA מחושב **ביחס ל-requests**. pod בלי CPU requests לא יכול להיות מנוהל על ידי HPA לפי CPU, ו-requests גבוהים מדי גורמים ל-HPA לא לגדול אף פעם."),
+       CODE("""
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: api}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: api}
+  minReplicas: 3
+  maxReplicas: 30
+  metrics:
+  - type: Resource
+    resource: {name: cpu, target: {type: Utilization, averageUtilization: 60}}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300     # the default: wait 5 minutes before shrinking
+""", cap="HPA ב-autoscaling/v2 עם יעד CPU ו-behavior מפורש"),
+       P("ירידה מחכה stabilization window של 5 דקות כברירת מחדל: ה-HPA לוקח את ההמלצה הגבוהה ביותר מ-5 הדקות האחרונות, כדי לא לקפוץ למעלה ולמטה (flapping). ב-`behavior` אפשר גם להגביל קצב, למשל להוסיף לכל היותר 4 pods בדקה. אל תפעילו HPA ו-VPA על אותו metric של CPU או זיכרון: VPA משנה את ה-requests, וזה משנה את האחוז שה-HPA מחשב."),
+       H("Cluster Autoscaler מול Karpenter"),
+       P("**Cluster Autoscaler** עובד מעל node groups קיימים (ב-AWS: Auto Scaling Groups). כשיש pod שלא נכנס, הוא מדמה איזה node group היה פותר את זה ומגדיל אותו. כש-node כמעט ריק, הוא מנסה להעביר את ה-pods שלו ולהוריד אותו. **Karpenter** לא צריך node groups: הוא קורא את הדרישות של ה-pods שממתינים ובוחר instance type מתאים ישירות מ-EC2, לפי NodePool. הוא גם עושה **consolidation**: מחליף כמה nodes חצי-ריקים ב-node אחד קטן יותר, וזה חוסך כסף."),
+       P("**KEDA** משלים את ה-HPA לאירועים: הוא קורא מקור כמו תור SQS או topic של Kafka, מוריד את ה-Deployment לאפס כשאין עבודה, מעלה אותו ל-1 כשמגיעה הודעה, ומשם נותן ל-HPA שהוא יוצר לנהל את הגדילה."),
        TREE(["HPA מראה `<unknown>`?", "metrics-server לא עובד, או ל-pods אין requests"],
-            ["HPA ב-max ועדיין עומס?", "להעלות max, או שה-bottleneck במקום אחר"],
-            ["pods ב-Pending אחרי scale up?", "בדיקת autoscaler של nodes והמגבלות שלו"],
-            ["autoscaler לא מוריד node?", "PDB, pods בלי controller, local storage"]),
-       TRAP("Cluster Autoscaler מוסיף nodes כשיש **pods שלא נכנסו**, לא כש-CPU גבוה. node עמוס ב-100% CPU לא יגרום להוספת node אם כל ה-pods משובצים."),
+            ["HPA ב-max ועדיין עומס?", "להעלות max, או שה-bottleneck במקום אחר (DB, תור)"],
+            ["pods ב-Pending אחרי scale up?", "ה-autoscaler של ה-nodes: מגבלת גודל, instance types, הרשאות"],
+            ["autoscaler לא מוריד node?", "PDB, pods בלי controller, local storage, או annotation שחוסם"]),
+       TRAP("Cluster Autoscaler מוסיף nodes כשיש **pods שלא נכנסו**, לא כש-CPU גבוה. node עמוס ב-100% CPU לא יגרום להוספת node אם כל ה-pods משובצים. מה שמגדיל nodes הוא HPA שמוסיף pods, או requests נכונים."),
       ],
       [C("The HPA shows `<unknown>` for its CPU target. What is a common cause?",
          ("No CPU requests on the pods, or metrics-server is down", "נכון. HPA מחשב אחוז ביחס ל-requests ומקבל מדדים מ-metrics-server. בלי אחד מהם אין לו מספר לעבוד איתו."),
