@@ -24,7 +24,7 @@ SRC = HERE / "study_src"
 PAGE = HERE / "index.html"
 sys.path.insert(0, str(HERE / "learn_src"))     # the block shorthand (_h.py)
 
-BLOCKS = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree"}
+BLOCKS = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree", "ask"}
 VISUAL = {"table", "flow", "split", "dtree", "code"}
 HEB = re.compile(r"[֐-׿]")
 
@@ -35,6 +35,8 @@ def text_of(b):
         out = [b["x"]]
     elif t in ("list", "steps", "flow"):
         out = list(b["x"])
+    elif t == "ask":
+        out = [s for qa in b["x"] for s in qa]
     elif t == "table":
         out = list(b["head"]) + [c for r in b["rows"] for c in r]
     elif t == "split":

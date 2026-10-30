@@ -201,9 +201,9 @@ asks_open = []
 for fname, s in BL.load():
     for m in s["modules"]:
         for b in m["blocks"]:
-            if b.get("t") == "list" and str(b.get("cap", "")).startswith("שאלות שחוזרות"):
-                asks_open += [(fname, x[:40]) for x in b["x"]]
-row("learn", "#30 interview questions in Learn with no answer outline", asks_open, 0)
+            if b.get("t") == "ask":
+                asks_open += [(fname, q[:40]) for q, a in b["x"] if len(a.strip()) < 120]
+row("learn", "#30 interview questions in Learn without a 120+ char answer outline", asks_open, 0)
 
 # ---------------- Study ----------------
 st_long, st_notes, st_asks = [], [], []
@@ -225,11 +225,11 @@ for f in sorted(os.listdir(os.path.join(ROOT, "study_src"))):
         st_long.append((f, f"{n_long}/{len(quiz)}"))
     for t in m.CHAPTER["topics"]:
         for b in t["blocks"]:
-            if b.get("t") == "list" and str(b.get("cap", "")).startswith("שאלות שחוזרות"):
-                st_asks += [(f, x[:40]) for x in b["x"]]
+            if b.get("t") == "ask":
+                st_asks += [(f, q[:40]) for q, a in b["x"] if len(a.strip()) < 120]
 row("study", "#9 chapters where the right quiz option is longest in > 40%", st_long, 0)
 row("study", "#10 quiz options without a note of 60+ chars", st_notes, 0)
-row("study", "#30 interview questions in Study with no answer outline", st_asks, 0)
+row("study", "#30 interview questions in Study without a 120+ char answer outline", st_asks, 0)
 
 # ---------------- report ----------------
 bad = 0

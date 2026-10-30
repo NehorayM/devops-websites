@@ -19,6 +19,10 @@ function lbHTML(b){
     case 'h':     return '<h3>'+mdInline(b.x)+'</h3>';
     case 'p':     return '<p>'+mdInline(b.x)+'</p>';
     case 'list':  return lbList(b.x,'ul');
+    // interview questions: try it aloud, then open the outline of a strong answer
+    case 'ask':   return '<div class="lb-ask">'+b.x.map(([q,a])=>a
+                    ?'<details class="lb-askq"><summary>'+mdInline(q)+'</summary><div class="lb-askans">'+mdInline(a)+'</div></details>'
+                    :'<div class="lb-askq">'+mdInline(q)+'</div>').join('')+lbCap(b)+'</div>';
     case 'steps': return lbList(b.x,'ol');
     case 'table': return '<div class="mdxtable"><table'+(b.head.length>2?' class="wide"':'')+'><thead><tr>'+
       b.head.map(h=>'<th>'+mdInline(h)+'</th>').join('')+'</tr></thead><tbody>'+

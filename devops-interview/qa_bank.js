@@ -410,7 +410,7 @@ async function studyChecks(){
       titles.add(tp.nm);
       ok(tp.blocks.length>0,'"'+tp.nm+'" has content');
       tp.blocks.forEach(b=>{
-        ok(['h','p','list','steps','table','flow','split','key','trap','note','code','dtree']
+        ok(['h','p','list','steps','table','flow','split','key','trap','note','code','dtree','ask']
           .includes(b.t), '"'+tp.nm+'": unknown block '+b.t);
         if(b.t==='table'){
           ok(b.head.length>1,'"'+tp.nm+'": a one-column table');

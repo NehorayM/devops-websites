@@ -75,5 +75,7 @@ def QZ(q, right, *wrong, x):
 
 
 def ASK(*qs):
-    """The questions interviewers keep asking on a topic, as a list block."""
-    return {"t": "list", "x": list(qs), "cap": "שאלות שחוזרות בראיונות. נסה לענות בקול לפני שממשיכים."}
+    """The questions interviewers keep asking on a topic. Each item is (question, answer outline in
+    Hebrew); the page shows the question and opens the outline on tap, after you've tried it aloud."""
+    items = [list(q) if isinstance(q, tuple) else [q, ""] for q in qs]
+    return {"t": "ask", "x": items, "cap": "שאלות שחוזרות בראיונות. נסה לענות בקול, ואז פתח את התשובה."}

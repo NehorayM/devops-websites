@@ -12,7 +12,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "learn_src"
 HTML = ROOT / "index.html"
 
-BLOCK_TYPES = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree"}
+BLOCK_TYPES = {"h", "p", "list", "steps", "table", "flow", "split", "key", "trap", "note", "code", "dtree", "ask"}
 VISUAL = {"table", "flow", "split", "dtree"}
 CALLOUT = {"key", "trap"}
 BAD_WORDS = re.compile(r"\b(TODO|TBD|lorem ipsum|FIXME|placeholder|xxx)\b", re.I)
@@ -37,6 +37,9 @@ def text_of(block):
         out.append(block.get("x", ""))
     elif t in ("list", "steps", "flow"):
         out.extend(block.get("x", []))
+    elif t == "ask":
+        for q, a in block.get("x", []):
+            out.extend([q, a])
     elif t == "table":
         out.extend(block.get("head", []))
         for r in block.get("rows", []):
