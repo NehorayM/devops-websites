@@ -3768,6 +3768,23 @@ function authoredChecks(){
   eq(enY,0,'every option line is Hebrew');
   eq(enX,0,'every question has a Hebrew interview tip');
   eq(badR,0,'and an https documentation link');
+  // Briefing before a question (papers 1-10, bank 0-649): the glossary names a concept for almost
+  // every question, terms match as whole words, and the rare fallback card is Hebrew.
+  const nobrief=t.QS.slice(0,650).filter(q=>!t.conceptsFor(q).length).length;
+  ok(nobrief<=65,'the briefing finds a glossary term for 90%+ of papers 1-10 ('+nobrief+' without)');
+  const probe=s=>t.conceptsFor({q:s,o:[['A','x']],a:['A']});
+  ok(!probe('a podSelector and nodeSelectorTerms').includes('pod'),'glossary terms match whole words only');
+  ok(probe('three pods are pending').includes('pod'),'a plural still matches its term');
+  ok(probe('Add a `moved` block').includes('moved block'),'code backticks don\'t hide a term');
+  const bare=t.QS.findIndex(q=>!t.conceptsFor(q).length);
+  if(bare>=0){ const was=t.briefingFor; t.briefingFor=bare; t.renderBriefing();
+    const txt=document.getElementById('briefBody').innerText;
+    ok(HEB.test(txt)&&!/reasoning rather than a single term/.test(txt),'the briefing fallback card is Hebrew');
+    t.briefingFor=was; }
+  // Doc links say whose documentation they open.
+  eq(t.docLabel('https://kubernetes.io/docs/concepts/'),'Kubernetes docs','a doc link names its site');
+  eq(t.docLabel('https://developer.hashicorp.com/terraform/language'),'Terraform docs','a Terraform link says Terraform');
+  eq(t.QS.filter(q=>!t.docLabel(q.r)||t.docLabel(q.r)==='Documentation').length,0,'every bank doc link gets a site name');
   const enC=Object.keys(t.CODEX).filter(k=>!HEB.test(t.CODEX[k]));
   eq(enC.join(', '),'','every glossary definition is Hebrew');
   ['explaindata','subjectdata','coursedata'].forEach(id=>ok(!$(id),'the retired '+id+' blob is gone'));

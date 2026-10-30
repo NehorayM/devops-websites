@@ -133,13 +133,20 @@ cx = re.search(r"const CODEX=\{(.*?)\n\};", HTML, re.S)
 keys = sorted(re.findall(r"^'([^']+)'\s*:", cx.group(1), re.M), key=len, reverse=True) if cx else []
 
 
-def concepts(q):
-    hay = (q["q"] + " " + " ".join(t for L, t in q["o"] if L in q["a"])).lower()
+def norm(s):        # the page's codexNorm: no backticks, '-' and '/' read as spaces
+    return re.sub(r"[-/]", " ", s.lower().replace("`", ""))
+
+
+RX = {k: re.compile(r"(?<![a-z0-9_.])" + re.escape(norm(k)) + r"(?:e?s)?(?![a-z0-9_])") for k in keys}
+
+
+def concepts(q):      # the page's conceptsFor: whole words, plural s/es allowed
+    hay = norm(q["q"] + " " + " ".join(t for L, t in q["o"] if L in q["a"]))
     found = []
     for k in keys:
         if len(found) >= 5:
             break
-        if re.search(r"(?<![a-z0-9_-])" + re.escape(k) + r"(?![a-z0-9_])", hay) and not any(k in f or f in k for f in found):
+        if RX[k].search(hay) and not any(k in f or f in k for f in found):
             found.append(k)
     return found
 

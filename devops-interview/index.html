@@ -4246,16 +4246,236 @@ const CODEX={
 'tls':'הצפנה ואימות זהות: שרשרת certificates, שם השרת (SAN) ותוקף.',
 'sni':'הלקוח אומר ב-TLS לאיזה שם הוא פונה, כך שכתובת אחת מגישה הרבה certificates.',
 'x-forwarded-for':'header שבו L7 proxy מעביר את ה-IP המקורי של הלקוח.',
+// added in the October 2026 audit so papers 1-10 brief almost every question (see tools/contentlint.py #25)
+'init container':'רץ עד סיום לפני קונטיינרי האפליקציה, אחד אחרי השני: המתנה לתלות, migration, הכנת קבצים.',
+'imagepullpolicy':'מתי kubelet מושך image: Always, IfNotPresent או Never. עם tag latest ברירת המחדל היא Always.',
+'nodeport':'פותח פורט קבוע (30000 עד 32767) על כל node ומעביר ממנו ל-Service.',
+'loadbalancer':'סוג Service שמבקש load balancer מהענן. בלי controller מתאים הכתובת נשארת pending.',
+'externalname':'סוג Service שמחזיר CNAME לשם DNS חיצוני, בלי proxy ובלי endpoints.',
+'namespace':'מחיצה לוגית בקלאסטר לשמות, הרשאות ו-quotas. היא לא מבודדת רשת לבד.',
+'envfrom':'מכניס את כל המפתחות של ConfigMap או Secret כ-env vars בבת אחת.',
+'millicore':'אלפית ליבת CPU: 500m הם חצי ליבה. כך מגדירים requests ו-limits ל-CPU.',
+'cpu limit':'חריגה ממנו מאטה את הקונטיינר (throttling) ולא הורגת אותו, בניגוד לזיכרון.',
+'kubeadm':'כלי להקמת קלאסטר Kubernetes בעצמך. הוא גם מחדש את תעודות ה-control plane.',
+'clusterrole':'הרשאות ברמת כל הקלאסטר, או תבנית הרשאות שמשתמשים בה בכמה namespaces.',
+'can-i':'פקודת kubectl auth שבודקת אם זהות מסוימת רשאית לפעולה; --list מציג את כולן.',
+'capabilities':'פיצול של הרשאות root לחלקים קטנים, כמו NET_BIND_SERVICE. מורידים הכול ומוסיפים רק מה שצריך.',
+'kubeconfig':'קובץ ההגדרות של kubectl: קלאסטרים, משתמשים ו-contexts שמחברים ביניהם.',
+'kyverno':'מנוע policies ל-Kubernetes שאוכף חוקים ב-admission, כתובים ב-YAML.',
+'observability':'היכולת להבין מה קורה במערכת מבחוץ: metrics, logs ו-traces.',
+'metrics-server':'אוסף שימוש CPU וזיכרון מה-kubelets. kubectl top ו-HPA תלויים בו.',
+'postmortem':'סיכום תקלה בלי האשמות: ציר זמן, סיבות ופעולות המשך עם בעלים.',
+'golden signals':'ארבעה מדדים לכל שירות: latency, traffic, errors ו-saturation.',
+'createnamespace':'sync option שיוצר את ה-namespace של היעד אם הוא לא קיים.',
+'manifest':'קובץ YAML שמתאר משאב Kubernetes. ב-GitOps הם יושבים ב-repo של הקונפיגורציה.',
+'sync status':'האם מה שרץ בקלאסטר תואם ל-Git: Synced או OutOfSync. זה לא אומר שהוא עובד.',
+'syncpolicy':'החלק ב-Application שקובע sync אוטומטי (prune, selfHeal), retry ו-syncOptions.',
+'automated sync':'Argo CD מסנכרן לבד כש-Git משתנה. בזמן שהוא פעיל, rollback מה-CLI חסום.',
+'crd':'Custom Resource Definition: מוסיף ל-API סוג משאב חדש. חייב להיות קיים לפני המשאבים שלו.',
+'app of apps':'Application אב שה-manifests שלו הם Applications אחרים. נוח ל-bootstrap של קלאסטר.',
+'targetrevision':'ה-branch, tag או commit ש-Application עוקב אחריו. HEAD צף; tag או SHA קבועים.',
+'syncfail':'hook שרץ רק כש-sync נכשל: להתריע או לנקות.',
+'argocd':'ה-CLI של Argo CD (app sync, app wait, app history), וגם קידומת ה-ConfigMaps שלו.',
+'on-sync-failed':'trigger מובנה ב-Argo CD Notifications שנורה רק כש-sync נכשל.',
+'notification':'שליחת הודעות מ-Argo CD ל-Slack ועוד: triggers, templates ו-subscription כ-annotation.',
+'generator':'החלק ב-ApplicationSet שמייצר פרמטרים: list, cluster, git, matrix, merge ו-PR.',
+'sourcerepos':'רשימת ה-repos שמותר ל-Applications של AppProject למשוך מהם.',
+'argocd-rbac-cm':'ה-ConfigMap של הרשאות Argo CD: שורות p להרשאות, g לקבוצות, ו-policy.default.',
+'sso':'Single Sign-On: התחברות דרך ספק הזהויות של הארגון (OIDC או SAML) במקום משתמשים מקומיים.',
+'github app':'זהות של אפליקציה ב-GitHub, עם הרשאות מוגדרות ו-tokens קצרי חיים. עדיפה על PAT.',
+'dockerfile':'הוראות לבניית image: FROM, RUN, COPY, CMD. כל שינוי במערכת הקבצים יוצר שכבה.',
+'entrypoint':'התוכנית שהקונטיינר מריץ. CMD נותן לה ארגומנטים ברירת מחדל שאפשר להחליף.',
+'.dockerignore':'מוציא קבצים מה-build context, כמו .git ו-node_modules: build מהיר ובלי סודות.',
+'pull-through cache':'registry שמושך images ממקור חיצוני ושומר עותק, כך שלא חוזרים למקור בכל pull.',
+'docker hub':'ה-registry הציבורי של Docker. pulls אנונימיים מוגבלים בקצב, ולכן מזדהים או משתמשים במראה.',
+'docker.sock':'ה-socket של Docker daemon. גישה אליו שקולה ל-root על ה-host.',
+'arm64':'ארכיטקטורת ARM (Apple Silicon, Graviton). image שנבנה לה לא ירוץ על amd64 בלי multi-arch.',
+'docker build':'בונה image מ-Dockerfile ומה-build context; כל הוראה רצה בשכבה משלה.',
+'container image':'תבנית לקריאה בלבד: מערכת קבצים ו-metadata. קונטיינר הוא image שרץ עם שכבה לכתיבה.',
+'chown':'משנה בעלים וקבוצה של קבצים ותיקיות, למשל לפני הרצה כמשתמש שאינו root.',
+'apt-get':'מנהל החבילות של Debian ו-Ubuntu. ב-Dockerfile מריצים update ו-install באותו RUN.',
+'healthcheck':'הוראה ב-Dockerfile ש-Docker משתמש בה. Kubernetes מתעלם ממנה ומשתמש ב-probes.',
+'non-root':'הרצת התהליך כמשתמש רגיל ולא כ-UID 0, כדי שפריצה תיתן פחות הרשאות.',
+'dependabot':'בוט של GitHub שפותח PRs לעדכון תלויות, ומתריע על תלויות פגיעות.',
+'security scan':'בדיקה אוטומטית של קוד, תלויות או images לפגיעויות. מהירה ב-PR, מלאה בלילה.',
+'quality gate':'בדיקה אוטומטית ב-pipeline שעוברת או נכשלת, ויכולה לחסום merge.',
+'github_token':'token אוטומטי לכל ריצה של workflow, מוגבל ל-repo, עם permissions שמגדירים.',
+'long-lived':'credentials שלא פגים מעצמם, כמו access keys. דליפה אחת נותנת גישה לאורך זמן.',
+'typosquatting':'חבילה זדונית עם שם שדומה לחבילה פופולרית, כדי שיתקינו אותה בטעות.',
+'trivy':'סורק פגיעויות ל-images, קבצים, IaC ו-SBOM, נפוץ ב-CI.',
+'codeowners':'קובץ שקובע מי אחראי על כל נתיב. עם branch protection הם חייבים לאשר.',
+'branch protection':'חוקים על branch: reviews חובה, status checks שחייבים לעבור, בלי push ישיר.',
+'credentials':'פרטי הזדהות: מפתחות, tokens וסיסמאות. ב-CI עדיף קצרי חיים דרך OIDC.',
+'sca':'Software Composition Analysis: סריקת תלויות לפגיעויות ידועות ולרישיונות.',
+'gitleaks':'סורק סודות ב-Git ובקוד, ב-pre-commit וב-CI.',
+'npm ci':'מתקין בדיוק לפי ה-lock file, ונכשל אם הוא לא תואם ל-package.json.',
+'shift left':'למצוא בעיות מוקדם (IDE, PR, CI), כשהתיקון זול יותר.',
+'fail fast':'להריץ קודם את הבדיקות המהירות, ולעצור מיד בכישלון כדי לקבל פידבק מהר.',
+'code coverage':'איזה אחוז מהקוד הבדיקות הריצו. הוא לא אומר אם ההתנהגות נבדקה.',
+'junit':'פורמט XML לתוצאות בדיקות, שרוב כלי ה-CI יודעים להציג.',
+'shard':'פיצול עבודה לחלקים שרצים במקביל: בדיקות בין jobs, או קלאסטרים בין replicas של controller.',
+'path filter':'תנאי שמריץ job רק כשקבצים בנתיבים מסוימים השתנו.',
+'staging':'סביבה דומה לפרודקשן לבדיקה אחרונה לפני release.',
+'pre-commit':'hooks שרצים לפני כל commit על המחשב של המפתח: linters ובדיקות מהירות.',
+'snapshot test':'בדיקה שמשווה פלט לקובץ שמור. snapshot רחב מדי נשבר מכל שינוי קטן.',
+'quarantine':'הוצאת בדיקה לא יציבה מהחסימה, עם בעלים ודדליין, בזמן שמתקנים אותה.',
+'linter':'כלי שבודק סגנון ושגיאות נפוצות בקוד בלי להריץ אותו.',
+'unit test':'בודקת יחידת קוד אחת בבידוד, מהר. הבסיס הרחב של פירמידת הבדיקות.',
+'integration test':'בודקת כמה חלקים יחד, למשל קוד מול DB אמיתי.',
+'merge queue':'תור שבודק כל PR על גבי main העדכני לפני merge, כך ש-main לא נשבר.',
+'test pyramid':'הרבה unit tests, פחות integration ומעט E2E.',
+'makefile':'קובץ עם targets לפקודות build ו-test, כך שמריצים אותו דבר מקומית וב-CI.',
+'regression test':'בדיקה שמוודאת שמה שעבד ממשיך לעבוד אחרי שינוי.',
+'tdd':'Test-Driven Development: קודם בדיקה שנכשלת, אחר כך קוד שמעביר אותה, ואז ניקוי.',
+'concurrency':'הגבלה לריצה אחת בכל פעם לכל group, כדי ששני deploys לא ידרסו זה את זה.',
+'backward compatible':'שינוי שהגרסה הקודמת עדיין עובדת איתו. הכרחי ל-rollback ול-rolling update.',
+'artifact':'קובץ שנבנה ב-pipeline ונשמר או עובר בין jobs: binary, image או דוח.',
+'semantic versioning':'MAJOR.MINOR.PATCH: שינוי שובר, פיצ׳ר חדש, תיקון באג.',
+'monorepo':'repo אחד לשירותים רבים. CI טוב בונה ומריץ רק את מה שהשתנה.',
+'stateless':'שירות שלא שומר מצב בזיכרון שלו, כך שכל instance יכול לטפל בכל בקשה.',
+'idempotency':'הרצה חוזרת נותנת את אותה תוצאה, בלי שגיאות ובלי כפילויות.',
+'build once':'בונים artifact אחד ומקדמים בדיוק אותו בין הסביבות, במקום לבנות מחדש.',
+'control plane':'ה-API server, ה-scheduler, ה-controllers ו-etcd. ב-EKS הם בניהול AWS.',
+'ebs':'דיסק רשת שמחובר ל-EC2, קשור ל-AZ אחד, ונשמר אחרי עצירה. ב-EKS דרך CSI driver.',
+'explicit deny':'deny מפורש ב-IAM גובר על כל allow, בכל policy שהוא.',
+'access entry':'מיפוי של IAM principal להרשאות בקלאסטר EKS, מנוהל דרך ה-EKS API.',
+'get-caller-identity':'פקודת aws sts שמראה איזו זהות (user או role) מבצעת את הקריאות שלך עכשיו.',
+'eksctl':'CLI שמקים ומנהל קלאסטרי EKS ו-node groups מקובץ או מפקודה.',
+'bottlerocket':'מערכת הפעלה מינימלית של AWS שבנויה רק להרצת קונטיינרים.',
+'least privilege':'לתת רק את ההרשאות שבאמת נדרשות, לכל זהות ולכל job.',
+'session manager':'חלק מ-Systems Manager: shell למכונה בלי פורט פתוח, עם IAM ותיעוד.',
+'systems manager':'שירות AWS לניהול מכונות: Session Manager, Run Command ו-Parameter Store.',
+'hosted zone':'אוסף רשומות DNS לדומיין ב-Route 53. zone פרטית נראית רק ב-VPCs המשויכים.',
+'flow logs':'תיעוד של חיבורים ב-VPC: מקור, יעד, פורט, והאם התקבלו או נדחו.',
+'user data':'סקריפט או cloud-init שרץ בעליית ה-instance הראשונה.',
+'user_data':'סקריפט ההפעלה של aws_instance. שינוי בו עוצר ומפעיל את המכונה, או מחליף אותה אם מבקשים.',
+'instance store':'דיסק מקומי של המכונה. מהיר, אבל הנתונים נמחקים בעצירה.',
+'spot instance':'קיבולת פנויה של AWS בהנחה גדולה, שאפשר לקחת בחזרה עם התראה של שתי דקות.',
+'cross-zone':'load balancer שמחלק תעבורה שווה בין targets בכל ה-AZs, לא רק באותו AZ.',
+'elastic ip':'כתובת IP ציבורית קבועה שאפשר לחבר ל-instance, ונשארת אחרי עצירה.',
+'availability zone':'data center נפרד באזור. פיזור בין AZs שורד תקלה של אחד מהם.',
+'transit gateway':'hub אזורי שמנתב בין הרבה VPCs, VPN ו-Direct Connect.',
+'listener':'מי שמאזין לחיבורים: תהליך על פורט, או ב-load balancer פורט ופרוטוקול עם חוקי ניתוב.',
+'launch template':'הגדרות ל-instance חדש: AMI, סוג, security groups ו-user data. ASG משתמש בו.',
+'route 53':'שירות ה-DNS של AWS: hosted zones, alias records ו-routing policies.',
+'cname':'רשומת DNS שהופכת שם לכינוי של שם אחר. אסורה ב-zone apex.',
+'ami':'Amazon Machine Image: תבנית של מערכת הפעלה ותוכנה ל-instances חדשים.',
+'internet gateway':'מחבר VPC לאינטרנט. subnet עם route אליו הוא ציבורי.',
+'route table':'קובע לאן נשלחת תעבורה מכל subnet, לפי יעד.',
+'cloudfront':'ה-CDN של AWS. מגיש תוכן מ-edges, ועם OAC ניגש ל-S3 פרטי.',
+'block public access':'הגדרת S3 שחוסמת גישה ציבורית ודורסת bucket policies שמתירות אותה.',
+'lifecycle rule':'חוק שמעביר אובייקטים ל-storage class זול יותר ואחר כך מוחק אותם.',
+'ecr':'ה-registry של AWS ל-images. lifecycle policy מוחק images ישנים.',
+'sqs':'תור הודעות של AWS. הודעה שנקראה מוסתרת למשך ה-visibility timeout.',
+'visibility timeout':'כמה זמן SQS מסתיר הודעה שנקראה. אם העיבוד ארוך יותר, היא חוזרת לתור.',
+'cost explorer':'כלי AWS לפירוק העלות לפי שירות, usage type ותגיות, לאורך זמן.',
+'distributed tracing':'מעקב אחרי בקשה בין שירותים, עם זמן לכל קפיצה (span).',
+'aws backup':'גיבויים מרוכזים לפי policy לשירותי AWS רבים, עם retention ו-vault lock.',
+'exponential backoff':'ניסיון חוזר עם המתנה שגדלה בכל פעם, ועם jitter אקראי.',
+'object lock':'מונע מחיקה או שינוי של אובייקטים ב-S3 לתקופה שנקבעה.',
+'versioning':'שמירת כל גרסה של אובייקט ב-S3, כך שאפשר לשחזר אחרי דריסה או מחיקה.',
+'presigned':'קישור עם תוקף שנותן גישה לאובייקט אחד ב-S3 בלי credentials.',
+'chart':'חבילת Helm: templates, values ברירת מחדל ו-metadata עם גרסה.',
+'nindent':'מוסיף שורה חדשה ואז הזחה לכל שורה. נפוץ אחרי include או toYaml.',
+'named template':'תבנית עם define, בדרך כלל ב-_helpers.tpl, שקוראים לה עם include.',
+'.values':'האובייקט ב-template שמחזיק את ה-values של המשתמש ואת ברירות המחדל של ה-chart.',
+'.release':'אובייקט מובנה ב-template: Name, Namespace ו-Revision של ה-release.',
+'.helmignore':'קבצים שלא נכנסים לחבילה של ה-chart, כמו .gitignore.',
+'yaml':'פורמט קונפיגורציה שבו הזחה קובעת מבנה, ומספרים ו-booleans מפוענחים לבד.',
+'subchart':'chart שתלוי בו, תחת charts/. מקבל values תחת המפתח של השם שלו.',
+'index.yaml':'הקובץ של chart repository שמפרט את ה-charts והגרסאות שבו.',
+'output block':'ערך שה-module חושף אחרי apply, ל-caller או לכלים אחרים.',
+'prevent_destroy':'lifecycle שמכשיל כל plan שמוחק או מחליף את המשאב.',
+'version constraint':'טווח גרסאות מותר. ~> 5.4 מתיר 5.4 ומעלה, אבל לא 6.0.',
+'provisioner':'הרצת פקודות על משאב אחרי יצירה. מוצא אחרון, כי זה לא נשמר ב-state.',
+'terraform_remote_state':'data source שקורא outputs מ-state אחר. דורש גישה לכל ה-state הזה.',
+'for expression':'הופך collection אחד לאחר ב-HCL, למשל map מתוך list.',
+'remote backend':'state משותף במקום אחד, עם נעילה ו-versioning, כמו S3.',
+'module':'יחידה לשימוש חוזר: ב-Terraform אוסף משאבים עם variables ו-outputs; ב-Node חבילה ב-node_modules.',
+'provider':'ספק חיצוני: ב-Terraform plugin שמדבר עם API של ענן; ב-OIDC וב-SSO ספק הזהויות; ב-Argo CD ספק ה-SCM.',
+'pipefail':'עם set -o, כישלון בכל פקודה ב-pipe מכשיל את כולו.',
+'xargs':'הופך שורות קלט לארגומנטים של הפקודה הבאה.',
+'df':'מראה מקום פנוי בכל מערכת קבצים. עם -i מראה inodes.',
+'fstab':'קובץ ב-/etc שקובע אילו מערכות קבצים מחוברות בעלייה. כדאי UUID ו-nofail.',
+'reverse dns':'שאילתה מכתובת IP לשם. שרתים שבודקים אותה (כמו sshd) מתעכבים כשהיא נתקעת.',
+'grep':'מחפש שורות לפי תבנית. -r לחיפוש בכל התיקיות.',
+'/etc/hosts':'מיפוי סטטי של שמות לכתובות, שנבדק לפני DNS לפי nsswitch.',
+'exit status':'מספר שתהליך מחזיר בסיום: 0 הצלחה, אחר כשלון. ב-shell הוא ב-$?.',
+'dmesg':'הודעות הקרנל: OOM killer, שגיאות דיסק ודרייברים.',
+'resolv.conf':'הקובץ שאומר ל-resolver לאיזה שרת DNS לפנות, ועם אילו search domains.',
+'ip route':'מציג את טבלת הניתוב, כולל ה-default gateway.',
+'ss':'מציג sockets. עם -tlnp: פורטים שמאזינים, ואיזה תהליך מחזיק כל אחד.',
+'tail':'מציג את סוף הקובץ. -f ממשיך להציג שורות חדשות.',
+'systemctl':'הפקודה לניהול שירותי systemd: start, stop, status, enable.',
+'journalctl':'קורא לוגים של systemd. -u לשירות, -p err לשגיאות בלבד.',
+'sed':'עורך זרם: מחליף טקסט בקבצים, למשל s/old/new/g עם -i.',
+'path variable':'רשימת התיקיות שה-shell מחפש בהן פקודות.',
+'ps':'מציג תהליכים (ps aux). crictl ps ו-docker ps מציגים קונטיינרים באותו אופן.',
+'execute permission':'הביט x: לקובץ מאפשר הרצה, לתיקייה מאפשר להיכנס אליה.',
+'sudo':'מריץ פקודה אחת כמשתמש אחר לפי חוקים מוגדרים, עם תיעוד, במקום התחברות כ-root.',
+'crlf':'סיום שורה של Windows. סקריפט כזה נכשל בלינוקס עם ^M.',
+'bash':'ה-shell הנפוץ. ל-sh (למשל dash) אין חלק מהיכולות שלו, כמו [[ ו-source.',
+'noexec':'אפשרות mount שחוסמת הרצת קבצים במערכת הקבצים, גם עם הביט x.',
+'authorized_keys':'הקובץ בשרת עם המפתחות הציבוריים שמותר להם להתחבר ב-SSH.',
+'file descriptor':'מספר שמייצג קובץ או socket פתוח. לכל תהליך יש מגבלה.',
+'chmod':'משנה הרשאות: 640 הם קריאה וכתיבה לבעלים, קריאה לקבוצה, כלום לאחרים.',
+'cap_net_bind_service':'capability שמאפשרת להאזין לפורט מתחת ל-1024 בלי root.',
+'ip address':'כתובת IPv4 של 32 ביטים. ה-prefix (/24) קובע כמה ביטים מזהים את הרשת.',
+'latency':'כמה זמן לוקח לחבילה להגיע. שונה מ-bandwidth, שהוא כמות לשנייה.',
+'bandwidth':'כמה נתונים עוברים בשנייה. שונה מ-latency, שהוא עיכוב.',
+'localhost':'הכתובת 127.0.0.1: שירות שמאזין עליה זמין רק מאותה מכונה.',
+'mx':'רשומת DNS שמפנה דומיין לשרתי הדואר שלו.',
+'nat':'Network Address Translation: משכתב כתובות, כך שמכונות פרטיות יוצאות דרך IP ציבורי.',
+'tcp':'פרוטוקול עם חיבור: handshake, אמינות, סדר ו-congestion control.',
+'udp':'פרוטוקול בלי חיבור ובלי הבטחות. DNS ו-QUIC רצים מעליו.',
+'traceroute':'מראה את הקפיצות שחבילה עוברת, ואת העיכוב בכל אחת.',
+'cdn':'רשת שרתים ב-edges קרובים למשתמשים, שמגישה תוכן מ-cache.',
+'subnetting':'חלוקת טווח כתובות לטווחים קטנים. /16 מתחלק לשישה-עשר /20.',
+'cors':'מנגנון בדפדפן: ה-API שולח Access-Control-Allow-* כדי שדף מ-origin אחר יקרא ממנו.',
+'502':'Bad Gateway: ה-proxy קיבל תשובה לא תקינה מה-upstream, או שהחיבור נכשל.',
+'connection refused':'אין תהליך שמאזין בפורט. timeout אומר שהחבילות נחסמות או נעלמות.',
+'401':'Unauthorized: לא הזדהית. 403: הזדהית, אבל אין לך הרשאה.',
+'aaaa':'רשומת DNS שממפה שם לכתובת IPv6. רשומת A ממפה ל-IPv4.',
+'301':'הפניה קבועה שדפדפנים שומרים ב-cache. 302 היא זמנית.',
+'rfc 1918':'הטווחים הפרטיים: 10.0.0.0/8, 172.16.0.0/12 ו-192.168.0.0/16.',
+'proxy':'שרת ביניים: forward יוצא בשם לקוחות, reverse עומד לפני שרתים.',
+'export var':'מגדיר משתנה ומעביר אותו ל-env של תהליכי הילד.',
+'layer cache':'cache של שכבות image: שכבה שלא השתנתה נלקחת ממנו. runner זמני מתחיל בלי cache.',
+'cert-manager':'controller ב-Kubernetes שמנפיק ומחדש תעודות TLS אוטומטית (למשל ACME).',
+'health check':'בדיקה אם משהו תקין: ב-load balancer אם target מקבל תעבורה; ב-Argo CD מה מצב המשאב.',
+'three-way handshake':'פתיחת חיבור TCP: SYN, SYN-ACK, ACK.',
+'continue-on-error':'הגדרה ב-step של GitHub Actions: הכישלון מדווח, אבל ה-job ממשיך.',
+'gitlab':'פלטפורמת Git עם CI מובנה: pipelines, runners, environments ו-registry.',
+'jenkinsfile':'הגדרת pipeline של Jenkins כקוד ב-repo, declarative או scripted.',
+'stash':'ב-Jenkins: שמירת קבצים זמנית בין stages שרצים על agents שונים.',
+'runner':'המכונה שמריצה jobs של CI. hosted מנוהל; self-hosted אצלך.',
+'github.ref':'ה-ref המלא של הריצה, למשל refs/heads/main. ref_name מכיל רק את השם.',
+'needs:':'תלות בין jobs: job מתחיל רק כשאלה שהוא צריך הסתיימו.',
+'workflow_dispatch':'טריגר שמריץ workflow ידנית, מה-UI או מה-API, עם inputs.',
+'.github/workflows':'התיקייה שבה GitHub מחפש קובצי workflow. שם אחר, ושום דבר לא רץ.',
+'ci_job_token':'token אוטומטי לכל job ב-GitLab, עם הרשאות מוגבלות ל-API ולפרויקטים אחרים.',
+'actions/checkout':'ה-action שמושך את הקוד. כברירת מחדל רק commit אחד (depth 1).',
+'declarative pipeline':'Jenkinsfile מובנה עם pipeline {}, stages, when ו-post.',
+'paths:':'מסנן ב-trigger של workflow: רץ רק כשקבצים מתאימים השתנו.',
 };
 const CODEX_KEYS=Object.keys(CODEX).sort((a,b)=>b.length-a.length);
-function conceptsFor(q){
-  const hay=(q.q+' '+q.o.filter(o=>q.a.includes(o[0])).map(o=>o[1]).join(' ')).toLowerCase();
-  const found=[];
+// Terms match as whole words (a plural s/es is fine), with backticks dropped and '-' or '/' read as
+// spaces. A plain indexOf found 'pod' inside 'podSelector', and missed 'moved block' when the
+// question wrote `moved` block.
+const codexNorm=s=>String(s).toLowerCase().replace(/`/g,'').replace(/[-\/]/g,' ');
+const CODEX_RX={};
+CODEX_KEYS.forEach(k=>{ CODEX_RX[k]=new RegExp('(?<![a-z0-9_.])'+codexNorm(k).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?:e?s)?(?![a-z0-9_])'); });
+function codexHits(text,max,skip){
+  const hay=codexNorm(text), found=[];
   for(const k of CODEX_KEYS){
-    if(found.length>=5) break;
-    if(hay.indexOf(k)>=0 && !found.some(f=>f.indexOf(k)>=0 || k.indexOf(f)>=0)) found.push(k);
+    if(found.length>=max) break;
+    if(skip&&skip.has(k)) continue;
+    if(CODEX_RX[k].test(hay) && !found.some(f=>f.indexOf(k)>=0 || k.indexOf(f)>=0)) found.push(k);
   }
   return found;
+}
+function conceptsFor(q){
+  return codexHits(q.q+' '+q.o.filter(o=>q.a.includes(o[0])).map(o=>o[1]).join(' '),5);
 }
 const STUDY_COST=0;        // study cards are free
 function openStudy(){
@@ -4271,7 +4491,7 @@ function openStudy(){
   const box=$('studyConcepts'); box.innerHTML='';
   if(!keys.length){
     const d=document.createElement('div'); d.className='ds';
-    d.textContent='No indexed services detected in this question.'; box.appendChild(d);
+    d.textContent='לא נמצאו בשאלה הזאת מונחים מהמילון.'; d.dir='rtl'; box.appendChild(d);
   }
   keys.forEach(k=>{
     const d=document.createElement('div'); d.className='concept';
@@ -4768,7 +4988,7 @@ function ivReveal(){
   ivRenderPoints();
   $('ivTrap').innerHTML='<b>⚠️ הטעות שמורידה נקודות</b>'+qtx(it.w);
   $('ivFollow').innerHTML='<b>Likely follow-up</b>'+qtx(it.f);
-  $('ivRef').innerHTML=it.r?'📘 <a href="'+esc(it.r)+'" target="_blank" rel="noopener">Documentation</a>':'';
+  $('ivRef').innerHTML=it.r?'📘 <a href="'+esc(it.r)+'" target="_blank" rel="noopener">'+esc(docLabel(it.r))+'</a>':'';
   $('ivAsk').classList.add('hidden');
   $('ivAns').classList.remove('hidden');
   $('ivAns').scrollIntoView({behavior:'smooth',block:'start'});
@@ -5286,15 +5506,7 @@ function hintsFor(q){
   return out;
 }
 function distractorConcepts(q){
-  const wrongTxt=q.o.filter(o=>!q.a.includes(o[0])).map(o=>o[1]).join(' ').toLowerCase();
-  const right=new Set(conceptsFor(q));
-  const out=[];
-  for(const k of CODEX_KEYS){
-    if(out.length>=3) break;
-    if(right.has(k)) continue;
-    if(wrongTxt.indexOf(k)>=0) out.push(k);
-  }
-  return out;
+  return codexHits(q.o.filter(o=>!q.a.includes(o[0])).map(o=>o[1]).join(' '),3,new Set(conceptsFor(q)));
 }
 // The traps recorded for a sector, phrased as mistakes rather than as answers — safe to show
 // before the question is answered, because they describe the family, not this one.
@@ -5348,7 +5560,7 @@ function renderBriefing(){
     b.concepts.forEach(k=>card(k,CODEX[k]));
   } else {
     section('Briefing');
-    card('general','This one is reasoning rather than a single term. Read the scenario twice, then rule out options that skip a step or fix the symptom instead of the cause.');
+    card('scenario','השאלה הזאת בודקת שיקול דעת ולא מונח מסוים. קרא את התרחיש פעמיים, ופסול תשובות שמדלגות על שלב או מטפלות בסימפטום במקום בסיבה.');
   }
   if(b.distractors.length){
     section('Also referenced — know the difference');
@@ -9265,6 +9477,17 @@ function exFallback(sec){ return learnCallouts(sec,'key').slice(0,3); }
 // Ship It questions are authored with a Hebrew line for every option (q.y, in option order),
 // an interview tip (q.x) and the documentation page the answer was checked against (q.r).
 // Nothing has to be split or guessed, so the panel is just those, in that order.
+// A doc link says whose documentation it opens ("Kubernetes docs", "semver.org"), not just "Documentation".
+const DOC_SITES={'kubernetes.io':'Kubernetes docs','argo-cd.readthedocs.io':'Argo CD docs','helm.sh':'Helm docs',
+  'docs.aws.amazon.com':'AWS docs','aws.amazon.com':'AWS','docs.docker.com':'Docker docs','docs.github.com':'GitHub docs',
+  'docs.gitlab.com':'GitLab docs','www.jenkins.io':'Jenkins docs','jenkins.io':'Jenkins docs','man7.org':'Linux man page',
+  'github.com':'GitHub','developer.mozilla.org':'MDN'};
+function docLabel(url){
+  let h='', p='';
+  try{ const u=new URL(url); h=u.hostname; p=u.pathname; }catch(e){ return 'Documentation'; }
+  if(h==='developer.hashicorp.com') return p.indexOf('/terraform')===0?'Terraform docs':'HashiCorp docs';
+  return DOC_SITES[h]||h.replace(/^www\./,'');
+}
 function authoredExplain(q,picked){
   const lv=q.lv?'Mid–Senior':'Junior–Mid', kd=q.k==='t'?'\u{1f527} Troubleshooting':'\u{1f4d8} Knowledge';
   const out=['<div class="exmeta"><span class="tag">'+kd+'</span><span class="tag">'+lv+'</span></div>',
@@ -9278,7 +9501,7 @@ function authoredExplain(q,picked){
         '<i class="exhe" dir="rtl" lang="he">'+mdInline(q.y[i]||'')+'</i></span></div>';
     }).join('')+'</div>'];
   if(q.x) out.push('<div class="extip" dir="rtl" lang="he"><b>\u{1f3a4} איך לענות בראיון</b>'+mdInline(q.x)+'</div>');
-  if(q.r) out.push('<div class="exref"><a href="'+esc(q.r)+'" target="_blank" rel="noopener">\u{1f4c4} Documentation</a></div>');
+  if(q.r) out.push('<div class="exref"><a href="'+esc(q.r)+'" target="_blank" rel="noopener">\u{1f4c4} '+esc(docLabel(q.r))+'</a></div>');
   return out.join('');
 }
 function renderExplain(q,picked,ok,timedOut){
@@ -11644,7 +11867,7 @@ if(TEST){
       const el=[...$('qOpts').children].find(e=>e.dataset.ltr===l); if(el) el.onclick();
     },
     launchGame, gStep, endGame, checkBadges, renderShop, renderBadges, rankFor,
-    openStudy, closeStudy, conceptsFor, CODEX,
+    openStudy, closeStudy, conceptsFor, CODEX, docLabel, codexHits,
     STORE_PERM, STORE_CONS, applyTheme, invCount, renderInv, renderDaily, bumpDaily,
     buyCons, usePotion, useFreeze, THEME_LIST, themeOwned, renderThemes,
     dueForReview, srSchedule,
@@ -11739,7 +11962,7 @@ if(TEST){
     LEARN_T,
     startStudyMode, nextStudyQuestion, buildBriefing, revealStudyQuestion, exitStudyMode,
     renderStudyPicker, hintsFor, distractorConcepts, STUDY_HINTS, tickRead,
-    get studyMode(){return studyMode;}, get briefingFor(){return briefingFor;}, get readT(){return readT;}, renderResume, badgeProgress, medalFor, openPicker,
+    get studyMode(){return studyMode;}, get briefingFor(){return briefingFor;}, set briefingFor(v){briefingFor=v;}, renderBriefing, get readT(){return readT;}, renderResume, badgeProgress, medalFor, openPicker,
     PICK_COST, logExam, renderExamLog, toggleHaptics, maybeOnboard, finishOnboard, buzz,
     setQuestion(i){ loadQuestionInto(i); },
     tapGame(x,y){ G&&G.tap&&G.tap(x,y); },
