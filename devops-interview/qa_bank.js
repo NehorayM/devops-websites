@@ -224,13 +224,17 @@ async function runPaper(n,{answerAll=true,rightRatio=0.6,flagEvery=7}={}){
 async function projectPaperCheck(){
   const t=T();
   if(!t.PROJ) return;
-  const n=t.CORE_PAPERS+1;
+  for(let n=t.CORE_PAPERS+1;n<=t.PAPER_COUNT;n++) await projectPaperWalk(t,n);
+  t.go('homeScreen');
+}
+async function projectPaperWalk(t,n){          // every project exam, start to result
+  const k=n-t.CORE_PAPERS;
   delete t.P.lastPaper; t.simClearSave();
   t.startPaper(n,'exam'); await sleep(40);
   const sim=t.sim;
   ok(!!sim&&sim.paper===n,'the project exam started');
   if(!sim) return;
-  eq($('qSector').textContent,'PROJECT EXAM 1','the header names it as a project exam');
+  eq($('qSector').textContent,'PROJECT EXAM '+k,'the header names it as a project exam');
   eq($('qBadge').textContent,'My project','and the badge says whose questions these are');
   ok($('exBrief').classList.contains('hidden'),'a project exam shows no glossary briefing');
   const len=sim.qs.length; let right=0, heb=0;
@@ -252,18 +256,17 @@ async function projectPaperCheck(){
   eq(t.route,'simRevScreen','review screen after the last project question');
   $('simRevSubmit').click(); await sleep(60);
   eq(t.route,'simDoneScreen','result screen after the project exam');
-  ok($('simVerdict').textContent.indexOf('Project exam 1')===0,'the verdict names the project exam ('+$('simVerdict').textContent.slice(0,30)+')');
+  ok($('simVerdict').textContent.indexOf('Project exam '+k)===0,'the verdict names the project exam ('+$('simVerdict').textContent.slice(0,30)+')');
   ok(/^Your project/.test($('simDomHead').textContent),'the breakdown is headed for the project');
   eq($('simDomList').children.length,1,'and is one line, not four DevOps domains');
   ok($('simMeta').textContent.indexOf(right+' / '+len+' correct')===0,'the count matches what was answered');
   const scaled=parseInt($('simScore').textContent,10);
   eq(scaled,t.scoreScaled(right/len),'one subject, so the score is the plain share of right answers');
-  eq($('simAgain').textContent,t.PAPER_COUNT>n?'Project exam 2 ›':'Back to exams','the next step stays inside the project exams');
+  eq($('simAgain').textContent,t.PAPER_COUNT>n?'Project exam '+(k+1)+' ›':'Back to exams','the next step stays inside the project exams');
   const rec=t.paperRec(n);
   ok(!!rec&&rec.tries>=1,'the attempt was stored under its paper number');
   eq(t.domainStats().reduce((a,d)=>a+d.pool,0),t.CORE_N,'the DevOps domains still hold the DevOps bank only');
   ok(((t.P.secStats||{})[t.PROJ_SEC]||{}).a>=len,'the answers were counted under the project subject');
-  t.go('homeScreen');
 }
 
 function csvChecks(){

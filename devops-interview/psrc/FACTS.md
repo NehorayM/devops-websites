@@ -11,6 +11,7 @@ mechanical ones; the rest is on the author. Private addresses, tool versions and
 Exam 1 (`p1.py`) covers: access through SSM, the two ALBs, environments and Git Flow, the three repositories,
 GitOps basics, Terraform modules / staged apply / the Helm handover, the daily cycle in outline, Buildah, the
 chart and Prometheus traps, cost and capacity. Do not repeat its stems.
+Exam 2 (`p2.py`) is written from the section below; exams 3-5 must not repeat its stems either.
 
 ## Exam 2: the daily cycle and Terraform in depth
 

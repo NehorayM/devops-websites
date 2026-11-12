@@ -2,7 +2,7 @@
 "v": 1,
 "section": "My project: weather-app on EKS",
 "short": "My project",
-"papers": 1,
+"papers": 2,
 "questions": [
 {
 "s": 24,
@@ -2278,6 +2278,2281 @@
 "lv": 1,
 "k": "k",
 "r": "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html"
+},
+{
+"s": 24,
+"q": "A developer edits the pipeline file on a feature branch so that its job assumes `weather-tf-apply`. The job fails at the credentials step. What stopped it?",
+"o": [
+[
+"A",
+"The role's trust policy checks the token's claims, and a token issued for that branch does not match `main`"
+],
+[
+"B",
+"The conftest gate scans the pipeline file and rejects any job that names the apply role"
+],
+[
+"C",
+"The runner keeps the apply role's access key in a file that only the `main` job can read"
+],
+[
+"D",
+"GitLab hides the apply job's variables from branches whose names do not start with the `release/` prefix"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ה-token ש-GitLab מנפיק ל-job כולל את ה-branch. ה-trust policy של התפקיד מתנה את ההנחה ב-claim הזה, ולכן AWS מסרב עוד לפני שהתפקיד ניתן.",
+"conftest בודק את ה-plan של Terraform ולא את קובץ ה-pipeline. העצירה קרתה בשלב קבלת ה-credentials.",
+"אין מפתחות קבועים על ה-runner. ה-credentials זמניים ומתקבלים בכל job מחדש דרך OIDC.",
+"ההגנה כאן אינה בצד GitLab. גם אם ה-job רץ ומבקש את התפקיד, AWS הוא שמסרב לפי תוכן ה-token."
+],
+"x": "הנקודה החשובה: ההגבלה נאכפת ב-AWS ולא בקובץ ה-pipeline, שכל מפתח יכול לערוך. בקרה שהצד המוגבל יכול לשנות בעצמו אינה בקרה.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html#idp_oidc_Create_GitHub"
+},
+{
+"s": 24,
+"q": "What does the shared `root.hcl` give every Terragrunt unit?",
+"o": [
+[
+"A",
+"The AWS credentials of the owner, written in plain text so that the runner does not need a role"
+],
+[
+"B",
+"The resource definitions themselves, so that the six units are only empty folders that inherit one big module"
+],
+[
+"C",
+"A fixed order in which the units run, written out as a numbered list of folders to apply"
+],
+[
+"D",
+"Inputs from the tfvars file, a state key per unit, generated provider blocks, a lock timeout and a retry rule"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין credentials בקובץ, והוא נמצא ב-git. ה-runner מקבל הרשאות זמניות דרך OIDC.",
+"כל יחידה מצביעה על מודול משלה עם משאבים משלה. הקובץ המשותף מחזיק הגדרות רוחב ולא משאבים.",
+"הסדר נגזר מהתלויות שכל יחידה מצהירה עליהן ולא מרשימה ממוספרת. `root.hcl` עוסק בהגדרות משותפות.",
+"נכון. הקובץ מרכז את מה שהיה חוזר בכל יחידה: קלטים, הגדרת backend עם מפתח נפרד, providers, המתנה לנעילה וניסיון חוזר על שגיאת רשת מוכרת."
+],
+"x": "התועלת היא DRY: backend ו-providers נכתבים פעם אחת ונוצרים לכל יחידה. ציין שהקובץ מחזיק גם את ההתנהגות התפעולית, כמו lock timeout ו-retry, במקום אחד.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/backend/s3"
+},
+{
+"s": 24,
+"q": "An engineer opens a unit's folder to read the generated backend file and finds nothing there. The unit plans fine. Where is the file?",
+"o": [
+[
+"A",
+"In the repository root next to `root.hcl`, where one backend file serves all six units together"
+],
+[
+"B",
+"In the state bucket, where the generated files are uploaded so that all the units can share them"
+],
+[
+"C",
+"Nowhere: Terragrunt passes the backend settings in memory, and no file is ever written to the local disk"
+],
+[
+"D",
+"In the unit's `.terragrunt-cache` copy, because Terragrunt 1.x always runs Terraform from that directory"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"לכל יחידה מפתח state משלה, ולכן אין קובץ backend אחד משותף. הקובץ נוצר בנפרד בעותק של כל יחידה.",
+"ב-bucket נמצאים ה-state והעתק ה-tfvars. קבצים שנוצרים לריצה נשארים מקומיים, בתיקיית המטמון.",
+"הקובץ נכתב בפועל, רק לא במקום שבו חיפשו. Terraform צריך בלוק backend בקבצים שהוא טוען.",
+"נכון. Terragrunt מעתיק את המודול לתיקיית המטמון, מייצר שם את קובצי ה-backend וה-providers, ומריץ משם. בתיקיית היחידה עצמה נשאר רק קובץ ההגדרה שלה."
+],
+"x": "פרט קטן שמראה ניסיון אמיתי עם הכלי. מי שמנסה להריץ `terraform` ישירות בתיקיית היחידה יגלה שאין שם backend, וזו הסיבה שעובדים רק דרך Terragrunt.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/backend/s3"
+},
+{
+"s": 24,
+"q": "Stage 2 of an older morning run failed with `BucketAlreadyOwnedByYou`. What had gone wrong in the ordering?",
+"o": [
+[
+"A",
+"Bucket versioning was enabled, which makes S3 reject a create call for an existing prefix"
+],
+[
+"B",
+"An IAM policy that referenced the kept buckets was applied before they were imported, so Terraform tried to create them"
+],
+[
+"C",
+"The buckets were imported twice in a row, and the second import collided with the first one in the state file and stopped the stage"
+],
+[
+"D",
+"Another AWS account had taken the bucket names overnight, which S3 reports with this exact error"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"versioning משפיע על גרסאות של אובייקטים ולא על יצירת bucket. הוא לא קשור לשגיאה הזו ולא לסדר השלבים.",
+"נכון. ה-policy הפנה למשאבי ה-buckets, ולכן Terraform משך אותם לתוך ה-apply. הם לא היו ב-state אבל כן היו קיימים ב-AWS, ולכן היצירה נכשלה.",
+"ייבוא כפול נותן שגיאה שהמשאב כבר מנוהל ב-state. השגיאה כאן מגיעה מ-S3 עצמו, בזמן ניסיון ליצור bucket.",
+"שם שתפוס אצל חשבון אחר מחזיר BucketAlreadyExists. הנוסח OwnedByYou אומר שה-bucket שלך וכבר קיים."
+],
+"x": "תלות ב-Terraform מושכת משאבים ל-apply גם אם לא התכוונת. כל מה שמפנה למשאב שנשמר חייב לרוץ אחרי שהמשאב נכנס ל-state, אחרת Terraform ינסה ליצור אותו.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/import"
+},
+{
+"s": 24,
+"q": "The evening script first destroys the WAF association on the controller's ALB, and only then deletes the routes. What does that order avoid?",
+"o": [
+[
+"A",
+"A Terraform resource left pointing at an ALB that no longer exists, which would fail the later destroy"
+],
+[
+"B",
+"A flood of blocked-request alerts that the WAF sends when its target group is emptied"
+],
+[
+"C",
+"A short window in which the site is served without TLS while the ALB is being drained"
+],
+[
+"D",
+"A charge for a full extra month of WAF, which AWS bills whenever the ALB is deleted before its association"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ה-association הוא משאב של Terraform שמפנה ל-ALB שה-controller יצר. אם ה-ALB נעלם קודם, Terraform נשאר עם משאב שהיעד שלו חסר, וה-destroy נתקע עליו.",
+"WAF לא שולח התראות על ריקון target group. הוא בודק בקשות נכנסות, וכשאין ALB פשוט אין מה לבדוק.",
+"ל-WAF אין קשר ל-TLS, שמסתיים ב-listener של ה-ALB. הסדר נועד לשמור על state עקבי ולא על הצפנה.",
+"החיוב על WAF אינו תלוי בסדר המחיקה. הסיבה היא טכנית: משאב ב-state שמאבד את היעד שלו."
+],
+"x": "הכלל: מפרקים בסדר הפוך מההקמה. ה-association נוצר אחרון, אחרי שה-ALB קיים, ולכן הוא נהרס ראשון, לפני שה-ALB נעלם.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/destroy"
+},
+{
+"s": 24,
+"q": "A plan of the `kubernetes` unit, started while the tunnel was down, used to fail with long and confusing provider errors. What does the unit do now?",
+"o": [
+[
+"A",
+"It falls back to the cluster's public endpoint, which is enabled for the duration of the plan"
+],
+[
+"B",
+"It opens a new SSM tunnel of its own on a random local port for every single plan it runs"
+],
+[
+"C",
+"A hook runs `kubectl get --raw /readyz` before plan and apply, and stops with a clear failure"
+],
+[
+"D",
+"It skips each `kubernetes_*` resource and plans just the AWS resources of that unit"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"לקלאסטר אין endpoint ציבורי, והפרויקט לא פותח אחד זמנית. הגישה היא רק דרך ה-tunnel.",
+"פתיחת ה-tunnel נשארת באחריות הסקריפט של הפרויקט. היחידה רק בודקת שהוא קיים, ולא יוצרת אחד משלה.",
+"נכון. before_hook בודק שה-API של הקלאסטר עונה לפני ש-Terraform מתחיל. אם ה-tunnel סגור, הכישלון מיידי וברור, במקום שגיאות של providers שמסתירות את הסיבה.",
+"דילוג שקט היה מייצר plan חלקי ומטעה. הפרויקט העדיף כישלון מוקדם ומפורש על תוצאה שנראית תקינה."
+],
+"x": "הרעיון: בודקים תנאי מקדים בפקודה זולה לפני פעולה יקרה. הודעת שגיאה אחת וברורה שווה יותר ממסך של שגיאות אמיתיות שמצביעות על הכיוון הלא נכון.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/providers"
+},
+{
+"s": 24,
+"q": "After that interrupted destroy, the next Terraform run refused to start because the state was locked. No run was active. What is the right move?",
+"o": [
+[
+"A",
+"Delete the whole state object from the bucket, so the next run begins from a clean and unlocked state"
+],
+[
+"B",
+"Wait a full day, because an S3 lock file expires automatically after twenty-four hours"
+],
+[
+"C",
+"Confirm that nothing is running, then release the stale lock with `terraform force-unlock` and its lock id"
+],
+[
+"D",
+"Pass `-lock=false` on every command from now on, since the lock has proven to be unreliable"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"מחיקת ה-state מאבדת את הידע על כל מה שעדיין קיים ב-AWS. המשאבים היו נשארים יתומים, והיה צריך לנקות אותם ידנית.",
+"לקובץ הנעילה אין תפוגה אוטומטית. הוא נשאר עד שהריצה משחררת אותו או עד שמשחררים אותו במפורש.",
+"נכון. ריצה שנקטעה לא שחררה את הנעילה. אחרי שמוודאים שאין ריצה פעילה, `force-unlock` עם מזהה הנעילה משחרר אותה, וזה מה שנעשה בפרויקט.",
+"ביטול הנעילה לתמיד פותח פתח לשתי ריצות במקביל שמשחיתות את ה-state. הנעילה עבדה כמתוכנן, רק הריצה נקטעה."
+],
+"x": "הדגש בראיון את התנאי: `force-unlock` רק אחרי שווידאת שאין ריצה חיה. שחרור נעילה של ריצה פעילה הוא הדרך הבטוחה להשחית state.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/force-unlock"
+},
+{
+"s": 24,
+"q": "How many golden AMIs does the project keep per server, and how does Terraform learn the newest one?",
+"o": [
+[
+"A",
+"Seven are kept, one per weekday, and the script picks the image by the current day's name"
+],
+[
+"B",
+"All of them are kept for a year, and the launch template always resolves the `$Latest` alias"
+],
+[
+"C",
+"The newest three are kept, and the bake script writes the new ids into the tfvars file"
+],
+[
+"D",
+"Only the latest one is kept, and Terraform finds it with a `most_recent` data source by name"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"אין בפרויקט סבב לפי ימי השבוע. נשמרים שלושת האחרונים לפי סדר יצירה, והשאר נמחקים.",
+"שמירת כל ה-AMIs הייתה צוברת עלות snapshots בלי תועלת. השרתים האלה גם אינם מאחורי launch template עם alias.",
+"נכון. שלוש גרסאות נותנות מרווח לחזור אחורה בלי לשלם על אחסון של כל ההיסטוריה. המזהה החדש נכתב ל-tfvars, וממנו Terraform מקים את השרת בבוקר.",
+"עם AMI יחיד אין לאן לחזור אם האפייה האחרונה פגומה. בפרויקט המזהים נכתבים במפורש ולא נשלפים לפי החדש ביותר."
+],
+"x": "הסבר למה מזהה מפורש עדיף על `most_recent`: הוא ניתן לשחזור. כשיודעים בדיוק מאיזה image שרת קם, אפשר לחזור לגרסה קודמת בשינוי שורה אחת.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html"
+},
+{
+"s": 24,
+"q": "An early version of the morning script ran `terraform import` for the kept resources before the cluster existed, and it failed with `Invalid provider configuration`. Why?",
+"o": [
+[
+"A",
+"The AWS provider refuses to import anything until a default VPC exists in the region"
+],
+[
+"B",
+"`terraform import` configures every provider, and the kubernetes and helm providers need a live cluster"
+],
+[
+"C",
+"`terraform import` needs the state lock, and that lock is created once the cluster is up"
+],
+[
+"D",
+"An S3 bucket or ECR repository can only be imported through the kubernetes provider's API once the cluster is registered"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אין ל-provider של AWS דרישה כזו, וה-VPC של הפרויקט כבר היה קיים בשלב הזה. השגיאה הגיעה מ-providers של הקלאסטר.",
+"נכון. גם כשמייבאים משאב של AWS, Terraform מאתחל את כל ה-providers בתצורה. ה-providers של kubernetes ו-helm קוראים את פרטי הקלאסטר, וכשהוא לא קיים האתחול נכשל.",
+"הנעילה נמצאת ב-S3 ולא תלויה בקלאסטר בשום צורה. שגיאת נעילה גם נראית אחרת לגמרי משגיאת תצורת provider.",
+"משאבי AWS מיובאים דרך ה-provider של AWS בלבד. הבעיה לא הייתה במשאב המיובא אלא ב-providers האחרים שאותחלו באותה ריצה."
+],
+"x": "הלקח הכללי: פקודות של Terraform מאתחלות את כל ה-providers, לא רק את זה של המשאב שנוגעים בו. לכן בפרויקט הייבוא הוזז אחרי הקלאסטר וה-tunnel.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/block/provider"
+},
+{
+"s": 24,
+"q": "The Terragrunt layout has six units. Which list is correct?",
+"o": [
+[
+"A",
+"networking, compute, databases, object-storage, identity, dns"
+],
+[
+"B",
+"dev, staging, prod, shared, monitoring, security"
+],
+[
+"C",
+"bootstrap, eks, argocd, vault, jenkins, gitlab"
+],
+[
+"D",
+"vpc, persistent, cicd, infrastructure, kubernetes, k8s-alb"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"חלוקה לפי סוג שירות נשמעת סבירה, אבל היא לא זו של הפרויקט. היחידות כאן נחתכות לפי מחזור חיים: מה נהרס, מה נשאר ומתי.",
+"זו חלוקה לפי סביבות, שנפוצה בפרויקטים אחרים. כאן שלוש הסביבות הן namespaces בקלאסטר אחד, והיחידות מחולקות לפי שכבות תשתית.",
+"ArgoCD ו-Vault מותקנים בתוך הקלאסטר דרך GitOps ולא כיחידות Terraform. החלוקה האמיתית היא לפי שכבות ומחזור חיים.",
+"נכון. רשת, משאבים שנשמרים, שרתי ה-CI/CD, הקלאסטר וסביבתו, המשאבים שבתוך הקלאסטר, וה-association של ה-WAF ל-ALB של ה-controller. לכל יחידה state משלה."
+],
+"x": "אל תדקלם רק את השמות. הסבר את קו החיתוך: כל יחידה היא קבוצת משאבים עם אותו מחזור חיים ואותן תלויות, ולכן אפשר להקים, להרוס או להחריג אותה בנפרד.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/composition"
+},
+{
+"s": 24,
+"q": "On a small instance the runner was killed in the middle of `terraform plan`, with no Terraform error in the log. What did the project measure, and what changed?",
+"o": [
+[
+"A",
+"The instance ran out of CPU credits, so the runner was switched to unlimited burst mode"
+],
+[
+"B",
+"A plan peaks at about 1.3 GB of memory, so the runner was moved to a t3.medium"
+],
+[
+"C",
+"The job hit GitLab's one-hour timeout, so the plan was split into six parallel jobs"
+],
+[
+"D",
+"The plan wrote 30 GB of provider cache to disk, so the root volume was tripled in size"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"מחסור ב-credits מאט את ה-instance אבל לא הורג תהליכים. תהליך שנעלם בלי שגיאה מצביע על הרג בגלל זיכרון.",
+"נכון. תהליך שנהרג בלי הודעת שגיאה הוא סימן ל-OOM. המדידה הראתה שיא של כ-1.3GB ב-plan עם כל ה-providers, ולכן נבחר instance עם 4GB.",
+"timeout של job נרשם בלוג במפורש כסיבת העצירה. כאן התהליך נהרג באמצע, בלי שום הודעה של GitLab.",
+"מטמון ה-providers שוקל מאות מגה-בייטים לכל היותר. הבעיה שנמדדה הייתה זיכרון ולא שטח דיסק."
+],
+"x": "תאר את השיטה ולא רק את התוצאה: תהליך שמת בשקט, חשד ל-OOM, מדידת שיא הזיכרון, ובחירת גודל לפי המדידה. כך מצדיקים עלות של instance גדול יותר.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.gitlab.com/runner/"
+},
+{
+"s": 24,
+"q": "The first OIDC login from a CI job failed: AWS could not validate GitLab's token. GitLab's logs showed nothing. Where was the request stopped?",
+"o": [
+[
+"A",
+"At the runner's security group, which had no inbound rule that lets AWS call the job back"
+],
+[
+"B",
+"At GitLab itself, which serves its public keys only to clients that present a valid personal access token"
+],
+[
+"C",
+"At the ALB listener rule, where AWS's addresses were missing from the source-IP allow list"
+],
+[
+"D",
+"At the WAF, which blocked requests without a User-Agent; an allow rule for the two OIDC paths fixed it"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"AWS לא פונה אל ה-runner. הוא פונה אל GitLab כדי לאמת את החתימה, ולכן החסימה הייתה בדרך ל-GitLab.",
+"נקודות הקצה של OIDC ציבוריות בהגדרה ואינן דורשות אימות. הבקשות פשוט לא הגיעו ל-GitLab.",
+"זה כיוון הגיוני, אבל החסימה שנמצאה הייתה ב-WAF ולפי כותרת חסרה. הפתרון היה כלל allow לפי נתיב.",
+"נכון. AWS מושך את מסמך הגילוי ואת המפתחות הציבוריים מ-GitLab, בבקשות בלי User-Agent. כלל של ה-WAF חסם אותן, ולכן נוסף כלל allow לשני הנתיבים האלה בלבד."
+],
+"x": "כשהיעד לא רואה את הבקשה בלוגים, מחפשים במה שעומד לפניו: WAF, load balancer, security group. ושים לב שהתיקון צר ככל האפשר: שני נתיבים ציבוריים, לא ביטול הכלל.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.gitlab.com/ci/secrets/id_token_authentication/"
+},
+{
+"s": 24,
+"q": "The Apply job in the Terraform pipeline is manual, even on `main`. What does that buy?",
+"o": [
+[
+"A",
+"A person reads the plan and decides when the change lands, since an infrastructure apply is hard to undo"
+],
+[
+"B",
+"GitLab cannot start a job on a protected branch without a click from a maintainer"
+],
+[
+"C",
+"It lets the plan and the apply run under the same role, which automatic jobs are not allowed to do in GitLab"
+],
+[
+"D",
+"A manual job is free, while automatic jobs on `main` are billed per minute even on a self-hosted runner"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. שינוי תשתית לא תמיד ניתן להחזיר ב-revert. עצירה ידנית נותנת רגע לקרוא את ה-plan ולבחור זמן, בלי לוותר על כך שה-pipeline הוא שמבצע.",
+"GitLab מריץ jobs על branch מוגן באופן אוטומטי כברירת מחדל. הידניות כאן היא בחירה של הפרויקט.",
+"ה-plan וה-apply משתמשים בתפקידים שונים בכוונה. לסוג ההפעלה של ה-job אין קשר לבחירת התפקיד.",
+"על runner עצמי אין חיוב לפי דקות של GitLab. השיקול הוא בקרה על שינויים ולא עלות."
+],
+"x": "אמור שזה continuous delivery ולא continuous deployment: הכול מוכן אוטומטית, והלחיצה האחרונה היא של אדם. בתשתית זה מקובל, כי המחיר של טעות גבוה.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.gitlab.com/ci/jobs/job_control/#create-a-job-that-must-be-run-manually"
+},
+{
+"s": 24,
+"q": "The first Terraform plan that ran under the pipeline's role proposed changes to the cluster's access entries and to a KMS key policy, with no code change. What was it about to do?",
+"o": [
+[
+"A",
+"Add the pipeline role next to the laptop identity, so that both would be cluster admins"
+],
+[
+"B",
+"Delete the node group's role, because the pipeline role has no permission to pass it"
+],
+[
+"C",
+"Move cluster-admin and key administration from the laptop identity to the pipeline role, as the new creator"
+],
+[
+"D",
+"Rotate the cluster's certificate authority, which EKS requires whenever a different caller reads the cluster"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"ה-plan לא הוסיף אלא החליף: הערך נגזר מהזהות הנוכחית בלבד. הבעלים היה מאבד את הגישה, וה-pipeline היה מקבל אותה.",
+"חוסר הרשאה היה מכשיל את ה-apply ולא מופיע כשינוי מתוכנן. ה-plan הראה העברת בעלות, לא מחיקת תפקיד.",
+"נכון. ההגדרה שנותנת admin ליוצר הקלאסטר, וברירת המחדל של מנהלי המפתח, נגזרות מהזהות שמריצה את Terraform. כשהזהות התחלפה, ה-plan רצה להעביר את ההרשאות אליה.",
+"קריאת פרטי קלאסטר על ידי זהות אחרת לא מחליפה את ה-CA. השינוי היה בהרשאות גישה ולא בתעודות."
+],
+"x": "הלקח: ערך שנגזר מזהות המריץ הופך plan לתלוי במי שמריץ אותו. לפני שמעבירים Terraform ל-CI בודקים מה בקוד תלוי ב-caller, וקוראים את ה-plan הראשון שורה אחר שורה.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html"
+},
+{
+"s": 24,
+"q": "Now and then a unit failed with `TLS handshake timeout` while talking to the cluster through the tunnel, and passed on a second try. How is that handled?",
+"o": [
+[
+"A",
+"The script wraps the whole morning in a loop that restarts it from the first stage on any error"
+],
+[
+"B",
+"TLS verification is switched off for the kubernetes provider, so the handshake cannot time out any more on the tunnel"
+],
+[
+"C",
+"Each unit runs `sleep 300` before it starts, to give the SSM tunnel time to warm up"
+],
+[
+"D",
+"`root.hcl` declares the error as retryable, so Terragrunt reruns the command without failing the morning"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"התחלה מחדש על כל שגיאה הייתה מסתירה תקלות אמיתיות ומבזבזת זמן. ה-retry מוגבל לשגיאה אחת ומוגדרת.",
+"ביטול אימות TLS לא מונע timeout, ורק מחליש את האבטחה. הבעיה היא חיבור רגעי ולא התעודה.",
+"המתנה קבועה מאריכה כל ריצה ולא מבטיחה כלום. ניסיון חוזר מגיב רק כשהתקלה באמת קורית.",
+"נכון. זו שגיאה חולפת ומוכרת של חיבור דרך ה-tunnel. במקום שריצה של עשרים דקות תיפול עליה, היא מוגדרת כשגיאה שמותר לנסות אחריה שוב."
+],
+"x": "הבחנה חשובה בראיון: מנסים שוב רק על שגיאות שידוע שהן חולפות, ומגדירים אותן במפורש. retry גורף הופך באג אמיתי לבעיה שמופיעה רק לפעמים.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/tutorials/automation/automate-terraform"
+},
+{
+"s": 24,
+"q": "A script line `terraform state list | grep -q <address>` under `set -o pipefail` failed at random with exit code 141, although the address was in the state. Why?",
+"o": [
+[
+"A",
+"`grep` returns 141 when a pattern matches more than one line, which pipefail treats as an error"
+],
+[
+"B",
+"Exit code 141 is Terraform's own code for a state that changed while it was being listed by another process"
+],
+[
+"C",
+"`grep -q` exits at the first match, `terraform` gets SIGPIPE on its next write, and pipefail reports that"
+],
+[
+"D",
+"The S3 backend throttled the request, and Terraform exits with 141 on every rate limit"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"`grep` מחזיר 0 כשיש התאמה, בלי קשר למספר השורות. הקוד 141 הגיע מהצד השמאלי של ה-pipe, לא מ-`grep`.",
+"ל-Terraform אין קוד כזה. 141 הוא 128 ועוד 13, כלומר תהליך שנהרג על ידי SIGPIPE, וזה סימן של ה-shell ולא של Terraform.",
+"נכון. `grep -q` סוגר את ה-pipe ברגע שמצא התאמה. אם `terraform` עוד כותב, הוא מקבל SIGPIPE ויוצא עם 141, ו-pipefail הופך את זה לכישלון של כל השורה. התזמון קובע, ולכן זה אקראי.",
+"הגבלת קצב הייתה נראית כשגיאת רשת עם הודעה מפורשת. כאן הפקודה הצליחה לקרוא את ה-state ונהרגה בזמן הכתיבה לפלט."
+],
+"x": "התיקון בפרויקט: `grep -x ... >/dev/null` במקום `-q`, כך ש-`grep` קורא את כל הקלט ולא סוגר את ה-pipe מוקדם. באג שמופיע רק לפעמים ב-pipeline עם pipefail הוא כמעט תמיד SIGPIPE.",
+"lv": 1,
+"k": "t",
+"r": "https://www.gnu.org/software/bash/manual/html_node/Pipelines.html"
+},
+{
+"s": 24,
+"q": "After a destroy, the evening script runs a final check for leftovers. Which leftovers is it looking for, and why those?",
+"o": [
+[
+"A",
+"Volumes created for PVCs and load balancers built by the controller: both were made outside Terraform"
+],
+[
+"B",
+"Docker images on the laptop, since yesterday's build cache would be reused by the next image"
+],
+[
+"C",
+"IAM roles and policies, because AWS keeps them for thirty days after the stack that created them is removed"
+],
+[
+"D",
+"State files of the six units, which have to be emptied by hand after each destroy"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. volumes שנוצרו דינמית ו-ALBs של ה-controller לא מופיעים ב-state, ולכן destroy לא נוגע בהם. אם נשארו, הם ממשיכים לעלות כסף ויכולים לחסום מחיקת רשת.",
+"הבדיקה נוגעת למשאבי ענן שנשארו מחויבים. מטמון מקומי אינו חלק מהסביבה שנהרסת ואינו עולה כסף.",
+"ל-IAM אין תקופת שמירה כזו, והתפקידים של הפרויקט מנוהלים ב-Terraform ונמחקים איתו. הם לא נוצרים מחוץ ל-state.",
+"ה-state מתעדכן לבד בסוף destroy ואין צורך לרוקן אותו. הבדיקה מחפשת משאבים ב-AWS ולא קבצים ב-bucket."
+],
+"x": "הרעיון המרכזי: destroy מוחק רק את מה ש-Terraform יצר. כל מה ש-controllers יצרו בתוך הקלאסטר דורש ניקוי נפרד ובדיקה בסוף, אחרת החשבון ממשיך לרוץ בשקט.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/destroy"
+},
+{
+"s": 24,
+"q": "Vault's disk survives the night, yet the evening script also takes a Raft snapshot to S3. Why both?",
+"o": [
+[
+"A",
+"Vault cannot start from an existing disk and always restores from the newest snapshot in the morning"
+],
+[
+"B",
+"S3 is where the auto-unseal key is kept, and the snapshot refreshes it once a day"
+],
+[
+"C",
+"A snapshot shrinks the Raft log, and without it the volume fills up within a few days"
+],
+[
+"D",
+"The snapshot is a second copy off the volume, for the case where the disk itself is lost or damaged"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"Vault עולה מהדיסק הקיים ונפתח אוטומטית עם מפתח ה-KMS. ה-snapshot הוא גיבוי ולא מסלול העלייה הרגיל.",
+"ה-unseal נעשה מול מפתח ב-KMS ולא מול קובץ ב-S3. ה-snapshot מכיל את הנתונים של Vault, לא את מפתח הפתיחה.",
+"דחיסת הלוג של Raft נעשית בתוך Vault עצמו. ה-snapshot ל-S3 נועד לגיבוי ולא לפינוי מקום בדיסק.",
+"נכון. volume יחיד ב-AZ אחד הוא נקודת כשל. snapshot ב-S3 נותן דרך שחזור נוספת שאינה תלויה בדיסק, ולכן הוא נלקח כל ערב לפני הפירוק."
+],
+"x": "בראיון קשר את זה לכלל רחב: דיסק שנשמר אינו גיבוי. גיבוי הוא עותק במקום אחר, עם דרך שחזור שנבדקה. ה-bucket של ה-snapshots הוא חלק מהמשאבים שנשמרים.",
+"lv": 1,
+"k": "k",
+"r": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
+},
+{
+"s": 24,
+"q": "A database password is changed at its source and the pods restart, yet the app can no longer log in to PostgreSQL. The volume was kept. Why?",
+"o": [
+[
+"A",
+"The PVC was bound with `Retain`, which also freezes every Secret that the pod mounts"
+],
+[
+"B",
+"The StatefulSet keeps the old environment until the pod is deleted by hand with `--force`"
+],
+[
+"C",
+"Init scripts run only on an empty data directory, so the role still has the old password until `ALTER ROLE`"
+],
+[
+"D",
+"PostgreSQL caches credentials for a day, so the new password is accepted only after the cache expires overnight"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"מדיניות Retain נוגעת לגורל ה-volume אחרי מחיקת ה-claim. היא לא משפיעה על Secrets או על סיסמאות.",
+"ה-pods כבר הופעלו מחדש וקיבלו את הערך החדש. הבעיה היא בצד מסד הנתונים, שלא עודכן.",
+"נכון. סקריפטי האתחול של ה-image רצים רק כשתיקיית הנתונים ריקה. על volume קיים הסיסמה החדשה לא נכתבת, וצריך לשנות אותה בתוך מסד הנתונים עצמו.",
+"אין ל-PostgreSQL מטמון סיסמאות כזה. האימות נעשה מול ה-role השמור, והוא פשוט עדיין מחזיק את הערך הישן."
+],
+"x": "הסדר שהפרויקט קבע לרוטציה: קודם משנים במסד הנתונים (`ALTER ROLE` או `db.updateUser`), ורק אז במקור הסוד. משתני סביבה של אתחול משפיעים רק על volume ריק.",
+"lv": 1,
+"k": "t",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+},
+{
+"s": 24,
+"q": "During the migration, the real state was split into six. One unit's first plan showed several resources `to add`. What does that mean, and what must not be done?",
+"o": [
+[
+"A",
+"Those resources did not reach this unit's state; applying would try to create what already exists"
+],
+[
+"B",
+"The unit's module is newer than the others, and the additions are tags that the upgrade introduces"
+],
+[
+"C",
+"The other five units must be destroyed first, since a resource may be planned in only one unit"
+],
+[
+"D",
+"Terragrunt always reports existing resources as additions on its first run, so the plan can be applied"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. משאב שמופיע בקוד היחידה אבל חסר ב-state שלה נראה ל-Terraform כחדש. קודם מעבירים את הרישום ל-state הנכון, ורק plan בלי שינויים מאשר שהפיצול הושלם.",
+"תגיות חדשות היו מופיעות כשינוי in-place במשאבים קיימים. `to add` אומר משאבים שלמים שחסרים ב-state.",
+"הריסת יחידות אחרות לא מעבירה רישום בין states. הפתרון הוא להעביר את המשאב ל-state של היחידה, בלי לגעת ב-AWS.",
+"אין ל-Terragrunt התנהגות כזו. plan ראשון על state שפוצל נכון חייב להראות אפס שינויים, וזה היה מבחן הקבלה."
+],
+"x": "מבחן הקבלה של ההגירה היה `run --all plan` עם no changes בכל שש היחידות. כל תוצאה אחרת אומרת שה-state והקוד לא תואמים, ואז לא מריצים apply.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/state/purpose"
+},
+{
+"s": 24,
+"q": "A freshly created runner instance booted, but its `user_data` failed when it called AWS for credentials. A minute later the same call worked by hand. What was the cause?",
+"o": [
+[
+"A",
+"The script ran before the instance profile was attached, so it now waits until credentials are available"
+],
+[
+"B",
+"The AMI had stale credentials baked in, which expired exactly at the moment of first boot"
+],
+[
+"C",
+"`user_data` runs as an unprivileged user that is never allowed to reach the instance metadata service"
+],
+[
+"D",
+"The role's trust policy allowed only Jenkins, and it was widened by hand a minute later"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ההצמדה של ה-instance profile מתפשטת באיחור קל, ו-user_data רץ מיד בעלייה. הסקריפט קיבל שגיאת הרשאות, ולכן נוספה לו לולאת המתנה עד שהתפקיד זמין.",
+"ב-AMI לא נשמרים credentials, והתפקיד מגיע מה-instance profile בזמן ריצה. אין כאן ערך אפוי שפג תוקפו.",
+"user_data רץ כ-root ויכול לגשת ל-metadata. הקריאה נכשלה בגלל תזמון ולא בגלל זהות המשתמש.",
+"אף אחד לא שינה את ה-trust policy באותה דקה. אותה קריאה הצליחה אחר כך בלי שום שינוי, וזה מצביע על תזמון."
+],
+"x": "eventual consistency של IAM היא תשובה שכדאי להכיר: משאב שנוצר זה עתה לא תמיד שמיש באותה שנייה. בסקריפט אתחול כותבים המתנה עם ניסיונות חוזרים, לא הנחה שהכול מוכן.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html"
+},
+{
+"s": 24,
+"q": "One evening the destroy ran while ArgoCD was still active. The VPC was left half destroyed. What had happened?",
+"o": [
+[
+"A",
+"Terraform skipped the subnets on purpose after it detected running pods in them"
+],
+[
+"B",
+"ArgoCD held a finalizer on the VPC itself, and AWS waited for it until the request timed out"
+],
+[
+"C",
+"Auto-synced apps recreated the routes being deleted, and the controller built a new ALB that blocked the VPC"
+],
+[
+"D",
+"The ArgoCD repo server kept a NAT connection open, and AWS refuses to delete a NAT gateway that still carries traffic"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Terraform לא בודק pods לפני מחיקת subnet. המחיקה נכשלה מצד AWS בגלל משאב שעדיין היה תלוי ברשת.",
+"finalizers קיימים על אובייקטים של Kubernetes ולא על משאבי AWS. ArgoCD לא מחזיק שום דבר על ה-VPC.",
+"נכון. ArgoCD עם selfHeal החזיר את ה-routes שנמחקו, וה-load balancer controller בנה להם ALB חדש. ה-ALB הזה לא מוכר ל-Terraform, ולכן ה-VPC לא יכול היה להימחק.",
+"חיבור פתוח לא מונע מחיקה של NAT gateway. מה שחסם היה משאב שלם בתוך ה-VPC, שנוצר מחוץ ל-Terraform."
+],
+"x": "הסיפור הזה מסביר למה סקריפט הערב מוריד קודם את ה-controllers של ArgoCD לאפס. מערכת GitOps עושה בדיוק את מה שהיא אמורה, ולכן צריך לעצור אותה לפני שמפרקים את מה שהיא שומרת.",
+"lv": 1,
+"k": "t",
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automatic-self-healing"
+},
+{
+"s": 24,
+"q": "Where does the project keep its Terraform state, and how is it locked?",
+"o": [
+[
+"A",
+"On the laptop under `.terraform/`, copied to the bucket by the evening script as a backup"
+],
+[
+"B",
+"In an S3 bucket, locked through a DynamoDB table that the bootstrap script creates on the first run"
+],
+[
+"C",
+"In an S3 bucket, locked with the backend's own lock file (`use_lockfile`), without a DynamoDB table"
+],
+[
+"D",
+"In the GitLab project's managed Terraform state, which locks through the GitLab API per pipeline"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"state מקומי לא היה מאפשר ל-CI ולמחשב הנייד לעבוד על אותה תשתית. ה-state חי ב-S3, ושני הצדדים קוראים אותו משם.",
+"זו הייתה השיטה המקובלת בעבר. הפרויקט משתמש בנעילה המובנית של ה-backend, ואין בו טבלת DynamoDB.",
+"נכון. ה-backend של S3 יודע לנעול בעזרת קובץ נעילה ב-bucket עצמו. כך אין צורך בטבלת DynamoDB נפרדת, ויש רכיב אחד פחות לתחזק ולשלם עליו.",
+"GitLab אכן מציע backend מנוהל, אבל הפרויקט לא משתמש בו. GitLab עצמו נהרס כל לילה, וה-state חייב לשרוד."
+],
+"x": "ציין את שני החלקים: איפה ה-state (S3) ואיך הוא ננעל (`use_lockfile`). מראיין ישאל מה קורה כשריצה נקטעת, והתשובה היא נעילה שנשארת ו-`force-unlock` אחרי בדיקה.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/backend/s3#state-locking"
+},
+{
+"s": 24,
+"q": "Each Terragrunt unit has a state key of its own. What does the project gain from six states compared with one?",
+"o": [
+[
+"A",
+"Separate states let two units manage the same resource, so each one can change part of it"
+],
+[
+"B",
+"Six states are needed because the S3 backend cannot hold more than a few hundred resources in one object"
+],
+[
+"C",
+"A run touches and locks only its own unit, and the kept resources sit in a state the destroy never opens"
+],
+[
+"D",
+"Each state can live in a different region, which gives the project a ready disaster-recovery copy"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"משאב צריך בעלים אחד בלבד. שתי יחידות שמנהלות אותו משאב ייצרו מאבק בין plans ולא שיתוף.",
+"אין ל-backend מגבלה כזו, ו-state אחד החזיק את כל הפרויקט לפני ההגירה. הסיבה היא בידוד ולא קיבולת.",
+"נכון. state נפרד מקטין את רדיוס הפגיעה: טעות או נעילה ביחידה אחת לא נוגעות באחרות. והמשאבים שנשמרים מוגנים פשוט מכך שאף פקודת destroy לא רצה על ה-state שלהם.",
+"כל ה-states נמצאים באותו bucket, והפרויקט עובד ב-region אחד. המסמך מציין את זה ביושר כמגבלה."
+],
+"x": "המונח לראיון הוא blast radius. הוסף את המחיר: יחידות נפרדות צריכות דרך להעביר ערכים זו לזו ולרוץ בסדר נכון, וזה מה ש-Terragrunt נותן מעל Terraform.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/state/locking"
+},
+{
+"s": 24,
+"q": "How did the project make the cluster's admin access independent of who runs Terraform?",
+"o": [
+[
+"A",
+"Every plan and apply was pinned to the laptop, and the pipeline role may only run `terraform fmt` and `validate`"
+],
+[
+"B",
+"The pipeline now assumes the laptop user's own identity, so both of them look the same to EKS"
+],
+[
+"C",
+"Creator-admin was switched off, and an explicit access entry and explicit key administrators were declared"
+],
+[
+"D",
+"The access entries were moved out of Terraform and are recreated by a morning shell script"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"המטרה הייתה דווקא להריץ plan ו-apply ב-CI. התיקון הסיר את התלות בזהות במקום לוותר על האוטומציה.",
+"שיתוף זהות אישית עם pipeline מבטל את ההפרדה בין אדם למכונה. הפתרון הוא הרשאות מפורשות, לא התחזות.",
+"נכון. `enable_cluster_creator_admin_permissions` בוטל, ובמקומו נכתבו access entry מפורש ורשימת `kms_key_administrators`. מעכשיו הזהויות כתובות בקוד ולא נגזרות מהמריץ.",
+"ה-access entries נשארו ב-Terraform. ה-policy של ה-pipeline אף מגן עליהם, כדי שלא יימחקו בטעות."
+],
+"x": "נסח את זה כעיקרון: הרשאות נכתבות במפורש, לא נגזרות מ-default. הוסף שבדיקת ה-policy ב-CI מגינה על ה-access entries, כך שגם טעות עתידית תיעצר לפני apply.",
+"lv": 1,
+"k": "k",
+"r": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html"
+},
+{
+"s": 24,
+"q": "In the evening the routes were deleted, but minutes later the controller's ALB was still there. What is the script's fallback step for?",
+"o": [
+[
+"A",
+"It recreates the routes, so that the controller receives a second deletion event to react to"
+],
+[
+"B",
+"It removes the leftover load balancer through the AWS API, so the VPC destroy is not blocked"
+],
+[
+"C",
+"It restarts the controller pod, and waits for it to come back before the destroy continues"
+],
+[
+"D",
+"It imports the ALB into the Terraform state, so that the destroy removes it with everything else"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"יצירה מחדש של routes הייתה בונה ALB נוסף ומחזירה את הבעיה. המטרה היא לפנות את הרשת, לא להתחיל שוב.",
+"נכון. אם ה-controller לא הספיק או לא הצליח לפרק את ה-ALB, הסקריפט מוחק אותו ישירות מול AWS. בלי זה, ה-destroy של הרשת היה נעצר על משאב תלוי.",
+"הפעלה מחדש עשויה לעזור, אבל הסקריפט לא מסתמך עליה. ה-fallback פועל מול AWS כדי שהתוצאה לא תהיה תלויה ב-controller.",
+"ייבוא היה דורש קוד למשאב שנוצר דינמית בשם משתנה. מחיקה ישירה פשוטה ובטוחה יותר למשאב חד-פעמי."
+],
+"x": "תכנון טוב של פירוק: המסלול הרגיל נותן לבעלים של המשאב לפרק אותו, ויש רשת ביטחון למקרה שלא הצליח. ובסוף בודקים שלא נשאר דבר, כי משאב שנשכח עולה כסף.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/vpc/latest/userguide/delete-vpc.html"
+},
+{
+"s": 24,
+"q": "The WAF association for the controller's ALB lives in a root file that the scripts rename between `.tf` and `.tf.bak`. What does the rename achieve?",
+"o": [
+[
+"A",
+"Terraform reads only `.tf` files, so the resource exists in the configuration only while that ALB is alive"
+],
+[
+"B",
+"It marks the resource as tainted, so the association is replaced whenever the file returns"
+],
+[
+"C",
+"It forces Terraform to re-download the WAF provider on each run, which refreshes the managed rule groups"
+],
+[
+"D",
+"It hides the association from `git diff`, so reviewers are not distracted by a file that changes daily"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. קובץ עם סיומת `.bak` פשוט לא נטען. כך המשאב נכנס לתצורה אחרי שה-ALB קם ויוצא ממנה לפני שהוא נמחק, ובשאר הזמן Terraform לא מחפש ALB שאינו קיים.",
+"taint הוא סימון ב-state ולא נגזר משם של קובץ. כאן המשאב פשוט מופיע או נעלם מהתצורה.",
+"שינוי שם של קובץ לא מוריד providers מחדש. קבוצות הכללים המנוהלות מתעדכנות בצד AWS, בלי קשר לקבצים.",
+"הקובץ נשמר ב-git תמיד בסיומת `.bak`, ולכן ממילא אין diff יומי. המטרה היא מה ש-Terraform טוען ולא מה שרואים ב-review."
+],
+"x": "ציין גם את הפרט שמראה שליטה: ב-git הקובץ תמיד `.bak`, כך ש-clone נקי לא ינסה ליצור association ל-ALB שעוד לא קיים. היום המשאב הזה הוא יחידה נפרדת בשם `k8s-alb`.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/plan"
+},
+{
+"s": 24,
+"q": "A `kubectl ... | while read` loop in the morning script killed the whole run when the tunnel reconnected for a moment. How was the script hardened?",
+"o": [
+[
+"A",
+"`set -e` was removed from the script, so that no single command can ever stop the morning again"
+],
+[
+"B",
+"The loop was moved into a subshell with `&`, which runs it in the background, fully detached from the SSM tunnel"
+],
+[
+"C",
+"The pipeline was wrapped as `{ ... || true; }`, so a passing `kubectl` failure no longer aborts the script"
+],
+[
+"D",
+"`kubectl` was given `--request-timeout=0`, which makes it wait forever instead of failing"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"הסרת `set -e` הייתה מסתירה גם כישלונות אמיתיים, והסקריפט היה ממשיך על סביבה שבורה. התיקון נקודתי, רק למקום שבו כישלון נסבל.",
+"הרצה ברקע לא מנתקת את `kubectl` מה-tunnel, והוא עדיין צריך אותו כדי להגיע ל-API. היא רק הייתה מסתירה את התוצאה.",
+"נכון. תחת `set -e` ו-pipefail, כישלון רגעי של `kubectl` בצד השמאלי מפיל את כל הסקריפט. העטיפה מאפשרת ללולאה להסתיים בלי להרוג ריצה של עשרים דקות.",
+"המתנה אינסופית הייתה תוקעת את הסקריפט בלי שום פלט. הבעיה אינה משך ההמתנה אלא האופן שבו כישלון מטופל."
+],
+"x": "הכלל שאפשר לצטט: `set -e` ו-pipefail הם ברירת מחדל טובה, אבל מקום שבו כישלון הוא צפוי ונסבל צריך לסמן במפורש. כך הסקריפט נשאר קפדני, והחריגים כתובים בקוד.",
+"lv": 1,
+"k": "t",
+"r": "https://www.gnu.org/software/bash/manual/html_node/The-Set-Builtin.html"
+},
+{
+"s": 24,
+"q": "Why does the evening script delete the Gateways and Ingresses itself before `terraform destroy`?",
+"o": [
+[
+"A",
+"Terraform deletes routes in a random order, and the script needs them removed alphabetically"
+],
+[
+"B",
+"Kubernetes blocks cluster deletion while any object with a hostname still exists in any of the cluster's namespaces"
+],
+[
+"C",
+"The routes hold the TLS certificate, and it has to be returned to ACM before the cluster goes down"
+],
+[
+"D",
+"Their ALB was built by the controller and is unknown to Terraform, so only the controller can remove it"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"לסדר המחיקה של ה-routes אין משמעות כאן. העניין הוא שה-ALB שמאחוריהם בכלל לא מנוהל על ידי Terraform.",
+"מחיקת קלאסטר EKS לא בודקת אובייקטים בתוכו. הקלאסטר היה נמחק, וה-ALB היה נשאר מאחור בלי בעלים.",
+"התעודה מנוהלת ב-ACM ואינה מוחזרת או נמחקת עם ה-routes. היא נשארת זמינה לבוקר הבא בלי שום פעולה.",
+"נכון. ה-ALB הזה נוצר מתוך הקלאסטר ולא מופיע ב-state. מחיקת ה-routes גורמת ל-controller לפרק אותו, ורק אז ה-VPC פנוי למחיקה."
+],
+"x": "משפט טוב לראיון: כל משאב צריך בעלים אחד. מה ש-controller יצר, ה-controller מפרק, ו-Terraform מפרק רק את מה שהוא יצר. הסקריפט רק דואג לסדר ביניהם.",
+"lv": 1,
+"k": "k",
+"r": "https://docs.aws.amazon.com/vpc/latest/userguide/delete-vpc.html"
+},
+{
+"s": 24,
+"q": "A teammate suggests moving the EKS cluster into the `persistent` unit to save twenty minutes each morning. Why does the project not do that?",
+"o": [
+[
+"A",
+"EKS does not allow a cluster to live for more than twenty-four hours on a training account, whatever its size"
+],
+[
+"B",
+"The cluster and its nodes are the main hourly cost, and saving that cost is the reason the cycle exists"
+],
+[
+"C",
+"A cluster cannot be given `prevent_destroy`, because the EKS module overrides lifecycle blocks"
+],
+[
+"D",
+"A long-lived cluster would have to be upgraded by hand, which a daily rebuild is not able to do"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אין ל-EKS מגבלת משך חיים כזו. ההחלטה היא כלכלית ושל הפרויקט, לא אילוץ של AWS.",
+"נכון. ה-control plane וה-nodes מחויבים לפי שעה גם כשאף אחד לא עובד. המחזור היומי נבנה כדי לא לשלם עליהם בלילה, והמחיר הוא זמן ההקמה.",
+"אפשר להגן על קלאסטר ממחיקה כמו על כל משאב. הוא פשוט לא משאב שרוצים לשמור, כי אין בו מצב שאי אפשר לשחזר.",
+"שדרוג גרסה אפשרי בשני המקרים דרך Terraform. השיקול שנתן הפרויקט הוא עלות, לא תחזוקת גרסאות."
+],
+"x": "תשובה טובה מציגה trade-off: עשרים דקות בבוקר מול שעות חיוב בלילה, בתקציב לימודי. ומה שמאפשר את הבחירה הוא שהקלאסטר נבנה כולו מקוד, והמצב נשמר בצד.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/destroy"
+},
+{
+"s": 24,
+"q": "The PV and PVC resources for the databases failed in plan with `Invalid for_each argument`. What was the cause, and what was the fix?",
+"o": [
+[
+"A",
+"`for_each` cannot be used on kubernetes resources; each PV was written as its own block"
+],
+[
+"B",
+"The keys came from volume ids known only after apply; they were replaced with static keys such as `pg` and `mongo`"
+],
+[
+"C",
+"The map held two volumes with one name; the fix was a `count` with an index per volume"
+],
+[
+"D",
+"The kubernetes provider version was too old for sets; pinning a newer release made the very same expression pass"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"`for_each` עובד על כל משאב, כולל של kubernetes. המגבלה היא על ערכי המפתחות ולא על סוג המשאב.",
+"נכון. `for_each` דורש מפתחות שידועים בזמן plan. מזהי ה-volumes נודעו רק אחרי הייבוא, ולכן המפתחות הוחלפו בקבוצה קבועה והמזהה נשאר רק בערך.",
+"מפתחות כפולים נותנים שגיאה אחרת, על כפילות. כאן הבעיה היא שהמפתחות עצמם לא היו ידועים בזמן התכנון.",
+"השגיאה נובעת מכלל בסיסי של השפה ולא מגרסת provider. אותו ביטוי היה נכשל בכל גרסה כל עוד המפתחות לא ידועים."
+],
+"x": "כלל לזכור: המפתחות של `for_each` חייבים להיות ידועים ב-plan, הערכים לא. כשמפתח נגזר ממזהה שנוצר ב-apply, עוברים למפתחות סטטיים כמו `toset([...])`.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/for_each"
+},
+{
+"s": 24,
+"q": "Someone commits the WAF association file under its `.tf` name. What breaks on the next clean morning run?",
+"o": [
+[
+"A",
+"Nothing breaks, because Terraform skips any resource whose target is missing and retries it later"
+],
+[
+"B",
+"An early stage looks up an ALB that the controller has not built yet, and the plan fails"
+],
+[
+"C",
+"The WAF attaches itself to the Terraform-owned ALB instead, and blocks GitLab pushes"
+],
+[
+"D",
+"The evening rename fails on a name collision, so the destroy can no longer be started at all"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"Terraform לא מדלג על משאב שהיעד שלו חסר. חיפוש שלא מוצא תוצאה הוא שגיאה שעוצרת את ה-plan.",
+"נכון. בשלבים הראשונים של הבוקר ה-ALB של ה-controller עוד לא קיים. משאב שמפנה אליו נכשל בחיפוש, וההקמה נעצרת לפני שהגיעה לקלאסטר.",
+"ה-association מצביע על ALB מסוים ולא עובר לבדו ל-ALB אחר. כשהיעד חסר מתקבלת שגיאה, לא הצמדה חלופית.",
+"שינוי השם קורה בסקריפטים המקומיים ולא היה נכשל בגלל commit. הנזק מופיע כבר בבוקר, בשלב ה-plan."
+],
+"x": "זו שאלה על חוזה סמוי בין הסקריפטים ל-repo. כשהתנהגות תלויה במוסכמה כמו סיומת קובץ, כותבים אותה במסמך הפרויקט, ומוטב שגם בדיקה אוטומטית תאכוף אותה.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/plan"
+},
+{
+"s": 24,
+"q": "The engineer who runs the evening script is cut off after the ArgoCD controllers were scaled to zero, but before the destroy. What state is the environment in, and what is the safe way forward?",
+"o": [
+[
+"A",
+"Everything still runs and is billed, only without GitOps reconciliation; rerun the evening script to the end"
+],
+[
+"B",
+"The state is locked for good, and the lock must be forced before any further Terraform command can run at all"
+],
+[
+"C",
+"Nothing has changed at all, because scaling a controller is undone as soon as the session drops"
+],
+[
+"D",
+"The applications were deleted with their controllers, so the morning script must be run right away"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. הורדת ה-controllers לאפס לא עוצרת את האפליקציות, רק את הסנכרון. הסביבה שלמה ומחויבת, ולכן הדרך הבטוחה היא להשלים את הפירוק ולא להשאיר אותה כך.",
+"בשלב הזה Terraform עוד לא רץ, ולכן אין נעילה. נעילה יתומה נוצרת רק כש-destroy עצמו נקטע באמצע.",
+"שינוי מספר ה-replicas נשמר בקלאסטר ולא תלוי בחיבור. ה-controllers נשארים על אפס עד שמישהו מחזיר אותם.",
+"כיבוי ה-controllers של ArgoCD לא מוחק את המשאבים שהוא מנהל. ה-pods ממשיכים לרוץ כרגיל, רק בלי השגחה."
+],
+"x": "הראה שאתה חושב על מצבי ביניים: בכל צעד של סקריפט ארוך שואלים מה קורה אם הוא נקטע כאן. סקריפט שאפשר להריץ שוב בבטחה הוא מה שמאפשר ריצה בלי השגחה.",
+"lv": 1,
+"k": "t",
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/#automatic-self-healing"
+},
+{
+"s": 24,
+"q": "The application is built by Jenkins. Where does the project's Terraform pipeline run?",
+"o": [
+[
+"A",
+"Only on the laptop, since a pipeline cannot be trusted with permission to change infrastructure"
+],
+[
+"B",
+"In GitLab CI, on a runner that has an EC2 instance of its own outside the cluster"
+],
+[
+"C",
+"In the same Jenkins, as one more stage of the application's Jenkinsfile after the image is signed"
+],
+[
+"D",
+"In ArgoCD, as a pre-sync hook that applies Terraform before the charts are synced"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"plan ו-apply של שינויים בקוד עוברים דרך GitLab CI עם תפקידים מוגבלים. המחזור היומי אכן רץ מהמחשב, אבל זה סיפור אחר.",
+"נכון. ה-agents של Jenkins רצים כ-pods בתוך הקלאסטר, והקלאסטר הוא חלק ממה ש-Terraform מנהל. לכן ה-pipeline של התשתית רץ על runner נפרד שאינו תלוי בו.",
+"חיבור התשתית ל-pipeline של האפליקציה היה מריץ plan על כל שינוי קוד. הפרויקט מפריד בין שני המחזורים, בשני כלים.",
+"ArgoCD מנהל את מה שבתוך הקלאסטר ולא מריץ Terraform. הוא גם אינו קיים לפני שהקלאסטר הוקם."
+],
+"x": "הסבר את ההיגיון: כלי שמנהל את הקלאסטר לא יכול לרוץ בתוך הקלאסטר. runner על EC2 משלו שובר את התלות המעגלית, והוא מוגן מהחלפה עצמית ב-`ignore_changes`.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.gitlab.com/runner/"
+},
+{
+"s": 24,
+"q": "The evening script records prod's last synced chart revision, and the morning syncs prod to exactly that revision. Why not to `HEAD`?",
+"o": [
+[
+"A",
+"`HEAD` cannot be resolved until the GitLab server has finished its first backup of the day"
+],
+[
+"B",
+"Syncing to `HEAD` takes several minutes longer, because the repo server clones the full history"
+],
+[
+"C",
+"ArgoCD rejects `HEAD` for Helm sources and demands a full commit hash in every Application"
+],
+[
+"D",
+"Prod is promoted by hand, so a rebuild must not release what reached `main` since the last sync"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"GitLab מחזיר את HEAD מיד כשהוא עולה. הבעיה אינה טכנית אלא עקרונית: מי מחליט מה רץ ב-prod.",
+"אין הבדל זמן משמעותי בין סנכרון ל-HEAD לבין סנכרון ל-commit. השיקול הוא שחזור המצב של אתמול בדיוק כפי שהיה.",
+"ArgoCD מקבל HEAD, שמות branches ו-tags. בפרויקט בחרו ב-revision מדויק מסיבה של בקרה, לא בגלל מגבלה.",
+"נכון. ב-prod הסנכרון ידני בכוונה. אם הבוקר היה מסנכרן ל-HEAD, עצם הקמת הסביבה היה משחרר גרסה שאף אחד לא אישר."
+],
+"x": "זו נקודה חזקה להגנה על הפרויקט: הקמה מחדש צריכה לשחזר מצב ולא לקדם גרסה. שחרור ל-prod הוא החלטה של אדם, והסקריפט דואג שהבוקר לא יעקוף אותה.",
+"lv": 1,
+"k": "k",
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/commands/argocd_app_sync/"
+},
+{
+"s": 24,
+"q": "A copy of the tfvars file is synced to the state bucket. What is the point of that copy?",
+"o": [
+[
+"A",
+"The inputs live next to the state, so the CI runner and a rebuilt laptop read the same values"
+],
+[
+"B",
+"The bucket's lifecycle rule deletes the copy nightly, which forces fresh values each morning"
+],
+[
+"C",
+"Terraform reads tfvars only from the backend bucket and ignores a file on the local disk"
+],
+[
+"D",
+"S3 validates the variable types on upload, which catches typos before a plan is started"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. קובץ ה-tfvars אינו ב-git כי יש בו ערכים רגישים. העתק ב-bucket נותן ל-runner ולכל מחשב מורשה את אותם קלטים, ולא רק למחשב אחד.",
+"ההעתק נועד להישמר ולא להימחק. ערכים כמו מזהי ה-AMIs נכתבים אליו בערב כדי לשמש את הבוקר הבא.",
+"Terraform קורא tfvars מהדיסק המקומי או מהנתיב שנותנים לו. הסנכרון ל-bucket הוא החלטה של הפרויקט ולא דרישה של הכלי.",
+"S3 מאחסן קבצים ולא בודק את התוכן שלהם. בדיקת טיפוסים נעשית על ידי Terraform בזמן plan."
+],
+"x": "אמור גם את המחיר: ההעתק יושב ב-bucket עם versioning, ולכן הוא חלק מהסיבה שנדרשה רוטציה מלאה של הסודות. נוחות ואבטחה הן שיקולים שצריך לאזן.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
+},
+{
+"s": 24,
+"q": "The Terraform pipeline uses two IAM roles. How do they differ?",
+"o": [
+[
+"A",
+"`weather-tf-plan` is read-only and open to any branch; `weather-tf-apply` can change things and is limited to `main`"
+],
+[
+"B",
+"`weather-tf-plan` is assumed by people and `weather-tf-apply` by the runner, with identical permissions on both"
+],
+[
+"C",
+"One is used in the morning to create and the other in the evening to destroy the environment"
+],
+[
+"D",
+"One role belongs to the staging account and the other to the production account, and both can apply from any branch"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. כל branch יכול לקבל plan, כי קריאה אינה משנה דבר. היכולת לשנות תשתית ניתנת רק לקוד שכבר עבר review והתמזג ל-`main`.",
+"שני התפקידים נלקחים על ידי jobs ב-GitLab דרך OIDC. ההבדל הוא במה שמותר לכל אחד ובאיזה branch.",
+"המחזור היומי אינו רץ דרך התפקידים האלה. הם משרתים את ה-pipeline של שינויי קוד: plan על כל branch ו-apply על `main`.",
+"הפרויקט רץ בחשבון אחד. ההפרדה בין התפקידים היא לפי הרשאה ולפי branch, ולא לפי חשבון."
+],
+"x": "זו דוגמה נקייה ל-least privilege ב-CI: הפעולה המסוכנת קשורה ל-branch מוגן. גם אם מישהו משנה את קובץ ה-pipeline ב-branch צדדי, התפקיד שהוא יקבל יכול רק לקרוא.",
+"lv": 1,
+"k": "k",
+"r": "https://docs.gitlab.com/ci/secrets/id_token_authentication/"
+},
+{
+"s": 24,
+"q": "After each nightly bake, the next plan in CI wanted to replace the GitLab runner, the very machine the plan runs on. How does the configuration prevent that?",
+"o": [
+[
+"A",
+"The apply job runs with `-refresh=false`, so Terraform never notices that the image changed"
+],
+[
+"B",
+"The runner has `ignore_changes = [ami, user_data]`, so a new image id does not trigger a replacement"
+],
+[
+"C",
+"The runner was taken out of the state for good and is now managed by hand in the console"
+],
+[
+"D",
+"The runner carries `prevent_destroy`, which makes Terraform quietly skip the replacement and move on"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"השינוי הוא בקלט (tfvars) ולא במצב ב-AWS, ולכן refresh לא רלוונטי. Terraform היה רואה את ההבדל גם בלי refresh.",
+"נכון. שינוי ב-AMI או ב-user_data מחייב החלפת instance. עם `ignore_changes` על שני השדות, ה-runner נשאר כמו שהוא גם כשהמזהה ב-tfvars מתעדכן.",
+"ה-runner עדיין מנוהל ב-Terraform, ביחידה משלו. ההתעלמות היא רק משני שדות, ולא ויתור על ניהול המשאב.",
+"`prevent_destroy` לא מדלג בשקט אלא מכשיל את ה-plan בשגיאה. הוא מגן ממחיקה, אבל לא מעלים את ההבדל שגורם להחלפה."
+],
+"x": "זה מקרה קלאסי של משאב שמריץ את הכלי שמנהל אותו. הסבר ש-`ignore_changes` הוא ויתור מודע: ה-runner לא יתעדכן לבדו, וכשרוצים image חדש מחליפים אותו ביוזמה.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#ignore_changes"
+},
+{
+"s": 24,
+"q": "Why do the Terraform jobs authenticate to AWS with GitLab OIDC rather than an access key stored as a CI variable?",
+"o": [
+[
+"A",
+"OIDC makes the AWS API calls faster, because the token is cached on the runner between pipelines"
+],
+[
+"B",
+"Each job gets short-lived credentials tied to its project and branch, and there is no stored key to leak"
+],
+[
+"C",
+"An access key cannot be given a read-only policy, so a plan role could not have been built with one"
+],
+[
+"D",
+"GitLab refuses to store any variable that looks like an AWS key since a recent major version"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"אין ל-OIDC יתרון מהירות, והאסימונים אינם נשמרים בין pipelines. היתרון הוא אבטחתי בלבד.",
+"נכון. ב-OIDC ה-job מציג token חתום ומקבל credentials זמניים. אין סוד קבוע שאפשר לגנוב מהגדרות הפרויקט או מלוג, ואין מה לסובב.",
+"אפשר להצמיד policy של קריאה בלבד גם למשתמש עם access key. הבעיה במפתח היא שהוא קבוע וניתן לדליפה.",
+"GitLab מאפשר לשמור מפתחות כמשתנים, עם מיסוך והגנה. זו פשוט שיטה חלשה יותר מאשר לא להחזיק מפתח בכלל."
+],
+"x": "משפט לראיון: הסוד הכי בטוח הוא זה שלא קיים. OIDC מחליף מפתח ארוך טווח בזהות שמוכחת בכל ריצה, והתנאים ב-trust policy קובעים מי בדיוק רשאי.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.gitlab.com/ci/secrets/id_token_authentication/"
+},
+{
+"s": 24,
+"q": "Which resources make up the `persistent` unit, the part of the project that is never destroyed?",
+"o": [
+[
+"A",
+"The VPC, its NAT gateway and the two load balancers, because the network takes the longest time to build each morning"
+],
+[
+"B",
+"The image registry, the database and Vault disks, the observability buckets, and Vault's key and snapshot bucket"
+],
+[
+"C",
+"The GitLab and Jenkins instances, since rebuilding them would lose the repositories and the job history"
+],
+[
+"D",
+"The EKS control plane and the node group, so that only the pods have to be rescheduled in the morning"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"הרשת וה-load balancers נהרסים כל ערב, כי הם עולים כסף לפי שעה ואין בהם מצב. הם נבנים מחדש בבוקר תוך דקות.",
+"נכון. אלה המשאבים שמחזיקים מצב: images, נתוני מסדי הנתונים ו-Vault, היסטוריית מדדים ולוגים, ומפתח ה-KMS ש-Vault נפתח איתו. כל השאר נבנה מחדש מקוד.",
+"השרתים עצמם נהרסים, והתוכן שלהם שורד בזכות ה-AMIs שנאפים בערב. הם אינם חלק מהיחידה הזו.",
+"הקלאסטר הוא המרכיב היקר ביותר, והוא נהרס במלואו כל ערב. זו עיקר החיסכון של המחזור היומי."
+],
+"x": "הכלל שמאחורי הרשימה: נשאר רק מה שמחזיק מצב ואי אפשר לבנות מקוד. מראיין ישאל מה עם GitLab ו-Jenkins, והתשובה היא ה-AMIs, שהם מנגנון נפרד.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy"
+},
+{
+"s": 24,
+"q": "A merge request moves a kept bucket into another module and has no `moved` block. Review missed it. What happens in the pipeline?",
+"o": [
+[
+"A",
+"Terraform recognises the same bucket name and moves the address by itself, so the plan comes out empty"
+],
+[
+"B",
+"The plan fails at once with a syntax error, since a resource may never change modules after creation"
+],
+[
+"C",
+"The plan shows a destroy and a create for the bucket, and the conftest gate fails the job on the destroy"
+],
+[
+"D",
+"The apply job runs automatically on merge and empties the bucket before anyone can react"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"Terraform מזהה משאבים לפי כתובת ב-state ולא לפי שם ב-AWS. בלי `moved` הוא לא מקשר בין הכתובת הישנה לחדשה.",
+"מותר להעביר משאב בין מודולים, והקוד תקין תחבירית. הסכנה היא דווקא ש-plan מצליח ומציע מחיקה.",
+"נכון. בלי `moved`, כתובת חדשה נראית ל-Terraform כמשאב חדש והישנה כמשאב למחיקה. ה-policy מזהה מחיקה של משאב מוגן ועוצר לפני Apply.",
+"ה-Apply ידני, ולפניו עומד שער ה-policy. גם `prevent_destroy` על המשאב היה מכשיל את המחיקה בנפרד."
+],
+"x": "זו שאלה על הגנה בשכבות: review אנושי, `prevent_destroy` בקוד, policy על ה-plan ו-Apply ידני. אף אחת לא מושלמת, ויחד הן הופכות טעות אחת לבלתי מזיקה.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+},
+{
+"s": 24,
+"q": "What replaced the daily `state rm` and `import` of the kept resources after the Terragrunt migration?",
+"o": [
+[
+"A",
+"They became a unit with a state of its own that the destroy skips, so nothing leaves or re-enters a state"
+],
+[
+"B",
+"`import` blocks in the code, which run the same import declaratively as part of every plan"
+],
+[
+"C",
+"A second AWS account that holds the kept resources, shared with the first through resource policies"
+],
+[
+"D",
+"A nightly job that exports the kept resources to JSON and re-creates them from that file in the morning"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ליחידת `persistent` יש state נפרד, והיא מוחרגת מ-destroy. המשאבים פשוט נשארים מנוהלים כל הזמן, ואין יותר שני צעדים יומיים שחייבים להתאים.",
+"בלוקי import היו שומרים את אותו מנגנון בצורה אחרת. הפתרון שנבחר מבטל את היציאה מה-state מלכתחילה.",
+"הפרויקט נשאר בחשבון אחד. ההפרדה היא בין states של יחידות, לא בין חשבונות.",
+"המשאבים האלה לא נוצרים מחדש בכלל, כי זו כל המטרה. הם נשארים קיימים ומנוהלים ברצף."
+],
+"x": "הצג את זה כשיפור של תכנון: במקום לפצות כל יום על state משותף, מפרידים את מה שחי לאורך זמן ממה שמתחלף. זו גם תשובה טובה לשאלה מה היית עושה אחרת מההתחלה.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/state/purpose"
+},
+{
+"s": 24,
+"q": "Why did the reorganisation use `moved` blocks in the code rather than a series of `terraform state mv` commands?",
+"o": [
+[
+"A",
+"The moves are reviewed in the merge request, shown in the plan, and applied the same way by anyone who runs it"
+],
+[
+"B",
+"`terraform state mv` was removed from recent Terraform releases, so the blocks are the only way left to do it today"
+],
+[
+"C",
+"Such a block also copies the resource to a second AWS region as a backup while it is being renamed"
+],
+[
+"D",
+"`state mv` rebuilds the resource at its new address, while a `moved` block keeps the old one alive"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. בלוק `moved` הוא קוד: הוא עובר review, מופיע ב-plan לפני הביצוע, ורץ זהה ב-CI ובכל מחשב. `state mv` הוא פעולה ידנית על ה-state, בלי תיעוד ב-git.",
+"הפקודה עדיין קיימת ושימושית במקרים מסוימים. הבחירה ב-`moved` היא בגלל יכולת הביקורת והחזרתיות.",
+"בלוק `moved` לא יוצר שום עותק. הוא רק אומר ל-Terraform שכתובת ישנה וכתובת חדשה הן אותו משאב.",
+"גם `state mv` משנה רק את הרישום ולא בונה דבר מחדש. ההבדל הוא בתהליך ולא בתוצאה ב-AWS."
+],
+"x": "נסח כך: שינוי ב-state צריך לעבור את אותו תהליך כמו שינוי בקוד. `moved` הופך פעולה ידנית ומסוכנת לשורה שאפשר לקרוא, לבדוק ב-plan ולאשר.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+},
+{
+"s": 24,
+"q": "The Apply job on `main` fails to acquire the state lock, because an apply from the laptop is still running. What is the correct reaction?",
+"o": [
+[
+"A",
+"Delete the lock file from the bucket by hand, which is what the S3 backend expects after a clash of runs"
+],
+[
+"B",
+"Run `terraform force-unlock` from the job, since the pipeline on `main` outranks a laptop run"
+],
+[
+"C",
+"Let the running apply finish and retry the job; the lock did its work, and forcing it risks the state"
+],
+[
+"D",
+"Re-run the job with `-lock=false`, which is safe as long as the two runs touch different resources"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"מחיקה ידנית של קובץ הנעילה שקולה ל-force-unlock בלי בדיקה. ה-backend מצפה שהריצה שמחזיקה בנעילה תשחרר אותה.",
+"`force-unlock` מיועד לנעילה יתומה בלבד. שחרור נעילה של ריצה פעילה מאפשר שתי כתיבות במקביל ל-state.",
+"נכון. נעילה תפוסה על ידי ריצה חיה היא בדיוק המצב שהנעילה נועדה לו. מחכים שתסתיים ומריצים שוב, וה-lock timeout ב-`root.hcl` אף ממתין זמן מה לבד.",
+"כאן שתי הריצות ביקשו את אותה נעילה, כלומר את אותו state. ביטול הנעילה בדיוק במצב הזה הוא הסיכון הגדול ביותר."
+],
+"x": "הבחנה שכדאי לומר במפורש: נעילה תפוסה אינה נעילה תקועה. קודם מבררים מי מחזיק בה, ורק נעילה שאין מאחוריה ריצה משחררים בכוח.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/state/locking"
+},
+{
+"s": 24,
+"q": "What does the morning script's preflight stage check before it creates anything?",
+"o": [
+[
+"A",
+"That the monthly AWS budget has room for one more day, and it aborts when the forecast is over the limit"
+],
+[
+"B",
+"That the CLI tools are installed, the baked AMIs still exist, and the current public IP is in the allow list"
+],
+[
+"C",
+"That every pod from yesterday is still Running, so the workloads can be adopted by ArgoCD without any restart"
+],
+[
+"D",
+"That last night's destroy left no state file behind, since a leftover state blocks a new apply"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"מעקב עלות קיים בפרויקט, אבל הוא לא חלק מה-preflight. השלב הזה בודק רק תנאים טכניים שבלעדיהם ההקמה תיכשל.",
+"נכון. שלושת אלה הם הדברים שמפילים בוקר באמצע: כלי חסר, AMI שנמחק, או כתובת בית שהשתנתה ונועלת את הבעלים מחוץ לשירותים.",
+"בבוקר אין קלאסטר בכלל, כי הוא נהרס בערב. אין pods לבדוק, והאפליקציות קמות מחדש דרך ArgoCD.",
+"ה-state נשאר ב-S3 בכוונה גם אחרי destroy, והוא מה שמאפשר ל-apply הבא לדעת מה קיים. הוא לא נבדק כמכשול."
+],
+"x": "preflight הוא עיקרון של fail fast: עדיף להיכשל בשנייה הראשונה על כלי חסר מאשר בדקה ה-12 אחרי שחצי סביבה כבר קמה. ציין שהוא גם מעדכן את כתובת ה-IP הנוכחית.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html"
+},
+{
+"s": 24,
+"q": "Before the destroy, the evening script scales the database StatefulSets to zero. What is that step for?",
+"o": [
+[
+"A",
+"Scaling to zero deletes the PVCs, which is how the data volumes are removed each night"
+],
+[
+"B",
+"It stops the databases from being billed for the minutes the destroy takes to finish"
+],
+[
+"C",
+"Terraform cannot destroy a node group while any StatefulSet object still exists in the cluster"
+],
+[
+"D",
+"The databases shut down cleanly and release their kept volumes before the nodes disappear"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"הורדה לאפס replicas לא מוחקת PVCs, וה-volumes בכלל אמורים לשרוד. המטרה הפוכה: לשמור על הנתונים שלמים.",
+"אין חיוב לפי pod של מסד נתונים. העלות היא של ה-nodes וה-volumes, והצעד הזה נועד לשלמות הנתונים.",
+"מחיקת node group לא תלויה באובייקטים שבקלאסטר. Terraform היה מוחק אותה גם עם StatefulSets פעילים, רק בלי כיבוי מסודר.",
+"נכון. הנתונים נמצאים על volumes שנשמרים בלילה. כיבוי מסודר סוגר את הקבצים ומנתק את ה-volume, במקום שה-node ייעלם מתחת למסד נתונים פעיל."
+],
+"x": "הסבר את ההבדל בין stateless ל-stateful בפירוק: pod של האפליקציה אפשר פשוט להרוג, ומסד נתונים מכבים בסדר. כשהדיסק שורד והשרת לא, כיבוי נקי הוא מה שמגן על הנתונים.",
+"lv": 1,
+"k": "k",
+"r": "https://kubernetes.io/docs/concepts/storage/persistent-volumes/#retain"
+},
+{
+"s": 24,
+"q": "Creating the IAM OIDC provider for GitLab failed on mornings when it ran before GitLab's DNS record existed. What was the fix?",
+"o": [
+[
+"A",
+"GitLab's URL in the provider was replaced with the instance's private IP address"
+],
+[
+"B",
+"A `depends_on` to the hosted zone was added, which makes IAM wait for global DNS propagation"
+],
+[
+"C",
+"The provider was moved to the evening script, where it is created just before the nightly destroy begins"
+],
+[
+"D",
+"The provider's thumbprint was pinned in the code, so IAM does not have to reach GitLab to fetch it"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"issuer של OIDC חייב להיות כתובת HTTPS עם שם שתואם את התעודה ואת ה-claims. כתובת IP פרטית לא עומדת בזה.",
+"`depends_on` קובע רק סדר יצירה בתוך Terraform. הוא לא מחכה שרשומה תיפתר בפועל מצד AWS.",
+"יצירה בערב הייתה חסרת טעם, כי ה-pipeline צריך את ה-provider במהלך היום. הפתרון הסיר את התלות ב-DNS.",
+"נכון. בלי thumbprint מפורש, IAM פונה לכתובת של GitLab כדי לקרוא את התעודה. בבוקר השם עוד לא נפתר, ולכן הערך נכתב בקוד והיצירה כבר לא תלויה ב-DNS."
+],
+"x": "הדפוס הכללי: משאב שהיצירה שלו פונה החוצה נכשל כשהיעד עוד לא קיים. מזהים פנייה כזו, ונותנים את הערך מראש כדי שהסדר לא יהיה תלוי ברשת.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-idp_oidc.html#idp_oidc_Create_GitHub"
+},
+{
+"s": 24,
+"q": "The `k8s-alb` unit is excluded from the destroy-all run, although its WAF association is removed every evening. How do the two fit together?",
+"o": [
+[
+"A",
+"Excluded units are destroyed last by Terragrunt, after the other units have finished successfully"
+],
+[
+"B",
+"The association is never really destroyed; the exclusion keeps it attached to the next morning's ALB"
+],
+[
+"C",
+"The controller removes the association when the ALB goes, so Terraform never has to touch it"
+],
+[
+"D",
+"The evening script destroys that unit itself, early, while the controller's ALB still exists"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"יחידה מוחרגת אינה נהרסת בכלל בהרצה הכללית. החרגה אינה דחייה לסוף אלא דילוג.",
+"ה-ALB של מחר הוא משאב חדש לגמרי. association ישן לא יכול לעבור אליו, ולכן הוא נהרס ונוצר מחדש.",
+"ה-controller רץ בפרויקט עם ניהול WAF כבוי, בדיוק כדי שלא ייגע ב-association. הוא שייך ל-Terraform.",
+"נכון. ה-association חייב להיהרס לפני שה-routes נמחקים וה-ALB נעלם. לכן הסקריפט מטפל ביחידה הזו בנפרד ובזמן הנכון, וההרצה הכללית מדלגת עליה."
+],
+"x": "הנקודה היא תזמון: יש משאב אחד שחייב להיהרס באמצע התהליך, בין שני צעדים של הקלאסטר. הרצה כללית לא יודעת לבטא את זה, ולכן הסקריפט קובע את הרגע.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/destroy"
+},
+{
+"s": 24,
+"q": "After the module reorganisation, the plan read: 13 moved, 0 to add, 0 to change, 0 to destroy. What does that line prove?",
+"o": [
+[
+"A",
+"Only addresses changed in the state; no real resource in AWS would be created, altered or deleted"
+],
+[
+"B",
+"The refactor was skipped, since a plan with nothing to add means that Terraform ignored the new files"
+],
+[
+"C",
+"Thirteen resources left the state and must be imported again before the following apply"
+],
+[
+"D",
+"Thirteen resources will be recreated in their new modules with a short and planned downtime"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. `moved` מעדכן את הכתובת של משאב קיים. אפס הוספות ואפס מחיקות מראה שכל משאב שעבר מודול זוהה כאותו משאב, ושום דבר לא ייבנה מחדש.",
+"אילו הקבצים החדשים לא נטענו, לא היו מופיעים 13 מעברים. המעברים הם הראיה שהשינוי נקלט.",
+"משאב שעבר עם `moved` נשאר ב-state בכתובת החדשה. אין שום צורך בייבוא אחרי מעבר כזה.",
+"יצירה מחדש הייתה מופיעה כהוספות ומחיקות. כאן שתי הספירות הן אפס, כלומר אין שום פעולה מול AWS."
+],
+"x": "זה מבחן ההצלחה של כל refactor ב-Terraform: plan שמראה רק מעברים. אם מופיעה ולו מחיקה אחת, עוצרים ומוסיפים את בלוק ה-`moved` החסר לפני כל apply.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/refactoring"
+},
+{
+"s": 24,
+"q": "While the cycle still imported the kept resources, what happened on a morning when the import step was skipped and the apply ran anyway?",
+"o": [
+[
+"A",
+"Terraform noticed the existing resources by name and adopted them into the state by itself"
+],
+[
+"B",
+"Terraform tried to create resources that already existed, and AWS rejected the calls as duplicates"
+],
+[
+"C",
+"The apply passed, and a second copy of each resource was created with a random suffix"
+],
+[
+"D",
+"Terraform deleted the existing resources first, to recreate them cleanly under its own management"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"Terraform לא מאמץ משאבים קיימים לפי שם. הוא מכיר רק את מה שב-state, ולכן נדרש ייבוא מפורש.",
+"נכון. משאב שאינו ב-state נראה ל-Terraform כחסר, ולכן הוא מנסה ליצור אותו. ב-AWS הוא כבר קיים עם אותו שם, והיצירה נכשלת.",
+"השמות מוגדרים בקוד במפורש, בלי סיומת אקראית. לכן לא נוצר עותק שני, אלא שגיאה על שם שכבר תפוס.",
+"Terraform לא יכול למחוק משאב שהוא לא מכיר. מה שאינו ב-state פשוט לא קיים מבחינתו, והוא רק מנסה ליצור."
+],
+"x": "זה היה החיסרון של המנגנון הישן: `state rm` בערב ו-`import` בבוקר הם שני צעדים שחייבים להתאים. המעבר ליחידת `persistent` עם state משלה ביטל את הצורך בייבוא יומי.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/import"
+},
+{
+"s": 24,
+"q": "The kept resources are excluded from the destroy run, and each one also carries `prevent_destroy`. Why keep both?",
+"o": [
+[
+"A",
+"`prevent_destroy` shortens the plan, because Terraform no longer refreshes protected resources"
+],
+[
+"B",
+"The exclusion is ignored whenever `prevent_destroy` is missing, so one does not work without the other"
+],
+[
+"C",
+"The exclusion covers the normal run; `prevent_destroy` stops any other plan that would delete one"
+],
+[
+"D",
+"`prevent_destroy` is what makes AWS refuse the delete call, while the exclusion only hides the output"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"משאב מוגן עובר refresh כמו כל משאב אחר. ההגנה משפיעה רק על plan שכולל מחיקה שלו.",
+"שני המנגנונים בלתי תלויים: האחד של Terragrunt ברמת היחידה, והשני של Terraform ברמת המשאב. כל אחד פועל לבדו.",
+"נכון. ההחרגה מגינה רק על המסלול של הסקריפט. `prevent_destroy` נמצא על המשאב עצמו, ולכן הוא עוצר גם הרצה ידנית בתוך היחידה או שינוי קוד שמוביל להחלפה.",
+"`prevent_destroy` נאכף בתוך Terraform ולא ב-AWS. מחיקה דרך המסוף או ה-CLI לא נעצרת על ידו."
+],
+"x": "הגנה בשכבות: החרגה ביחידה, `prevent_destroy` במשאב ו-policy על ה-plan ב-CI. הוסף ביושר שאף אחת מהן לא עוצרת מחיקה ידנית ב-AWS, וזה כבר עניין של הרשאות.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy"
+},
+{
+"s": 24,
+"q": "In the module reorganisation, the load balancer controller's `helm_release` moved into the `kubernetes` module. Why does it belong there?",
+"o": [
+[
+"A",
+"It is installed inside the cluster through the helm provider, so it shares that module's lifecycle and tunnel"
+],
+[
+"B",
+"Helm releases may only be declared in a module whose name matches the provider that is used"
+],
+[
+"C",
+"ArgoCD cannot install controllers, so every Helm chart in the project is a Terraform release of its own"
+],
+[
+"D",
+"The controller creates the VPC's subnets, so it has to come before the network module is applied"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ה-release נוצר דרך ה-provider של helm, שצריך קלאסטר חי ו-tunnel פתוח. הוא קם ונעלם עם שאר המשאבים שבתוך הקלאסטר, ולכן זו היחידה שלו.",
+"אין ל-Terraform כלל כזה על שמות מודולים. ההחלטה נובעת מתלויות וממחזור חיים, לא משם.",
+"ArgoCD מתקין את רוב הרכיבים בקלאסטר. ה-controller הזה ב-Terraform כי ה-bootstrap זקוק לו לפני ArgoCD.",
+"ה-controller רק מגלה subnets קיימים לפי תגיות. הרשת נוצרת הרבה לפניו, ביחידת ה-vpc."
+],
+"x": "שאלת ההמשך הצפויה: למה לא דרך ArgoCD כמו השאר. התשובה היא סדר הקמה: ה-controller נדרש כדי לחשוף שירותים, ולכן הוא חלק מהבסיס ש-Terraform מקים.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/modules/develop/providers"
+},
+{
+"s": 24,
+"q": "The morning script stops in preflight: an AMI id written in the tfvars file does not exist. What is the likely story?",
+"o": [
+[
+"A",
+"AMIs are regional, and the script switched to a different region overnight on its own"
+],
+[
+"B",
+"The launch template caches the id for a day, so the check runs against yesterday's value"
+],
+[
+"C",
+"The bake script writes the ids into tfvars, and that image was removed or never finished baking"
+],
+[
+"D",
+"Terraform deletes every AMI during the nightly destroy, so the ids must be re-baked each morning"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"AMI אכן שייך ל-region אחד, אבל הפרויקט עובד ב-region יחיד והסקריפט לא מחליף אותו. זה לא ההסבר הסביר כאן.",
+"ה-preflight בודק את המזהה ישירות מול AWS ולא דרך launch template. אין כאן מטמון שמחזיק ערך ישן.",
+"נכון. סקריפט ה-bake כותב את המזהים ל-tfvars ושומר רק את שלושת ה-AMIs החדשים לכל שרת. מזהה שמצביע על image שנמחק או שלא הושלם נתפס ב-preflight.",
+"ה-AMIs נאפים בערב דווקא כדי לשרוד את הלילה, והם לא חלק ממה ש-destroy מוחק. בבוקר השרתים קמים מהם."
+],
+"x": "הסבר את הקשר: bake בערב, המזהים נכתבים ל-tfvars, נשמרים שלושה אחרונים, ו-preflight מוודא בבוקר שהם קיימים. כך תקלה של אתמול מתגלה לפני שנוצר משהו.",
+"lv": 0,
+"k": "t",
+"r": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html"
+},
+{
+"s": 24,
+"q": "An old runbook for this project says to set the variable `k8s_alb_ready = true` once the ALB is up. What is its status today?",
+"o": [
+[
+"A",
+"It is still required, and it must be passed with `-var` on the first apply of every morning, before the tunnel opens"
+],
+[
+"B",
+"It belonged to an older design and no longer exists; the association is now its own unit applied last"
+],
+[
+"C",
+"It moved into the Helm chart, where it now decides whether the Gateway is rendered"
+],
+[
+"D",
+"It was renamed to `waf_enabled`, and it now switches the whole web ACL on and off"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"המשתנה כבר לא מוגדר בקוד. העברת ערך למשתנה שלא הוצהר לא מפעילה שום דבר, והמסמך מציין במפורש שהוא הוסר.",
+"נכון. בתכנון ישן משתנה בוליאני קבע אם ה-association נוצר. הוא הוסר, ובמקומו בא שינוי שם הקובץ ואחר כך יחידה נפרדת שרצה אחרי שה-ALB קיים.",
+"ה-chart לא מחזיק ערך כזה. ה-Gateway נוצר תמיד דרך ArgoCD, וה-association מנוהל בנפרד ב-Terraform.",
+"אין בפרויקט משתנה כזה. ה-web ACL קיים תמיד, ורק ההצמדה שלו ל-ALB של ה-controller תלויה בזמן."
+],
+"x": "תשובה בוגרת כוללת את ההיסטוריה: היה משתנה בוליאני, אחריו שינוי שם קובץ, והיום יחידה נפרדת. מי שמכיר את הגלגולים יודע גם לזהות runbook מיושן.",
+"lv": 1,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/language/values/variables"
+},
+{
+"s": 24,
+"q": "What is the difference between `terraform state rm` and `terraform destroy`, and where does the cycle still use `state rm`?",
+"o": [
+[
+"A",
+"`state rm` marks a resource for recreation on the next apply; it is used for the node group"
+],
+[
+"B",
+"Both delete the resource, but `state rm` also removes its backups; it is used for old AMIs"
+],
+[
+"C",
+"`state rm` deletes the resource faster by skipping the plan; it is used for the VPC and its subnets every evening"
+],
+[
+"D",
+"`state rm` only forgets a resource; it is still used for the in-cluster unit, whose cluster dies under it"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"סימון ליצירה מחדש נעשה עם `-replace`. ה-node group נהרס יחד עם הקלאסטר בכל ערב, בלי סימון מיוחד.",
+"ה-AMIs הישנים נמחקים בסקריפט ה-bake ולא דרך Terraform. `state rm` אינו פעולת מחיקה בכלל.",
+"`state rm` לא מוחק שום דבר ב-AWS. ה-VPC נהרס ב-destroy רגיל, כי הוא משאב אמיתי שצריך להיעלם.",
+"נכון. `state rm` מוחק את הרישום ולא נוגע במשאב עצמו. המשאבים שבתוך הקלאסטר נעלמים יחד איתו, ולכן אין מה להרוס אחד אחד, רק לנקות את ה-state."
+],
+"x": "הסבר למה `state rm` הגיוני דווקא שם: להרוס Deployment אחרי Deployment דרך API של קלאסטר שעומד להימחק זה זמן מבוזבז, ואם ה-API כבר לא עונה ה-destroy נתקע.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/cli/commands/state/rm"
+},
+{
+"s": 24,
+"q": "Right after the Vault KMS key was imported in the old cycle, `terraform plan` showed one in-place change: `deletion_window_in_days`. Which AWS call does applying it make?",
+"o": [
+[
+"A",
+"`PutKeyPolicy`, because the deletion window is stored as a statement inside the key policy"
+],
+[
+"B",
+"None: `deletion_window_in_days` exists only in Terraform's state, and import cannot read it"
+],
+[
+"C",
+"`EnableKeyRotation`, since the provider couples the window to the yearly rotation setting"
+],
+[
+"D",
+"`ScheduleKeyDeletion`, which starts the waiting period and must be cancelled the same day"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"חלון המחיקה אינו חלק מה-key policy. ה-policy קובעת מי רשאי להשתמש במפתח ולנהל אותו, ולא מתי הוא נמחק.",
+"נכון. זה ערך שה-provider משתמש בו רק בזמן מחיקה, ואין לו ייצוג במפתח עצמו. אחרי ייבוא הוא חסר ב-state, וה-apply רק כותב אותו שם.",
+"רוטציה שנתית היא הגדרה נפרדת עם ארגומנט משלה. היא לא קשורה לחלון המחיקה ולא נשלחת בגללו.",
+"הקריאה הזו נשלחת רק כש-Terraform מוחק את המפתח. שינוי in-place של הערך לא מתזמן שום מחיקה."
+],
+"x": "כשרואים שינוי in-place מיד אחרי ייבוא, שואלים אם זה שדה של AWS או שדה של Terraform בלבד. שדות כמו `force_delete` ו-`deletion_window_in_days` הם מהסוג השני, והשינוי צפוי ולא מזיק.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html"
+},
+{
+"s": 24,
+"q": "The morning script builds the application image only in one case. Which?",
+"o": [
+[
+"A",
+"On Mondays only, when the base image is refreshed to pick up the security patches of the week"
+],
+[
+"B",
+"On every morning, because image layers expire when the cluster that pulled them is destroyed at night"
+],
+[
+"C",
+"When Jenkins is down, as a fallback that deploys straight from the laptop without the pipeline"
+],
+[
+"D",
+"When the image is missing from the registry, which survives the night, so normally nothing is built"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"אין בפרויקט בנייה לפי יום בשבוע. עדכוני אבטחה נכנסים דרך ה-pipeline הרגיל, כשסריקה מזהה ממצא.",
+"images ב-registry אינם תלויים בקלאסטר. הם נשארים עד שמוחקים אותם, ולכן אין סיבה לבנות כל בוקר.",
+"הסקריפט לא עוקף את ה-pipeline. הבדיקה היא רק אם יש image שהקלאסטר יוכל למשוך כדי לעלות.",
+"נכון. ה-registry הוא חלק מהמשאבים שנשמרים, ולכן ה-images של אתמול עדיין שם. בנייה נדרשת רק אם ה-image חסר, למשל ב-registry ריק לגמרי."
+],
+"x": "זה תנאי של אידמפוטנטיות: הסקריפט בודק מצב ופועל רק כשחסר משהו. כך אותו סקריפט מתאים גם לבוקר רגיל וגם להקמה מאפס, בלי דגלים מיוחדים.",
+"lv": 0,
+"k": "k",
+"r": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html"
+},
+{
+"s": 24,
+"q": "When secrets moved out of Terraform, the project rotated every value, not only the ones that had been exposed. What forced that?",
+"o": [
+[
+"A",
+"The state bucket is versioned, so older state and tfvars versions still held the previous values"
+],
+[
+"B",
+"Vault refuses to import an existing value and accepts only secrets that it generated itself"
+],
+[
+"C",
+"A provider upgrade re-encrypted the state with a new key, which invalidated all the stored values"
+],
+[
+"D",
+"Kubernetes Secrets expire after ninety days, and the migration happened to fall on that date"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. versioning שומר כל גרסה קודמת של ה-state ושל העתק ה-tfvars. הסרת סוד מהקוד לא מוחקת אותו מהגרסאות הישנות, ולכן רק רוטציה הופכת אותן לחסרות ערך.",
+"Vault מקבל כל ערך שכותבים ל-kv. בתהליך ההעברה אכן נכתבו אליו הערכים הקיימים, והושוו לפי hash.",
+"שדרוג provider לא מצפין מחדש את ה-state ולא מבטל ערכים. הבעיה היא שהערכים הישנים נשארו קריאים בגרסאות קודמות.",
+"ל-Secrets של Kubernetes אין תפוגה מובנית. הסיבה היא היסטוריית הגרסאות ב-S3 ולא מועד כלשהו."
+],
+"x": "נקודה שמראיינים אוהבים: state של Terraform מכיל סודות בטקסט גלוי, ו-versioning משמר אותם לאורך זמן. הוצאת סוד מ-Terraform נגמרת רק ברוטציה של הערך.",
+"lv": 1,
+"k": "t",
+"r": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html"
+},
+{
+"s": 24,
+"q": "In which order does the morning script build the environment?",
+"o": [
+[
+"A",
+"Everything in one `apply`, and Terraform's dependency graph alone decides the order of all the parts"
+],
+[
+"B",
+"Cluster first, then the network around it, then ArgoCD, and the tunnel only at the very end for the status report"
+],
+[
+"C",
+"Kept resources first, then ArgoCD, then the network, and the cluster once DNS has fully propagated"
+],
+[
+"D",
+"Network, then cluster and servers, then the tunnel, then kept resources, then in-cluster parts and ArgoCD"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"הפרויקט מחלק את ההקמה לשלבים כי ה-providers של kubernetes ו-helm צריכים קלאסטר קיים ו-tunnel פתוח. גרף אחד לא יכול לפתוח tunnel באמצע.",
+"קלאסטר EKS נוצר בתוך subnets קיימים, כך שהרשת חייבת לבוא לפניו. גם ה-tunnel נדרש באמצע, כי בלעדיו אי אפשר לגעת ב-API הפרטי.",
+"ArgoCD רץ בתוך הקלאסטר, ולכן לא יכול לקום לפניו. גם המשאבים שנשמרים מחכים לקלאסטר, בגלל הגדרת ה-providers בזמן הפעולה.",
+"נכון. כל שלב תלוי בקודמו: בלי VPC אין קלאסטר, בלי קלאסטר ו-tunnel אי אפשר להגדיר את ה-providers של kubernetes ו-helm, ורק אחרי כל אלה ArgoCD מקים את האפליקציות."
+],
+"x": "בראיון תאר את הסדר כשרשרת תלויות: רשת, קלאסטר ושרתים, tunnel, משאבים נשמרים, משאבים בתוך הקלאסטר, ArgoCD. מי שמסביר למה כל שלב מחכה לקודם מראה שהוא מבין את המערכת ולא רק מריץ סקריפט.",
+"lv": 0,
+"k": "k",
+"r": "https://developer.hashicorp.com/terraform/tutorials/automation/automate-terraform"
+},
+{
+"s": 24,
+"q": "The morning's prod sync used to fail on a fresh cluster. What does the script wait for before it syncs prod now?",
+"o": [
+[
+"A",
+"The node group to reach five nodes, since prod's three replicas need a node each"
+],
+[
+"B",
+"The staging environment to pass a smoke test, which is the gate for every prod sync"
+],
+[
+"C",
+"The DNS records to propagate worldwide, which the script measures with a public resolver"
+],
+[
+"D",
+"The monitoring CRDs to be installed, and prod's Secrets to arrive from Vault"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"הקלאסטר רץ על שני nodes, ואין דרישה ל-node לכל replica. ההמתנה היא לתלויות של ה-chart ולא לקיבולת.",
+"בבוקר לא משחררים גרסה חדשה אלא משחזרים את זו של אתמול. לכן אין צורך בשער של staging בשלב הזה.",
+"סנכרון של ArgoCD לא תלוי ב-DNS חיצוני. הוא צריך שהמשאבים שה-chart מפנה אליהם יהיו קיימים בקלאסטר.",
+"נכון. ה-chart כולל ServiceMonitor, שדורש CRD קיים, וה-pods צריכים את ה-Secrets שהאופרטור מביא מ-Vault. הסקריפט ממתין לשניהם ורק אז מסנכרן."
+],
+"x": "תאר את זה כסדר תלויות בתוך הקלאסטר: קודם CRDs, אחריהם סודות, ורק אז האפליקציה. בקלאסטר ותיק הסדר הזה מוסתר, ובקלאסטר שקם כל בוקר הוא מתגלה מיד.",
+"lv": 1,
+"k": "t",
+"r": "https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/#skip-dry-run-for-new-custom-resources-types"
+},
+{
+"s": 24,
+"q": "A plan stops with `Instance cannot be destroyed` on one of the kept disks. What is the right conclusion?",
+"o": [
+[
+"A",
+"The change would delete or replace the disk; find out why the plan wants that, and leave the flag in place"
+],
+[
+"B",
+"The state is corrupted; restore yesterday's version from the bucket and run the plan again"
+],
+[
+"C",
+"The disk is attached to a node; drain the node first and the same plan will then pass"
+],
+[
+"D",
+"The flag is out of date; remove `prevent_destroy`, apply once, and add it back in a later commit after the change"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. השגיאה היא ההגנה שעובדת. צריך להבין מה בקוד גורם למחיקה או להחלפה, למשל כתובת שהשתנתה בלי `moved`, ולתקן את הסיבה במקום להסיר את ההגנה.",
+"state פגום היה נותן שגיאות קריאה או חוסר התאמה. ההודעה הזו מדויקת ואומרת שיש בתכנון מחיקה של משאב מוגן.",
+"השגיאה מגיעה מ-Terraform בזמן התכנון ולא מ-AWS. ניתוק ה-volume לא משנה את העובדה שה-plan מבקש למחוק אותו.",
+"הסרת ההגנה כדי שה-plan יעבור היא בדיוק הדרך לאבד את הנתונים. ההגנה לא התיישנה, היא תפסה שינוי מסוכן."
+],
+"x": "שגיאת `prevent_destroy` היא חדשות טובות. בראיון הסבר איך חוקרים: קוראים ב-plan מה מאלץ החלפה (`forces replacement`), ומתקנים את הגורם. לא נוגעים בהגנה.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy"
+},
+{
+"s": 24,
+"q": "Vault's data is on a kept disk. Why must its KMS key survive the night as well?",
+"o": [
+[
+"A",
+"Vault auto-unseals with that key, so without it the kept data could never be decrypted again"
+],
+[
+"B",
+"The key signs the container images, and Kyverno would reject every pod on the next morning's cluster"
+],
+[
+"C",
+"A new KMS key costs a setup fee each time, which would be paid again on every single morning"
+],
+[
+"D",
+"Terraform cannot create a KMS key until the cluster exists, which would delay Vault by ten minutes"
+]
+],
+"a": [
+"A"
+],
+"y": [
+"נכון. ה-seal של Vault מסוג awskms: המפתח הראשי שלו מוצפן במפתח ה-KMS. דיסק ששרד בלי המפתח הוא נתונים מוצפנים שאי אפשר לפתוח.",
+"חתימת ה-images נעשית עם זוג מפתחות של cosign ולא עם מפתח ה-KMS הזה. המפתח הזה משרת את Vault בלבד.",
+"אין עמלת הקמה למפתח KMS, רק חיוב חודשי קטן. הסיבה היא שהנתונים הקיימים קשורים למפתח הספציפי הזה.",
+"מפתח KMS אינו תלוי בקלאסטר ונוצר בשניות. הבעיה אינה זמן אלא שמפתח חדש לא יפתח נתונים ישנים."
+],
+"x": "זו דוגמה לתלות נסתרת בין משאבים שנשמרים: דיסק מוצפן שווה משהו רק יחד עם המפתח שלו. לכן המפתח, ה-alias שלו וה-bucket של ה-snapshots נשמרים כקבוצה אחת.",
+"lv": 1,
+"k": "k",
+"r": "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys.html"
+},
+{
+"s": 24,
+"q": "Why does the project forbid `random_password` for the database passwords?",
+"o": [
+[
+"A",
+"A random value changes on every `plan`, so the pods would restart on each pipeline run"
+],
+[
+"B",
+"The random provider cannot produce characters that PostgreSQL and MongoDB accept in a password"
+],
+[
+"C",
+"`random_password` prints its value in the plan output, where the CI job log would expose it to every project member"
+],
+[
+"D",
+"The in-cluster state is dropped nightly, so a fresh value each morning would not match the kept volumes"
+]
+],
+"a": [
+"D"
+],
+"y": [
+"`random_password` יציב כל עוד הוא ב-state ולא משתנה בכל plan. הבעיה בפרויקט היא שה-state עצמו נמחק כל לילה.",
+"אפשר לשלוט בתווים של `random_password` בלי בעיה. הסיבה היא משך החיים של הערך ב-state ולא הרכב התווים.",
+"הערך מסומן sensitive ולא מודפס ב-plan. הוא כן נשמר ב-state, אבל זו לא הסיבה שנתנו בפרויקט.",
+"נכון. המודול שבתוך הקלאסטר יוצא מה-state כל ערב, ולכן `random_password` היה נוצר מחדש כל בוקר. הנתונים על ה-volumes שנשמרו נוצרו עם הסיסמה הישנה, והאפליקציה הייתה ננעלת בחוץ."
+],
+"x": "זו דוגמה טובה לכך שמשאב נכון במקום אחד הוא שגוי במקום אחר: ערך שנוצר ב-state חי רק כל עוד ה-state חי. כשהנתונים שורדים וה-state לא, הסיסמה חייבת לבוא ממקור יציב.",
+"lv": 1,
+"k": "k",
+"r": "https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password"
+},
+{
+"s": 24,
+"q": "On a slow morning the WAF association failed: the load balancer it refers to could not be found, although the Gateway had been created. What does the script do about it?",
+"o": [
+[
+"A",
+"It attaches the WAF to the Gateway object, which passes it on once the ALB appears"
+],
+[
+"B",
+"It waits until the controller has finished provisioning the ALB, and only then applies that unit"
+],
+[
+"C",
+"It skips the association for that day and leaves the site without the WAF until tomorrow"
+],
+[
+"D",
+"It creates the ALB itself with the AWS CLI when the controller needs more than a minute to do so"
+]
+],
+"a": [
+"B"
+],
+"y": [
+"WAF מוצמד למשאב של AWS ולא לאובייקט של Kubernetes. וה-controller רץ עם ניהול WAF כבוי בכוונה.",
+"נכון. יצירת Gateway היא רק בקשה. ה-controller צריך זמן לבנות את ה-ALB ב-AWS, ועד אז אין למה להצמיד. הסקריפט ממתין ל-ALB עצמו ולא לאובייקט בקלאסטר.",
+"דילוג היה משאיר את האתר חשוף ליום שלם. הסקריפט ממתין, והיחידה הזו רצה אחרונה מהסיבה הזו.",
+"ALB שנוצר ידנית לא היה מנוהל על ידי ה-controller, והיו נוצרים שניים. הסקריפט מחכה למשאב הנכון."
+],
+"x": "הבחן בין אובייקט שנוצר לבין משאב שמוכן. Kubernetes מחזיר מיד, וה-controller עובד ברקע. סקריפט אמין מחכה למצב בפועל ולא להצלחת הפקודה.",
+"lv": 1,
+"k": "t",
+"r": "https://developer.hashicorp.com/terraform/language/meta-arguments/depends_on"
+},
+{
+"s": 24,
+"q": "What does the conftest gate in the Terraform pipeline check?",
+"o": [
+[
+"A",
+"The HCL formatting and naming conventions of each module, in the way `terraform fmt -check` and a linter would do"
+],
+[
+"B",
+"The running AWS account for drift, by comparing every live resource with the state"
+],
+[
+"C",
+"The plan as JSON against a Rego policy that fails the job when a protected resource would be deleted or replaced"
+],
+[
+"D",
+"The monthly cost of the change, and it blocks any merge request above a fixed budget"
+]
+],
+"a": [
+"C"
+],
+"y": [
+"בדיקת פורמט היא עניין של `fmt`. conftest כאן לא בודק סגנון אלא את מה שה-plan עומד לעשות בפועל.",
+"זיהוי drift הוא תפקיד ה-plan עצמו. conftest מקבל את תוצאת ה-plan ומחיל עליה כללים, בלי לגשת ל-AWS.",
+"נכון. ה-plan מומר ל-JSON, וקובץ `plan.rego` עובר על השינויים המתוכננים. אם משאב מרשימת המוגנים עומד להימחק או להיות מוחלף, ה-job נכשל לפני שמישהו לוחץ Apply.",
+"הערכת עלות נעשית בכלים אחרים. ה-policy בפרויקט עוסק במשאבים מוגנים ולא במחיר."
+],
+"x": "הסבר למה בודקים את ה-plan ולא את הקוד: אותו קוד יכול לייצר plan תמים או הרסני, תלוי ב-state. policy על ה-plan תופס את מה שבאמת עומד לקרות.",
+"lv": 1,
+"k": "k",
+"r": "https://www.conftest.dev/"
 }
 ]
 }
