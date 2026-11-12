@@ -232,6 +232,19 @@ row("study", "#9 chapters where the right quiz option is longest in > 40%", st_l
 row("study", "#10 quiz options without a note of 60+ chars", st_notes, 0)
 row("study", "#30 interview questions in Study without a 120+ char answer outline", st_asks, 0)
 
+# ---------------- the owner's project ----------------
+# The site is public and the project is real: nothing published about it may carry an account id,
+# a resource id, a public address, the domain, a mail address or anything shaped like a key.
+# build_project.py refuses such a question; this covers the Study chapter (and any later page) too.
+import build_project as BP  # noqa: E402
+proj_leaks = []
+proj_files = sorted(os.path.join("psrc", f) for f in os.listdir(os.path.join(ROOT, "psrc")) if f.endswith((".py", ".md")))
+proj_files += [os.path.join("study_src", f) for f in sorted(os.listdir(os.path.join(ROOT, "study_src"))) if "project" in f]
+for rel in proj_files:
+    text = re.sub(r"https://[^\s\"']+", "", open(os.path.join(ROOT, rel), encoding="utf-8").read())   # doc links are public
+    proj_leaks += [(rel, found, why) for found, why in BP.leaks(text)]
+row("project", "identifiers that must stay out of a public site (account, resource ids, public IPs, domain)", proj_leaks, 0)
+
 # ---------------- report ----------------
 bad = 0
 w = max(len(r[1]) for r in rows)

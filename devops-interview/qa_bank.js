@@ -26,8 +26,31 @@ function hittable(el,label){
 function bankChecks(){
   const t=T(), QS=t.QS;
   ok(QS.length>0,'bank is not empty');
-  eq(t.SECTIONS.length,24,'24 sections');
-  eq(t.SHORT.length,24,'24 short names');
+  // the DevOps bank has 24 subjects; the owner's project (build_project.py) is one more after them
+  const core=t.SECTIONS.length-(t.PROJ?1:0);
+  eq(core,24,'24 sections in the DevOps bank');
+  eq(t.SHORT.length,t.SECTIONS.length,'a short name for every section');
+  eq(t.CORE_N,1300,'the DevOps bank is 1,300 questions');
+  eq(t.CORE_PAPERS,20,'in 20 exams');
+  if(t.PROJ){
+    eq(t.PROJ_SEC,24,'the project is the subject after the bank');
+    eq(t.QS.length-t.CORE_N,t.PROJ.questions.length,'the project questions follow the bank');
+    eq((t.QS.length-t.CORE_N)%65,0,'in full exams of 65');
+    ok(t.QS.slice(t.CORE_N).every(q=>q.s===t.PROJ_SEC),'every question after the bank is a project question');
+    ok(t.QS.slice(0,t.CORE_N).every(q=>q.s<t.PROJ_SEC),'and none before it is');
+    eq(t.paperName(t.CORE_PAPERS+1),'Project exam 1','the first exam after the bank is Project exam 1');
+    eq(t.paperName(t.CORE_PAPERS),'Exam 20','and the one before it is Exam 20');
+    ok(t.paperQs(t.CORE_PAPERS+1).every(t.isProjQ)&&!t.paperQs(t.CORE_PAPERS).some(t.isProjQ),'project exams hold project questions only');
+    ok(/^p[0-9a-f]{9}$/.test(t.PROJV),'the project slots carry a version stamp ('+t.PROJV+')');
+    // a profile from an incompatible project version loses its project-index entries and nothing else
+    const fake={projv:'p000000000',seen:{'5':1,[String(t.CORE_N+3)]:1},wrong:[7,t.CORE_N+1],marks:[t.CORE_N],sr:{'9':{},[String(t.CORE_N+2)]:{}}};
+    t.projCheck(fake);
+    eq(JSON.stringify([Object.keys(fake.seen),fake.wrong,fake.marks,Object.keys(fake.sr),fake.projv]),
+       JSON.stringify([['5'],[7],[],['9'],t.PROJV]),'an incompatible project version clears project entries only');
+    const kept={projv:t.PROJV,seen:{[String(t.CORE_N+3)]:1},wrong:[t.CORE_N+1],marks:[],sr:{}};
+    t.projCheck(kept);
+    eq(kept.wrong.length+Object.keys(kept.seen).length,2,'the current project version keeps them');
+  }
   const stems=new Set(); const bySec={};
   QS.forEach((q,i)=>{
     const where='q'+i;
@@ -96,7 +119,13 @@ async function runPaper(n,{answerAll=true,rightRatio=0.6,flagEvery=7}={}){
   eq(rows.length, t.PAPER_COUNT, 'one row per paper');
   eq(rows[0].querySelector('.nm').textContent,'Exam 1','the first row names Exam 1');
   const lastNm=rows[rows.length-1].querySelector('.nm').textContent;
-  ok(t.QS.length%65===0?lastNm==='Exam '+t.PAPER_COUNT:/^Exam \d+ · short paper \(\d+ questions\)$/.test(lastNm),'the last row is named for its length');
+  ok(t.QS.length%65===0?lastNm===t.paperName(t.PAPER_COUNT):/^(Project exam|Exam) \d+ · short paper \(\d+ questions\)$/.test(lastNm),'the last row is named for its length');
+  if(t.PROJ){
+    eq(rows[t.CORE_PAPERS-1].querySelector('.nm').textContent,'Exam '+t.CORE_PAPERS,'the last DevOps exam keeps its number');
+    eq(rows[t.CORE_PAPERS].querySelector('.nm').textContent,'Project exam 1','the project exams follow under their own name');
+    eq($('paperList').querySelectorAll('.paperhead').length,1,'under one heading');
+    ok(/project exam/.test($('paperSub').textContent),'and the subtitle counts them apart');
+  }
   // Start is the row's LAST button: a restart arrow or a finish-later button can sit before it
   const btn=[...rows[n-1].querySelectorAll('button')].pop();
   hittable(btn,'Start button on exam '+n);
@@ -186,6 +215,55 @@ async function runPaper(n,{answerAll=true,rightRatio=0.6,flagEvery=7}={}){
     ok(getComputedStyle($(id)).display!=='none', id+' is back after the exam'));
   ok(!$('simBar').classList.contains('show'),'the exam bar is gone in practice');
   return {pct,len,expectRight,flagged};
+}
+
+// ---------- an exam on the owner's project, from Start to the result ----------
+// It is a paper like any other to the engine, so this checks what is different about it:
+// its name, its badge, no glossary briefing, one result line in place of four domains, and
+// that nothing it records leaks into the DevOps side (domains, duels).
+async function projectPaperCheck(){
+  const t=T();
+  if(!t.PROJ) return;
+  const n=t.CORE_PAPERS+1;
+  delete t.P.lastPaper; t.simClearSave();
+  t.startPaper(n,'exam'); await sleep(40);
+  const sim=t.sim;
+  ok(!!sim&&sim.paper===n,'the project exam started');
+  if(!sim) return;
+  eq($('qSector').textContent,'PROJECT EXAM 1','the header names it as a project exam');
+  eq($('qBadge').textContent,'My project','and the badge says whose questions these are');
+  ok($('exBrief').classList.contains('hidden'),'a project exam shows no glossary briefing');
+  const len=sim.qs.length; let right=0, heb=0;
+  eq(len,65,'a project exam is a full paper');
+  for(let i=0;i<len;i++){
+    const q=t.QS[sim.qs[i]];
+    ok(t.isProjQ(sim.qs[i])&&q.s===t.PROJ_SEC,'project exam question '+(i+1)+' is a project question');
+    const good=i%4!==0;                                   // three in four right
+    const l=good?q.a[0]:q.o.map(o=>o[0]).find(x=>!q.a.includes(x));
+    const b=[...$('qOpts').children].find(x=>x.dataset.ltr===l);
+    ok(!!b,'project exam question '+(i+1)+' renders its options');
+    if(b) b.click();
+    if(good) right++;
+    if(i===0){ await sleep(40); heb=document.querySelectorAll('#explain .exhe, .exhe').length; }
+    if(i<len-1){ $('simNext').click(); await sleep(0); }
+  }
+  ok(heb>=4,'answering shows a Hebrew line for every option ('+heb+')');
+  $('simNext').click(); await sleep(30);
+  eq(t.route,'simRevScreen','review screen after the last project question');
+  $('simRevSubmit').click(); await sleep(60);
+  eq(t.route,'simDoneScreen','result screen after the project exam');
+  ok($('simVerdict').textContent.indexOf('Project exam 1')===0,'the verdict names the project exam ('+$('simVerdict').textContent.slice(0,30)+')');
+  ok(/^Your project/.test($('simDomHead').textContent),'the breakdown is headed for the project');
+  eq($('simDomList').children.length,1,'and is one line, not four DevOps domains');
+  ok($('simMeta').textContent.indexOf(right+' / '+len+' correct')===0,'the count matches what was answered');
+  const scaled=parseInt($('simScore').textContent,10);
+  eq(scaled,t.scoreScaled(right/len),'one subject, so the score is the plain share of right answers');
+  eq($('simAgain').textContent,t.PAPER_COUNT>n?'Project exam 2 ›':'Back to exams','the next step stays inside the project exams');
+  const rec=t.paperRec(n);
+  ok(!!rec&&rec.tries>=1,'the attempt was stored under its paper number');
+  eq(t.domainStats().reduce((a,d)=>a+d.pool,0),t.CORE_N,'the DevOps domains still hold the DevOps bank only');
+  ok(((t.P.secStats||{})[t.PROJ_SEC]||{}).a>=len,'the answers were counted under the project subject');
+  t.go('homeScreen');
 }
 
 function csvChecks(){
@@ -317,14 +395,15 @@ async function appChecks(){
   ok(tot&&(tot.total===t.QS.length||tot.all===t.QS.length||true),'bank totals computed');
   const r=t.readiness();
   ok(r&&typeof r.pct==='number'&&r.pct>=0&&r.pct<=100,'readiness is a percentage, got '+(r&&r.pct));
-  eq(r.domains.reduce((a,d)=>a+d.pool,0), t.QS.length, 'the domain pools add up to the whole bank');
+  eq(r.domains.reduce((a,d)=>a+d.pool,0), t.CORE_N, 'the domain pools add up to the whole DevOps bank');
   r.domains.forEach(d=>ok(d.pool>0,'domain '+d.short+' has questions'));
   t.domainStats();
   for(let d=0;d<4;d++) ok(t.DOMAINS[d].secs.every(s=>s>=0&&s<t.SECTIONS.length),'domain '+d+' maps to real sections');
   // every section belongs to exactly one domain
   const covered=new Set();
   t.DOMAINS.forEach(d=>d.secs.forEach(s=>{ ok(!covered.has(s),'section '+s+' is in two domains'); covered.add(s); }));
-  eq(covered.size,t.SECTIONS.length,'every section belongs to a domain');
+  eq(covered.size,t.SECTIONS.length-(t.PROJ?1:0),'every DevOps section belongs to a domain');
+  ok(!covered.has(t.PROJ_SEC),'the project is not one of the four domains');
   t.go('homeScreen');
 }
 
@@ -399,7 +478,10 @@ async function studyChecks(){
   ok(!!S,'the study engine is exposed');
   if(!S) return;
   const CH=S.STU_CH;
-  eq(CH.length,9,'nine chapters, one per topic');
+  const projCh=CH.filter((c,i)=>S.stuWeight(i).proj).length;
+  eq(CH.length-projCh,9,'nine chapters, one per topic');
+  eq(projCh,t.PROJ?1:0,'and one more for the owner\'s project, when it is built in');
+  if(projCh) ok(S.stuWeight(CH.length-1).proj,'the project chapter is the last one, so earlier chapters keep their place');
   const titles=new Set();
   CH.forEach((c,i)=>{
     ok(!!c.nm&&!!c.em&&!!c.sub, 'chapter '+i+' is labelled');
@@ -425,7 +507,7 @@ async function studyChecks(){
       ok(q.a>=0&&q.a<q.o.length,'chapter '+i+' check '+qi+' has a valid answer');
     });
   });
-  eq(titles.size,45,'every reference page is present exactly once');   // 30 + 15 added in stage 10
+  eq(titles.size,45+(projCh?CH[CH.length-1].topics.length:0),'every reference page is present exactly once');   // 30 + 15 added in stage 10, + the project chapter
   // every question sector belongs to exactly one chapter, so the shares add up to the bank
   const owned=CH.flatMap(c=>c.secs||[]);
   eq(new Set(owned).size,owned.length,'no sector is in two chapters');
@@ -2272,15 +2354,17 @@ async function duelChecks(){
   eq(t.duelWhere(130),'Exam 3 · Q1','question 130 opens Exam 3');
   eq(t.duelWhere(1200),'Exam 19 · Q31','the last question is the last of Exam 19');
   const opts=[...$('duelExam').options];
-  eq(opts.length,t.PAPER_COUNT+1,'the exam picker offers any exam and every exam');
+  eq(opts.length,t.CORE_PAPERS+1,'the exam picker offers any exam and every DevOps exam');
+  ok(!opts.some(o=>/Project/.test(o.textContent)),'a duel is never played on a project exam');
   eq(opts[0].value,'0','any exam first');
 
   // ---- the server's answer key is the bank's (it drifted once: 862 and 1046)
   const sql=await (await fetch('/supabase_duel_v2.sql?'+Date.now())).text();
   const key=JSON.parse(/values \(1, '(\{.*?\})'::jsonb\)/.exec(sql)[1]);
-  const drift=t.QS.map((q,i)=>(key[i]||[]).slice().sort().join()===q.a.slice().sort().join()?null:i).filter(x=>x!==null);
+  // the server keys the DevOps bank only: project questions are not played in duels
+  const drift=t.QS.slice(0,t.CORE_N).map((q,i)=>(key[i]||[]).slice().sort().join()===q.a.slice().sort().join()?null:i).filter(x=>x!==null);
   eq(drift.length,0,'the duel answer key matches the bank — re-run gen_duel_v2.py after a bank change'+(drift.length?' (off: '+drift.slice(0,5)+')':''));
-  eq(Object.keys(key).length,t.QS.length,'and covers every question');
+  eq(Object.keys(key).length,t.CORE_N,'and covers every DevOps question, and no project question');
 
   // ---- the bot: exam 3, you right and the bot wrong ends it at once
   const rnd=Math.random, saveW=t.P.botW||0, saveL=t.P.botL||0, saveD=t.P.botD||0;
@@ -3614,10 +3698,11 @@ async function cheerChecks(){
 async function statsChecks(){
   const t=T(), $=id=>document.getElementById(id);
   const S=t.BANK_STATS;
-  eq(S.total,t.QS.length,'the overview counts every question');
-  eq(S.papers,t.PAPER_COUNT,'over every paper');
-  eq(S.rows.reduce((a,r)=>a+r.n,0),t.QS.length,'the subject counts add up to the bank');
-  eq(S.rows.length,new Set(t.QS.map(q=>q.s)).size,'one row per subject that has questions');
+  eq(S.total,t.CORE_N,'the overview counts every DevOps question');
+  eq(S.papers,t.CORE_PAPERS,'over every DevOps paper');
+  eq(S.rows.reduce((a,r)=>a+r.n,0),t.CORE_N,'the subject counts add up to the bank');
+  eq(S.rows.length,new Set(t.QS.slice(0,t.CORE_N).map(q=>q.s)).size,'one row per subject that has questions');
+  ok(!S.rows.some(r=>r.sec===t.PROJ_SEC),'the project is not listed as a share of the DevOps exams');
   const pct=S.rows.reduce((a,r)=>a+r.pct,0);
   ok(Math.abs(pct-100)<1.5,'the percentages add up to about 100, got '+pct.toFixed(1));
   S.rows.forEach(r=>{
@@ -3651,7 +3736,8 @@ async function weightChecks(){
   S.STU_CH.forEach((c,i)=>{
     const w=S.stuWeight(i);
     ok(w.n>0,'chapter '+i+' ('+c.nm+') covers questions');
-    ok(w.pct>0,'chapter '+i+' has a share of the exam');
+    if(w.proj) eq(w.pct,0,'the project chapter is not a share of the DevOps exams');
+    else ok(w.pct>0,'chapter '+i+' has a share of the exam');
   });
 
   S.renderStudyPick(); t.go('stuPickScreen'); await sleep(30);
@@ -3727,13 +3813,22 @@ function authoredChecks(){
   eq(stub,0,'no terse lines under wrong options ('+stub+')');
   // The right answer used to be the longest option in 84% of questions, so it could be found
   // without reading. Stage 9 rebalanced every file (now ~23% longest, ~29% shortest).
-  const longest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
-    return L[a]>Math.max(...L.filter((_,j)=>j!==a)); }).length;
+  const CORE=t.QS.slice(0,t.CORE_N), PRJ=t.QS.slice(t.CORE_N);
+  const isLongest=q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
+    return L[a]>Math.max(...L.filter((_,j)=>j!==a)); };
+  const isShortest=q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
+    return L[a]<Math.min(...L.filter((_,j)=>j!==a)); };
+  const longest=CORE.filter(isLongest).length;
   ok(longest<=294,'the right option is the longest in at most 294 questions ('+longest+')');
   // Shortening right answers too far creates the opposite tell, so cap that side too.
-  const shortest=t.QS.filter(q=>{ const L=q.o.map(o=>o[1].length), a=q.o.findIndex(o=>q.a.includes(o[0]));
-    return L[a]<Math.min(...L.filter((_,j)=>j!==a)); }).length;
+  const shortest=CORE.filter(isShortest).length;
   ok(shortest<=373,'the right option is the shortest in at most 373 questions ('+shortest+')');
+  // the project exams are held to the same line: at most 30% either way
+  if(PRJ.length){
+    const pl=PRJ.filter(isLongest).length, ps=PRJ.filter(isShortest).length;
+    ok(pl<=0.3*PRJ.length,'project exams: the right option is the longest in at most 30% ('+pl+' of '+PRJ.length+')');
+    ok(ps<=0.3*PRJ.length,'project exams: the right option is the shortest in at most 30% ('+ps+' of '+PRJ.length+')');
+  }
   // The October 2026 audit found other ways to spot the answer without knowing the material. Each cap
   // matches tools/contentlint.py, which explains them: `code` on the right option only, absolute words
   // ("always", "only") on every wrong one, the right one alone repeating the question's words.
@@ -3991,10 +4086,17 @@ window.QA_BANK=async function(opts){
     await step('timeoutCheck',timeoutCheck);
     await step('abandonCheck',abandonCheck);
     await step('shortPaperCheck',shortPaperCheck);
+    await step('projectPaperCheck',projectPaperCheck);
   }
   t.go('homeScreen');
   console.log(fails.length?('QA_BANK: '+pass+' passed, '+fails.length+' FAILED'):('QA_BANK: '+pass+' assertions, all passing'));
   return {pass, failed:fails.length, fails};
 };
-console.log('QA_BANK ready — run  await QA_BANK()  ·  QA_UI()  ·  QA_INTEG()');
+// the project exam on its own, for a quick run after build_project.py
+window.QA_PROJECT=async function(){
+  pass=0; fails=[];
+  await step('projectPaperCheck',projectPaperCheck);
+  return {pass, failed:fails.length, fails};
+};
+console.log('QA_BANK ready — run  await QA_BANK()  ·  QA_UI()  ·  QA_INTEG()  ·  QA_PROJECT()');
 })();

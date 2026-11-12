@@ -48,6 +48,7 @@ JSON blobs that Python scripts generate from source files.
 | CI scope | Docker builds, DevSecOps (SAST/SCA/Trivy/cosign/SBOM/OIDC), testing in the pipeline, pipeline design and deploy strategies |
 | Accounts | Supabase **on** since stage 8: Ship It's own project `rkebneaecaprfolafolg` (Tokyo, free tier). Guests still play on `localStorage`; signing in syncs |
 | Games | Casino, duel, tournament and leaderboard are **visible** (stage 8). They hide again (`.nocloud`) if `SUPA` is emptied |
+| My project | A **25th subject** on the owner's own project (weather-app on EKS), outside the 1,300 and outside the Ship It score, duels and mock: its own exams (**Project exam 1–5**, 65 questions each, shown as exams 21–25 under their own heading), a Study chapter, and later a Learn subject and interview questions. **The site is public: no account id, resource ids, public IPs, domain, user names, credentials or still-open security gaps in anything published about it** |
 
 ### Weights and counts
 
@@ -85,7 +86,10 @@ devops-interview/
   isrc/<topic>.py         open interview questions (k8s, argocd, ci, aws, helm, terraform, linux, cicd_tools, net)
   learn_src/_h.py         block shorthand shared by Learn and Study
   learn_src/s00..s23_*.py one Learn subject per file (SUBJECT dict)
-  study_src/c1..c9_*.py   one Study chapter per file (CHAPTER dict)
+  study_src/c1..c9_*.py   one Study chapter per file (CHAPTER dict); c10_project.py = the owner's project
+  psrc/pN.py              project exams, one file of 65 Q() per exam (section "project"); psrc/FACTS.md = the sanitized
+                          digest of the project's handbook that the questions are written from
+  build_project.py        psrc → psrc/project.json → #projdata + PROJV in index.html (validates, refuses identifiers)
   learn_engine.js learn_screens.html learn_styles.css   Learn engine, injected between LEARN: markers
   study_engine.js study_screens.html study_styles.css   Study engine, injected between STUDY: markers
   build_*.py inject_*.py  builders (validate, then write)
@@ -134,6 +138,13 @@ copied from the bank. `python3 tools/learnq.py stats learn_src/sNN.py` shows the
 Every sector must belong to exactly one chapter. Each `QZ` option is `(text, why_he)`; the quiz feedback lists every option
 with its note (`stuWhyEach`), and `build_study.py` applies the same balance rules per chapter (`learnq.py` edits quizzes as `z0, z1…`).
 
+**Project exam** (`psrc/pN.py`): the same `Q()` as the bank with `S = "project"` and `HARD = True`, exactly 65 per file,
+35–65% troubleshooting, refs taken from pages the bank already links (they were link-checked). `build_project.py` applies
+the bank's HARD rules and refuses a stem that is already in the bank and anything shaped like an identifier (12-digit
+numbers, AWS resource ids, public IPs, `.click` names, mail addresses, keys). Each file is shuffled inside its own 65
+slots, so adding `pN+1.py` never moves earlier questions; `PROJV`/`PROJV_OK` (like `BANKV`) keep progress on project
+questions when exams are added or reworded. Write from `psrc/FACTS.md`; don't repeat stems of earlier exams.
+
 **Blocks** (`_h.py`): `H P UL STEPS KEY TRAP NOTE TABLE FLOW SPLIT CODE TREE ASK`. Inline markdown: `**bold**`
 and `` `code` ``. Keep `**` and backticks balanced; the validators check.
 `ASK(("English question", "Hebrew answer outline"), …)` renders each item as a tap-to-open `<details>`; both builders require an
@@ -148,6 +159,7 @@ python3 gen_duel_v2.py && python3 build_duel_key.py        # ALWAYS after a bank
 python3 build_interview.py && python3 inject_interview.py  # isrc → #ivdata
 python3 build_learn.py                                     # learn_src → #learndata
 python3 inject_learn.py                                    # Learn engine files → index.html
+python3 build_project.py                                   # psrc → #projdata (BEFORE build_study: the chapter needs sector 24)
 python3 build_study.py && python3 inject_study.py          # study_src → #studydata, Study engine files
 ```
 
@@ -184,14 +196,14 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 
 | Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 22,998 assertions / 0 fail (runs about 10 minutes) |
+| `QA_BANK()` | qa_bank.js | 24,314 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` runs only the project exam check (147) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
 | `AUDIT()`, `AUDIT2()`…`AUDIT8()` | audit_runtime.js, audit2..8.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
-| `tools/contentlint.py --strict` | — | 34 / 34 lines within limits (run after any content change) |
+| `tools/contentlint.py --strict` | — | 35 / 35 lines within limits (run after any content change; the last line is the project privacy check) |
 | `qa_progress.js` (node) | — | 6 / 6 |
 
 Notes:
@@ -218,6 +230,7 @@ Notes:
 | Study weights | `STUDY_T.STU_CH`, `STU_SECS`, `stuWeight` |
 | Ranks / labels | `RANKS` (Intern … Neon Ascendant), `skillLabel` (Junior/Mid-level/Senior) |
 | Cloud switch | `const SUPA={url,anonKey}` (publishable key) → `CLOUD_ON` → otherwise `<html class="nocloud">` hides casino and leaderboard |
+| My project | `CORE_N` (1,300: where the DevOps bank ends), `PROJ`, `PROJ_SEC` (24), `CORE_PAPERS` (20), `isProjQ`, `isProjPaper`, `paperName(n)` ("Project exam 1" for exam 21), `PROJV`/`PROJV_OK`, `projCheck(P)`. The blob is appended to `QS`/`SECTIONS` at load. Mock, random exam, duels, tournaments, `BANK_STATS` and the four `DOMAINS` use `CORE_N`/`CORE_PAPERS` |
 | Test surface | `window.__t` with `?test=1` |
 
 ## 9. Gotchas (each one has bitten before)
@@ -244,6 +257,12 @@ Notes:
   Ask before touching an option's text (stage 9 and the October 2026 audit have that approval).
 - In Bash heredocs, quote the delimiter (`<<'EOF'`): backticks in Hebrew content otherwise run as command substitution.
 - The cloud proxy blocks the docs hosts, so `ref` links can't be fetched there. Verify them from a normal browser.
+- `QS.length` is 1,300 + the project questions. Anything that means "the DevOps bank" (a random exam, duels, the server's
+  answer key, weights, domains) must use `CORE_N` / `CORE_PAPERS`; `gen_duel_v2.py` reads `#data` only, so the key stays 1,300.
+- Study chapters load by number (`c10` sorts before `c1_` as text, and reading progress is keyed by position): a new
+  chapter always gets the next number.
+- The site and the repo are public. The project's handbook holds real identifiers; never commit it, and write project
+  content from `psrc/FACTS.md`. `build_project.py` and the last `contentlint.py` line catch the mechanical leaks only.
 
 ## 10. History
 
@@ -265,6 +284,7 @@ Notes:
 | Links | 822 doc pages checked against source repos; 154 refs fixed (moved pages, dead anchors, wrong paths); `LINKS.md` lists what needs a browser. Ship It rocket icon replaces the AWS badge |
 | Cleanup | Skyforge explanation fallback, dead course mode, empty blobs, their CSS and `audit9.js` removed (~850 lines); `saa*` → `score*`; root `index.html` redirect fixes the Pages 404 |
 | Audit (Oct 2026) | 30 content improvements, each guarded by a `contentlint.py` line (34/34 green). Progress survives a reworded bank (`BANKV_OK`). Bank: answer tells removed (`code` only on the right option 73 → 0, absolute-word distractors 31 → 0, stem echo 33 → 0), a duplicate reworded, landing-page refs replaced. Interview: 294 short traps and 256 short points rewritten. 8 facts fixed across bank, interview, Learn and Study (seccomp default, `kubectl debug node` + chroot, Argo CD polling, Ingress NGINX retirement, `create-only`, hook delete policy, `helm --wait`, `Replace=true`). Briefing: CODEX 102 → 312 terms, questions with no term 259 → 18. Learn: all 528 checks and finals rebalanced (right option longest 73–95% per subject → ≤ 27%; 976 throwaway distractors, 1,698 short notes → 0), 96 ASK answers. Study: 46 quiz questions with notes per option (longest 31 → 10), 165 ASK answers. Builders enforce all of it |
+| Project (Nov 2026) | "My project" category, part 1: engine (25th subject appended at load, project exams after the bank, own result line, DevOps scope kept on `CORE_N`), `build_project.py` with a privacy guard, **Project exam 1** (65 questions: access, the two ALBs, environments, GitOps, Terraform, the daily cycle, Buildah, chart and Prometheus traps, cost), Study chapter 10 (6 pages, 18 interview answers, 6 checks). The bank, `BANKV` and the duel key are byte-identical |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -364,3 +384,13 @@ Notes:
    maximum (34/34 green); run it with `--strict` after any content change. **Left, found on the way:**
    18 Junior–Mid questions still get no glossary term in the briefing (limit 65). English lists inside Hebrew (1,448 in
    1,272 strings) now render item by item through `heLists` (see section 9).
+8. **My project (IN PROGRESS, asked by Nehoray 2026-11-12):** teach and test his own project, weather-app on EKS.
+   **Done:** the engine, Project exam 1 (`psrc/p1.py`), Study chapter 10 (`study_src/c10_project.py`).
+   **Next, one stage each:** Project exams 2–5 (`psrc/p2.py` … `p5.py`, 65 questions each; themes and facts per exam are in
+   `psrc/FACTS.md`: 2 = the daily cycle and Terraform in depth, 3 = CI/CD, DevSecOps and GitOps in depth, 4 = security, data
+   and secrets, 5 = observability, agents and incidents), then a Learn subject for sector 24 (the engine tolerates its
+   absence today) and open interview questions for the oral defense (needs a 10th topic in `IV_COUNTS`).
+   Per exam: write in three chunks, check lengths as you go (right option mid-pack: aim ≤ 25% longest), `build_project.py`,
+   `build_study.py && inject_study.py`, `QA_PROJECT()`, then the full QA. Nothing needs re-running in Supabase.
+   **Left out on purpose** (public site): identifiers, and security gaps that are still open on the live system.
+

@@ -60,7 +60,9 @@ def check_md(where, s, errs):
 
 def load():
     out = []
-    for f in sorted(SRC.glob("c*.py")):
+    # by chapter number, not by name: "c10_..." sorts before "c1_..." as text, and the page keys
+    # reading progress by a chapter's position, so a new chapter must land at the end
+    for f in sorted(SRC.glob("c*.py"), key=lambda p: int(re.match(r"c(\d+)", p.stem).group(1))):
         spec = importlib.util.spec_from_file_location("study_" + f.stem, f)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -71,9 +73,16 @@ def load():
 
 
 def sections():
+    """The bank's subjects, plus the owner's project when build_project.py has put it in the page."""
     s = PAGE.read_text(encoding="utf-8")
     m = re.search(r'<script id="data" type="application/json">(.*?)</script>', s, re.S)
-    return json.loads(m.group(1))["sections"]
+    names = json.loads(m.group(1))["sections"]
+    p = re.search(r'<script id="projdata" type="application/json">(.*?)</script>', s, re.S)
+    if p:
+        proj = json.loads(p.group(1))
+        if proj.get("questions"):
+            names = names + [proj.get("section", "My project")]
+    return names
 
 
 def main():

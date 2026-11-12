@@ -10,10 +10,12 @@ const STU_CH=STUDY.chapters||[];
 // whole bank and the card colour means the same thing as everywhere else in the app.
 const STU_DOM=STU_CH.map(c=>c.dom|0);
 const STU_SECS=STU_CH.map(c=>c.secs||[]);
+// The chapter on the owner's own project is not a share of the DevOps exams: it has exams of its own.
+const stuIsProj=i=>PROJ_SEC>=0&&(STU_SECS[i]||[]).includes(PROJ_SEC);
 function stuWeight(i){
   const secs=STU_SECS[i]||[];
   const n=secs.reduce((a,s)=>a+((bySec[s]||[]).length),0);
-  return {n, pct:QS.length?Math.round(n/QS.length*1000)/10:0, secs};
+  return {n, pct:(stuIsProj(i)||!CORE_N)?0:Math.round(n/CORE_N*1000)/10, secs, proj:stuIsProj(i)};
 }
 // how well you have done on the sectors a chapter covers, and how much of it you have seen
 function stuMastery(i){
@@ -52,7 +54,7 @@ function renderStudyPick(){
   STU_CH.forEach((c,i)=>{
     const rec=stuRec(i);
     const b=document.createElement('button'); b.className='stucard';
-    b.style.setProperty('--dcol',DOMAIN_COL[STU_DOM[i]]||'var(--cyan)');
+    b.style.setProperty('--dcol',stuIsProj(i)?PROJ_COL:(DOMAIN_COL[STU_DOM[i]]||'var(--cyan)'));
     b.innerHTML='<span class="sem">'+c.em+'</span>'+
       '<span style="flex:1;min-width:0"><span class="snm">'+esc(c.nm)+'</span>'+
       '<div class="ssub">'+esc(c.sub)+'</div>'+
@@ -69,6 +71,8 @@ function renderStudyPick(){
 function stuWeightHTML(i){
   const w=stuWeight(i), m=stuMastery(i);
   if(!w.n) return '';
+  if(w.proj) return '<div class="stuw mid"><div class="wtxt"><b>'+plural(PAPER_COUNT-CORE_PAPERS,'project exam')+'</b> · '+w.n+' questions'+
+    (m.a?' · you are '+m.acc+'% right on '+m.a+' of them':' · none attempted yet')+'</div></div>';
   const band=w.pct>=10?'heavy':w.pct>=5?'mid':'light';
   return '<div class="stuw '+band+'">'+
     '<div class="wbar"><i style="width:'+pctW(w.pct*6)+'"></i></div>'+
@@ -86,7 +90,8 @@ function stuOpen(i){
   $('stuSub').textContent=c.sub;
   const w=stuWeight(i), m=stuMastery(i);
   $('stuWeight').innerHTML=w.n
-    ? '<div class="stat"><b>'+w.pct+'%</b><span>Of the exam</span></div>'+
+    ? (w.proj?'<div class="stat"><b>'+(PAPER_COUNT-CORE_PAPERS)+'</b><span>Project exams</span></div>'
+             :'<div class="stat"><b>'+w.pct+'%</b><span>Of the exam</span></div>')+
       '<div class="stat"><b>'+w.n+'</b><span>Questions</span></div>'+
       '<div class="stat"><b>'+(m.a?m.acc+'%':'—')+'</b><span>You are right</span></div>'
     : '';
