@@ -196,7 +196,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 
 | Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 25,514 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
+| `QA_BANK()` | qa_bank.js | 25,530 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
@@ -287,6 +287,7 @@ Notes:
 | Project (Nov 2026) | "My project" category, part 1: engine (25th subject appended at load, project exams after the bank, own result line, DevOps scope kept on `CORE_N`), `build_project.py` with a privacy guard, **Project exam 1** (65 questions: access, the two ALBs, environments, GitOps, Terraform, the daily cycle, Buildah, chart and Prometheus traps, cost), Study chapter 10 (6 pages, 18 interview answers, 6 checks). The bank, `BANKV` and the duel key are byte-identical |
 | Project exam 2 | `psrc/p2.py`, 65 questions on the daily cycle and Terraform in depth (morning and evening scripts, import ordering, shell traps, state and tfvars, AMIs and the runner, cluster ownership, Terraform in GitLab CI with OIDC and conftest, `moved` blocks, the six Terragrunt units). `PROJV_OK` keeps progress on exam 1. `QA_BANK` 25,439 / 0 |
 | Project: five questions | Study chapter 10 grew from 6 to 9 pages: 18 components (access, ALBs, Terragrunt, daily cycle, AMIs, Terraform CI, Buildah, gates, cosign and Kyverno, ArgoCD, Rollouts, Gateway API, NetworkPolicy and WAF, Istio ambient, data tier, Vault, LGTM, agents), each answered through the five defense questions (`FIVE()` helper in `c10_project.py`: built, why, rejected, cost, in production), plus a one-line opener table per page |
+| Project: flows | Chapter 10, page 10: three end-to-end flows as diagram + numbered steps + an interview answer each: a request from the browser to PostgreSQL, a change from `feature/*` to `main` and prod, and an incident from a failing pod to the issue and mail. `QA_BANK` 25,530 / 0 |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
