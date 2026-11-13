@@ -66,3 +66,11 @@
 /* a long identifier in a table cell would push the table sideways on a phone; code may break
    inside a cell, except in the first column, which names the thing (same rule as Learn) */
 #stuBody .mdxtable td:not(:first-child) code{overflow-wrap:anywhere}
+
+/* the project chapter's door to its Learn lessons */
+#stuBody .stulessons{direction:ltr;display:flex;align-items:center;gap:12px;width:100%;margin:4px 0 18px;padding:14px 16px;text-align:left;
+  border-radius:16px;border:1px solid #d98fb3;background:rgba(217,143,179,.10);color:inherit;font:inherit;cursor:pointer}
+#stuBody .stulessons .ic{font-size:26px;flex:none}
+#stuBody .stulessons b{display:block;font-size:16px}
+#stuBody .stulessons i{display:block;font-style:normal;font-size:13px;opacity:.75;margin-top:2px}
+#stuBody .stulessons .ar{margin-left:auto;font-size:24px;opacity:.7;flex:none}

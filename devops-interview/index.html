@@ -326,6 +326,14 @@ h2.head{font-size:18px;font-weight:650;letter-spacing:.2px;margin-bottom:4px}
 /* a long identifier in a table cell would push the table sideways on a phone; code may break
    inside a cell, except in the first column, which names the thing (same rule as Learn) */
 #stuBody .mdxtable td:not(:first-child) code{overflow-wrap:anywhere}
+
+/* the project chapter's door to its Learn lessons */
+#stuBody .stulessons{direction:ltr;display:flex;align-items:center;gap:12px;width:100%;margin:4px 0 18px;padding:14px 16px;text-align:left;
+  border-radius:16px;border:1px solid #d98fb3;background:rgba(217,143,179,.10);color:inherit;font:inherit;cursor:pointer}
+#stuBody .stulessons .ic{font-size:26px;flex:none}
+#stuBody .stulessons b{display:block;font-size:16px}
+#stuBody .stulessons i{display:block;font-style:normal;font-size:13px;opacity:.75;margin-top:2px}
+#stuBody .stulessons .ar{margin-left:auto;font-size:24px;opacity:.7;flex:none}
 /* STUDY:CSS:END */
 /* ---------- home ---------- */
 .hero{display:flex;flex-direction:column;align-items:center;gap:3px;margin:8px 0 26px;text-align:center}
@@ -11182,7 +11190,9 @@ function renderLearnPick(){
       'Run <code>python3 build_learn.py</code> to inject them.</div>';
     return;
   }
-  LEARN_SECS.forEach(sec=>{
+  // the owner's own project leads the list; the 24 DevOps subjects follow in their fixed order
+  const isProj=sec=>typeof PROJ_SEC!=='undefined'&&sec===PROJ_SEC;
+  LEARN_SECS.slice().sort((x,y)=>(isProj(y)-isProj(x))||x-y).forEach(sec=>{
     const d=learnData(sec), rec=learnRecord(sec), done=learnModsDone(sec).length;
     const mins=d.modules.reduce((a,m)=>a+m.min,0)+LSIM_MIN+8;
     const b=document.createElement('button'); b.className='crsrow';
@@ -11193,6 +11203,7 @@ function renderLearnPick(){
       (done?' · '+done+'/'+plural(d.modules.length,'part')+' passed':'')+
       (rec?' · best '+(Number(rec.best)|0)+'%':'')+'</span></span>'+
       (rec?'<span class="cdone">✓ '+(Number(rec.runs)|0)+'</span>':'');
+    if(isProj(sec)) b.style.borderColor='#d98fb3';
     b.onclick=()=>startLearn(sec);
     list.appendChild(b);
   });
@@ -11803,6 +11814,14 @@ function stuOpen(i){
     '<section class="stutopic" id="stuT'+k+'"><h2>'+esc(t.nm)+'</h2>'+studyBlocksHTML(t.blocks)+'</section>'
   ).join('');
   $('stuBody').querySelectorAll('.parread').forEach(b=>{ b.onclick=()=>paraRead(b); });
+  // the project is also taught as short lessons in Learn; a reference chapter this long needs the door
+  if(stuIsProj(i)&&typeof learnData==='function'&&learnData(PROJ_SEC)){
+    const d=learnData(PROJ_SEC), go=document.createElement('button');
+    go.className='stulessons'; go.id='stuLessons';
+    go.innerHTML='<span class="ic">🎓</span><span><b>Learn it step by step</b><i>'+d.modules.length+' short lessons, in order, with a few questions after each</i></span><span class="ar">›</span>';
+    go.onclick=()=>startLearn(PROJ_SEC);
+    $('stuBody').insertBefore(go,$('stuBody').firstChild);
+  }
   stuRenderQuiz(c);
   $('stuNext').textContent=i<STU_CH.length-1?('Next: '+STU_CH[i+1].nm+' ▸'):'Back to chapters';
   stuMarkRead(i);

@@ -132,7 +132,9 @@ function renderLearnPick(){
       'Run <code>python3 build_learn.py</code> to inject them.</div>';
     return;
   }
-  LEARN_SECS.forEach(sec=>{
+  // the owner's own project leads the list; the 24 DevOps subjects follow in their fixed order
+  const isProj=sec=>typeof PROJ_SEC!=='undefined'&&sec===PROJ_SEC;
+  LEARN_SECS.slice().sort((x,y)=>(isProj(y)-isProj(x))||x-y).forEach(sec=>{
     const d=learnData(sec), rec=learnRecord(sec), done=learnModsDone(sec).length;
     const mins=d.modules.reduce((a,m)=>a+m.min,0)+LSIM_MIN+8;
     const b=document.createElement('button'); b.className='crsrow';
@@ -143,6 +145,7 @@ function renderLearnPick(){
       (done?' · '+done+'/'+plural(d.modules.length,'part')+' passed':'')+
       (rec?' · best '+(Number(rec.best)|0)+'%':'')+'</span></span>'+
       (rec?'<span class="cdone">✓ '+(Number(rec.runs)|0)+'</span>':'');
+    if(isProj(sec)) b.style.borderColor='#d98fb3';
     b.onclick=()=>startLearn(sec);
     list.appendChild(b);
   });

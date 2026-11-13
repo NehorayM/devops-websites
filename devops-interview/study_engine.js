@@ -107,6 +107,14 @@ function stuOpen(i){
     '<section class="stutopic" id="stuT'+k+'"><h2>'+esc(t.nm)+'</h2>'+studyBlocksHTML(t.blocks)+'</section>'
   ).join('');
   $('stuBody').querySelectorAll('.parread').forEach(b=>{ b.onclick=()=>paraRead(b); });
+  // the project is also taught as short lessons in Learn; a reference chapter this long needs the door
+  if(stuIsProj(i)&&typeof learnData==='function'&&learnData(PROJ_SEC)){
+    const d=learnData(PROJ_SEC), go=document.createElement('button');
+    go.className='stulessons'; go.id='stuLessons';
+    go.innerHTML='<span class="ic">🎓</span><span><b>Learn it step by step</b><i>'+d.modules.length+' short lessons, in order, with a few questions after each</i></span><span class="ar">›</span>';
+    go.onclick=()=>startLearn(PROJ_SEC);
+    $('stuBody').insertBefore(go,$('stuBody').firstChild);
+  }
   stuRenderQuiz(c);
   $('stuNext').textContent=i<STU_CH.length-1?('Next: '+STU_CH[i+1].nm+' ▸'):'Back to chapters';
   stuMarkRead(i);
