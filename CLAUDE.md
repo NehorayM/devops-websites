@@ -196,7 +196,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 
 | Suite | File | Last green (after the October 2026 audit) |
 |---|---|---|
-| `QA_BANK()` | qa_bank.js | 25,439 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
+| `QA_BANK()` | qa_bank.js | 25,514 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
 | `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
@@ -286,6 +286,7 @@ Notes:
 | Audit (Oct 2026) | 30 content improvements, each guarded by a `contentlint.py` line (34/34 green). Progress survives a reworded bank (`BANKV_OK`). Bank: answer tells removed (`code` only on the right option 73 → 0, absolute-word distractors 31 → 0, stem echo 33 → 0), a duplicate reworded, landing-page refs replaced. Interview: 294 short traps and 256 short points rewritten. 8 facts fixed across bank, interview, Learn and Study (seccomp default, `kubectl debug node` + chroot, Argo CD polling, Ingress NGINX retirement, `create-only`, hook delete policy, `helm --wait`, `Replace=true`). Briefing: CODEX 102 → 312 terms, questions with no term 259 → 18. Learn: all 528 checks and finals rebalanced (right option longest 73–95% per subject → ≤ 27%; 976 throwaway distractors, 1,698 short notes → 0), 96 ASK answers. Study: 46 quiz questions with notes per option (longest 31 → 10), 165 ASK answers. Builders enforce all of it |
 | Project (Nov 2026) | "My project" category, part 1: engine (25th subject appended at load, project exams after the bank, own result line, DevOps scope kept on `CORE_N`), `build_project.py` with a privacy guard, **Project exam 1** (65 questions: access, the two ALBs, environments, GitOps, Terraform, the daily cycle, Buildah, chart and Prometheus traps, cost), Study chapter 10 (6 pages, 18 interview answers, 6 checks). The bank, `BANKV` and the duel key are byte-identical |
 | Project exam 2 | `psrc/p2.py`, 65 questions on the daily cycle and Terraform in depth (morning and evening scripts, import ordering, shell traps, state and tfvars, AMIs and the runner, cluster ownership, Terraform in GitLab CI with OIDC and conftest, `moved` blocks, the six Terragrunt units). `PROJV_OK` keeps progress on exam 1. `QA_BANK` 25,439 / 0 |
+| Project: five questions | Study chapter 10 grew from 6 to 9 pages: 18 components (access, ALBs, Terragrunt, daily cycle, AMIs, Terraform CI, Buildah, gates, cosign and Kyverno, ArgoCD, Rollouts, Gateway API, NetworkPolicy and WAF, Istio ambient, data tier, Vault, LGTM, agents), each answered through the five defense questions (`FIVE()` helper in `c10_project.py`: built, why, rejected, cost, in production), plus a one-line opener table per page |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
