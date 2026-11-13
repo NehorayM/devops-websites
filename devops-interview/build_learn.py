@@ -26,7 +26,14 @@ def sections_from_html():
     txt = HTML.read_text()
     m = re.search(r'<script id="data" type="application/json">(.*?)</script>', txt, re.S)
     d = json.loads(m.group(1))
-    return d["sections"], d.get("short") or d["sections"], d["questions"]
+    names, shorts = list(d["sections"]), list(d.get("short") or d["sections"])
+    # the owner's project is a 25th subject that build_project.py keeps in its own blob
+    p = re.search(r'<script id="projdata" type="application/json">(.*?)</script>', txt, re.S)
+    if p and json.loads(p.group(1)).get("questions"):
+        proj = json.loads(p.group(1))
+        names.append(proj.get("section", "My project"))
+        shorts.append(proj.get("short", names[-1]))
+    return names, shorts, d["questions"]
 
 
 def text_of(block):

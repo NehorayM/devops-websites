@@ -85,7 +85,7 @@ devops-interview/
   qsrc/<sub>.py           MCQ sources (k8s_pods, argo_sync, ci_sec, aws_eks, helm_ops, tf_state, linux, net, cicd_tools …)
   isrc/<topic>.py         open interview questions (k8s, argocd, ci, aws, helm, terraform, linux, cicd_tools, net)
   learn_src/_h.py         block shorthand shared by Learn and Study
-  learn_src/s00..s23_*.py one Learn subject per file (SUBJECT dict)
+  learn_src/s00..s23_*.py one Learn subject per file (SUBJECT dict); s24_project.py = the owner's project in 8 lessons
   study_src/c1..c9_*.py   one Study chapter per file (CHAPTER dict); c10_project.py = the owner's project
   psrc/pN.py              project exams, one file of 65 Q() per exam (section "project"); psrc/FACTS.md = the sanitized
                           digest of the project's handbook that the questions are written from
@@ -159,7 +159,7 @@ python3 gen_duel_v2.py && python3 build_duel_key.py        # ALWAYS after a bank
 python3 build_interview.py && python3 inject_interview.py  # isrc → #ivdata
 python3 build_learn.py                                     # learn_src → #learndata
 python3 inject_learn.py                                    # Learn engine files → index.html
-python3 build_project.py                                   # psrc → #projdata (BEFORE build_study: the chapter needs sector 24)
+python3 build_project.py                                   # psrc → #projdata (BEFORE build_study and, on a page without #projdata, before build_learn: both need sector 24)
 python3 build_study.py && python3 inject_study.py          # study_src → #studydata, Study engine files
 ```
 
@@ -199,7 +199,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 | `QA_BANK()` | qa_bank.js | 25,530 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
-| `QA_LEARN()` | qa_learn.js | 6,790 / 0 (24 subjects, 96 modules) |
+| `QA_LEARN()` | qa_learn.js | 7,221 / 0 (25 subjects, 104 modules) |
 | `AUDIT()`, `AUDIT2()`…`AUDIT8()` | audit_runtime.js, audit2..8.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
@@ -288,6 +288,7 @@ Notes:
 | Project exam 2 | `psrc/p2.py`, 65 questions on the daily cycle and Terraform in depth (morning and evening scripts, import ordering, shell traps, state and tfvars, AMIs and the runner, cluster ownership, Terraform in GitLab CI with OIDC and conftest, `moved` blocks, the six Terragrunt units). `PROJV_OK` keeps progress on exam 1. `QA_BANK` 25,439 / 0 |
 | Project: five questions | Study chapter 10 grew from 6 to 9 pages: 18 components (access, ALBs, Terragrunt, daily cycle, AMIs, Terraform CI, Buildah, gates, cosign and Kyverno, ArgoCD, Rollouts, Gateway API, NetworkPolicy and WAF, Istio ambient, data tier, Vault, LGTM, agents), each answered through the five defense questions (`FIVE()` helper in `c10_project.py`: built, why, rejected, cost, in production), plus a one-line opener table per page |
 | Project: flows | Chapter 10, page 10: three end-to-end flows as diagram + numbered steps + an interview answer each: a request from the browser to PostgreSQL, a change from `feature/*` to `main` and prod, and an incident from a failing pod to the issue and mail. `QA_BANK` 25,530 / 0 |
+| Project: lessons | Learn subject 24 (`learn_src/s24_project.py`): the project as **8 short lessons** in order (big picture, access and network, Terraform and the daily cycle, the pipeline, GitOps from feature to prod, security/data/secrets, observability and agents, defending it in an interview), 24 checks, recap, 10 finals. `build_learn.py` now reads the project section from `#projdata` |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 
@@ -388,11 +389,11 @@ Notes:
    18 Junior–Mid questions still get no glossary term in the briefing (limit 65). English lists inside Hebrew (1,448 in
    1,272 strings) now render item by item through `heLists` (see section 9).
 8. **My project (IN PROGRESS, asked by Nehoray 2026-11-12):** teach and test his own project, weather-app on EKS.
-   **Done:** the engine, Project exams 1–2 (`psrc/p1.py`, `p2.py`), Study chapter 10 (`study_src/c10_project.py`).
+   **Done:** the engine, Project exams 1–2 (`psrc/p1.py`, `p2.py`), Study chapter 10 (`study_src/c10_project.py`, 10 pages),
+   the Learn subject (`learn_src/s24_project.py`, 8 lessons).
    **Next, one stage each:** Project exams 3–5 (`psrc/p3.py` … `p5.py`, 65 questions each; themes and facts per exam are in
    `psrc/FACTS.md`: 3 = CI/CD, DevSecOps and GitOps in depth, 4 = security, data
-   and secrets, 5 = observability, agents and incidents), then a Learn subject for sector 24 (the engine tolerates its
-   absence today) and open interview questions for the oral defense (needs a 10th topic in `IV_COUNTS`).
+   and secrets, 5 = observability, agents and incidents), then open interview questions for the oral defense (needs a 10th topic in `IV_COUNTS`).
    Per exam: write in three chunks, check lengths as you go (right option mid-pack: aim ≤ 25% longest), `build_project.py`,
    `build_study.py && inject_study.py`, `QA_PROJECT()`, then the full QA. Nothing needs re-running in Supabase. `QA_BANK`'s answer-tell caps count project
    questions too (backticks on the right option only or on the three wrong ones only, absolute words on the wrong ones only):
