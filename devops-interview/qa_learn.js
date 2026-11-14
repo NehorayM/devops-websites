@@ -178,6 +178,10 @@ window.QA_LEARN = async function (opts) {
     });
   });
 
+  // ---- pass mark: 2 of 3 right opens the next part (Nehoray asked for it) ----
+  ok(LT.learnQuizNeed(3) === 2, 'a part with three checks needs two right (' + LT.learnQuizNeed(3) + ')');
+  ok(LT.learnQuizNeed(4) === 3 && LT.learnQuizNeed(5) === 3, 'four or five checks need three right');
+
   // ---- resume across a reload ----
   if (opts.extra !== false) {
   const sec0 = LT.LEARN_SECS[0];

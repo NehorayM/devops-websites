@@ -9,7 +9,7 @@ function learnData(sec){ return LEARN[String(sec)]||null; }
 const LEARN_SECS=Object.keys(LEARN).map(Number).sort((a,b)=>a-b);
 const LSIM_MIN=15;            // minutes for the ten-question exam
 const LSIM_PASS=70;           // percent
-const LPASS=0.75;             // fraction of a part's check questions needed to move on
+const LPASS=0.6;              // fraction of a part's check questions needed to move on: 2 of 3, 3 of 4 or 5
 
 // ---------- content blocks ----------
 function lbList(items,tag){ return '<'+tag+'>'+items.map(i=>'<li>'+mdInline(i)+'</li>').join('')+'</'+tag+'>'; }
