@@ -199,7 +199,7 @@ After a rebuild, reload the page and confirm the `#data` blob holds a new string
 | `QA_BANK()` | qa_bank.js | 25,530 assertions / 0 fail (runs about 10 minutes); `QA_PROJECT()` walks every project exam start to result (147 per exam; 294 with two) |
 | `QA_UI()` | qa_bank.js | 37 screens, no problems |
 | `QA_INTEG()` | qa_bank.js | 40 / 0 |
-| `QA_LEARN()` | qa_learn.js | 7,221 / 0 (25 subjects, 104 modules) |
+| `QA_LEARN()` | qa_learn.js | 7,230 / 0 (25 subjects, 104 modules) |
 | `AUDIT()`, `AUDIT2()`…`AUDIT8()` | audit_runtime.js, audit2..8.js | no HIGH or MED findings |
 | `FUZZ_EXAM(3000,7)` | fuzz_exam.js | clean |
 | `audit_static.py` | — | advisory only: unused-looking code is mostly reached through strings |
@@ -257,6 +257,8 @@ Notes:
   Ask before touching an option's text (stage 9 and the October 2026 audit have that approval).
 - In Bash heredocs, quote the delimiter (`<<'EOF'`): backticks in Hebrew content otherwise run as command substitution.
 - The cloud proxy blocks the docs hosts, so `ref` links can't be fetched there. Verify them from a normal browser.
+- A Learn run in progress lives in `localStorage` only (per subject), not in the profile: it is not synced to another
+  device. `P.courses[sec]` is written when the final exam is submitted.
 - `QS.length` is 1,300 + the project questions. Anything that means "the DevOps bank" (a random exam, duels, the server's
   answer key, weights, domains) must use `CORE_N` / `CORE_PAPERS`; `gen_duel_v2.py` reads `#data` only, so the key stays 1,300.
 - Study chapters load by number (`c10` sorts before `c1_` as text, and reading progress is keyed by position): a new
@@ -289,6 +291,7 @@ Notes:
 | Project: five questions | Study chapter 10 grew from 6 to 9 pages: 18 components (access, ALBs, Terragrunt, daily cycle, AMIs, Terraform CI, Buildah, gates, cosign and Kyverno, ArgoCD, Rollouts, Gateway API, NetworkPolicy and WAF, Istio ambient, data tier, Vault, LGTM, agents), each answered through the five defense questions (`FIVE()` helper in `c10_project.py`: built, why, rejected, cost, in production), plus a one-line opener table per page |
 | Project: flows | Chapter 10, page 10: three end-to-end flows as diagram + numbered steps + an interview answer each: a request from the browser to PostgreSQL, a change from `feature/*` to `main` and prod, and an incident from a failing pod to the issue and mail. `QA_BANK` 25,530 / 0 |
 | Project: lessons | Learn subject 24 (`learn_src/s24_project.py`): the project as **8 short lessons** in order (big picture, access and network, Terraform and the daily cycle, the pipeline, GitOps from feature to prod, security/data/secrets, observability and agents, defending it in an interview), 24 checks, recap, 10 finals. `build_learn.py` now reads the project section from `#projdata`. Where to find them: **My project leads the Learn list** (`renderLearnPick`), and the Study chapter opens with a "Learn it step by step" button (`#stuLessons` → `startLearn(PROJ_SEC)`) |
+| Learn progress fix | **Bug (found by Nehoray):** opening a subject again restarted it at part 1, and only one run was kept for the whole site, so starting another subject erased it. Now each subject keeps its own run (`shipit_learn_s<sec>` in `localStorage`, 90 days; `shipit_learn` is still the most recent, for the Continue button), `startLearn(sec)` resumes a run that has progress (`startLearn(sec, true)` forces a fresh one), the run is cleared when the final exam is submitted, and the subject list shows "2/8 parts passed" for a run in progress |
 
 ## 11. Left to do (in this order unless Nehoray says otherwise)
 

@@ -52,27 +52,50 @@ function blocksChars(arr){ return (arr||[]).reduce((n,b)=>n+lbHTML(b).length,0);
 let L=null, lrnTimer=null, lrnGate=0, lrnGateTimer=null, lrnQuitArm=0;
 const LRN_KEY='shipit_learn';
 
+// A run in progress is kept per subject, so starting another subject, or opening this one again
+// from the list, never throws away the parts already passed. LRN_KEY holds the most recent run
+// (the "Continue" button); LRN_KEY_s<sec> holds each subject's own.
+const lrnKey=sec=>LRN_KEY+'_s'+sec;
+const LRN_KEEP=1000*60*60*24*90;
 function learnSave(){
   if(!L) return;
   try{
-    localStorage.setItem(LRN_KEY,JSON.stringify({
+    const rec=JSON.stringify({
       v:1, sec:L.sec, phase:L.phase, mi:L.mi, startedAt:L.startedAt, spent:L.spent,
       mods:L.mods, sim:L.sim?{qs:L.sim.qs,i:L.sim.i,ans:L.sim.ans,left:Math.max(0,L.sim.endAt-Date.now())}:null,
-      savedAt:Date.now()}));
+      savedAt:Date.now()});
+    localStorage.setItem(LRN_KEY,rec);
+    localStorage.setItem(lrnKey(L.sec),rec);
   }catch(e){}
 }
-function learnClear(){ try{ localStorage.removeItem(LRN_KEY); }catch(e){} }
-function learnStored(){
+function learnClear(sec){
   try{
-    const raw=localStorage.getItem(LRN_KEY); if(!raw) return null;
+    if(sec==null){ const last=learnStored(); if(last) sec=last.sec; }
+    if(sec!=null) localStorage.removeItem(lrnKey(sec));
+    const last=learnStored();
+    if(!last||sec==null||last.sec===sec) localStorage.removeItem(LRN_KEY);
+  }catch(e){}
+}
+// no argument: the most recent run; a subject: that subject's own run
+function learnStored(sec){
+  try{
+    const raw=localStorage.getItem(sec==null?LRN_KEY:lrnKey(sec)); if(!raw) return null;
     const s=JSON.parse(raw);
     if(!s||s.v!==1||!learnData(s.sec)) return null;
-    if(Date.now()-(s.savedAt||0)>1000*60*60*24*7) return null;   // a week is long enough
+    if(sec!=null&&s.sec!==sec) return null;
+    if(Date.now()-(s.savedAt||0)>LRN_KEEP) return null;
     return s;
   }catch(e){ return null; }
 }
-function learnResume(){
-  const s=learnStored(); if(!s) return false;
+// has the reader got anywhere worth keeping?
+function learnStarted(s){
+  return !!s&&((s.mi||0)>0||(s.phase&&s.phase!=='read')||Object.values(s.mods||{}).some(m=>m&&(m.attempts||m.passed)));
+}
+function learnSavedPassed(sec){
+  const s=learnStored(sec); return s?Object.values(s.mods||{}).filter(m=>m&&m.passed).length:0;
+}
+function learnResume(sec){
+  const s=learnStored(sec); if(!s) return false;
   const d=learnData(s.sec); if(!d) return false;
   ensureAudio(); exitStudyMode(); reviewMode=false; markMode=false; mock=null; sim=null;
   L={sec:s.sec, phase:s.phase||'read', mi:Math.min(s.mi||0,d.modules.length), startedAt:Date.now()-(s.spent&&s.spent.total||0),
@@ -135,7 +158,7 @@ function renderLearnPick(){
   // the owner's own project leads the list; the 24 DevOps subjects follow in their fixed order
   const isProj=sec=>typeof PROJ_SEC!=='undefined'&&sec===PROJ_SEC;
   LEARN_SECS.slice().sort((x,y)=>(isProj(y)-isProj(x))||x-y).forEach(sec=>{
-    const d=learnData(sec), rec=learnRecord(sec), done=learnModsDone(sec).length;
+    const d=learnData(sec), rec=learnRecord(sec), done=Math.max(learnModsDone(sec).length,learnSavedPassed(sec));
     const mins=d.modules.reduce((a,m)=>a+m.min,0)+LSIM_MIN+8;
     const b=document.createElement('button'); b.className='crsrow';
     b.innerHTML='<span class="cem">'+(rec&&rec.best>=LSIM_PASS?'🎓':secEm(sec))+'</span>'+
@@ -152,10 +175,12 @@ function renderLearnPick(){
 }
 
 // ---------- lifecycle ----------
-function startLearn(sec){
+function startLearn(sec, fresh){
   ensureAudio();
   const d=learnData(sec);
   if(!d){ toast('That subject has not been authored yet'); return; }
+  // opening a subject you are part-way through carries on where you stopped
+  if(!fresh&&learnStarted(learnStored(sec))&&learnResume(sec)) return;
   exitStudyMode(); reviewMode=false; markMode=false; mock=null; sim=null;
   P.lastLearn=sec;
   L={sec, phase:'read', mi:0, startedAt:Date.now(), spent:{total:0}, mods:{}, quiz:null, sim:null, stage:Date.now()};
@@ -610,7 +635,7 @@ function learnFinish(){
   $('lrnDoneHome').onclick=()=>{ L=null; go('homeScreen'); renderHome(); };
   $('lrnDoneBack').onclick=()=>{ L=null; renderLearnPick(); go('learnPickScreen'); };
 
-  learnStopClock(); learnClear(); L=null;
+  learnStopClock(); learnClear(sec); L=null;
   saveProfile(); checkBadges(); logReadiness(); renderReadiness(); renderHome();
   if(passed) celebrate(); else sfx.end();
   go('learnDoneScreen');
@@ -647,7 +672,7 @@ $('lrnSimNext').onclick=()=>learnSimGo(1);
 $('lrnSimSubmit').onclick=()=>learnSimSubmit(false);
 
 const LEARN_T={
-  LEARN, learnData, get L(){return L;}, startLearn, learnResume, learnStored, learnMap,
+  LEARN, learnData, get L(){return L;}, startLearn, learnResume, learnStored, learnClear, learnStarted, learnMap,
   learnReadModule, learnQuiz, learnQuizPick, learnQuizSubmit, learnQuizPaint, learnQuizResult,
   learnQuizNeed, learnRecap, learnSim, learnSimPick, learnSimGo, learnSimSubmit, learnFinish,
   learnContinue, learnLeave, learnQuit, renderLearnPick, lbHTML, blocksHTML, learnReviewCard,

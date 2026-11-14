@@ -189,7 +189,33 @@ window.QA_LEARN = async function (opts) {
   ok(LT.learnResume(), 'a saved run can be resumed');
   ok(LT.L && LT.L.sec === sec0, 'the resumed run is the same subject');
   LT.learnLeave(true);
-  localStorage.removeItem('shipit_learn');
+  LT.learnClear(sec0);
+  ok(!LT.learnStored() && !LT.learnStored(sec0), 'clearing a subject removes its saved run');
+
+  // ---- progress is kept per subject: another subject, or opening this one again, must not reset it ----
+  const secs = LT.LEARN_SECS, secA = secs[secs.length - 1], secB = secs[0];
+  LT.startLearn(secA);
+  const mA = LT.learnData(secA).modules;
+  LT.L.mods[mA[0].id] = { attempts: 1, best: 3, passed: true, paid: true };
+  LT.L.mi = 1;
+  LT.learnLeave(true);
+  LT.startLearn(secB);
+  ok(LT.L && LT.L.sec === secB && LT.L.mi === 0, 'a subject never opened starts at its first part');
+  LT.learnLeave(true);
+  ok(!!LT.learnStored(secA), 'starting another subject keeps the first one\'s saved run');
+  LT.startLearn(secA);
+  ok(LT.L && LT.L.sec === secA && LT.L.mi === 1, 'opening a subject again carries on at the part reached (' + (LT.L && LT.L.mi) + ')');
+  ok(LT.L && (LT.L.mods[mA[0].id] || {}).passed === true, 'and the parts already passed stay passed');
+  ok(T.route === 'learnMapScreen' && $('lrnMapDone').textContent.indexOf('1 /') === 0, 'the map shows the passed part');
+  LT.learnLeave(true);
+  LT.renderLearnPick();
+  const rowA = [...$('lrnPickList').children].find(r => /1\/\d+ parts passed/.test(r.textContent));
+  ok(!!rowA, 'the subject list shows how many parts of a run in progress are passed');
+  LT.startLearn(secA, true);
+  ok(LT.L && LT.L.mi === 0 && !Object.keys(LT.L.mods).length, 'a forced fresh start begins again');
+  LT.learnLeave(true);
+  LT.learnClear(secA); LT.learnClear(secB);
+  ok(!LT.learnStored(secA) && !LT.learnStored(secB) && !LT.learnStored(), 'the test leaves no saved run behind');
   }
 
   const secs = opts.secs || LT.LEARN_SECS;
